@@ -84,9 +84,8 @@ mission_manager ──SelectNextTarget / UpdateRequestStatus──▶ queue_mana
 이 VM에는 이미 ROS 2 Humble, Gazebo Harmonic, `~/ros_gz_ws`(ros_gz 소스 빌드)가 있고
 `~/.bashrc` 가 둘 다 source 한다. 추가로 필요한 것은 없다 (기본 모드 기준).
 
-```bash
-cd ~/Desktop/ROS_TermProject
-```
+> **이 문서의 모든 명령은 워크스페이스(clone 한 `ROS_TermProject` 폴더) 안에서 실행한다고 가정한다.**
+> 폴더를 어디에 두었든 그 폴더로 이동한 뒤 명령을 실행하면 된다.
 
 ```bash
 colcon build --symlink-install
@@ -114,7 +113,7 @@ sudo apt install ros-humble-apriltag-ros
 
 ## 3. 실행
 
-새 터미널마다 `source ~/Desktop/ROS_TermProject/install/setup.bash` 를 먼저 한다.
+새 터미널마다 워크스페이스에서 `source install/setup.bash` 를 먼저 한다.
 
 ### 3-1. 가장 기본: Gazebo + 시나리오 1
 
