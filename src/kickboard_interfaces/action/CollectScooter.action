@@ -1,0 +1,10 @@
+string scooter_id
+geometry_msgs/PoseStamped target_pose
+---
+bool success
+string failure_reason
+geometry_msgs/PoseStamped corrected_pose
+---
+string phase             # NAVIGATING / VERIFYING / ALIGNING / LOADING
+float32 distance_remaining
+uint8 load_count

@@ -1,0 +1,10 @@
+name: "2. 이동 중 새 요청"
+description: >
+  요청 2건 처리 중 20초에 1건 추가. 통과: 현재 대상 완료 후 재평가, 3건 모두 수거 (비선점)
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 0.5, y: 1.0, yaw_deg: 0}                       # 주차구역 밖
+  - {id: 2, x: 2.5, y: -3.0, yaw_deg: 90, battery_pct: 10}    # 구역 B 안, 배터리 부족
+  - {id: 3, x: -2.5, y: 3.0, yaw_deg: 0}                      # 구역 A 안, 20초에 넘어짐
+events:
+  - {t: 20, id: 3, type: fall}

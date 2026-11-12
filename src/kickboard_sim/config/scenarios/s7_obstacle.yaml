@@ -1,0 +1,9 @@
+name: "7. 장애물 회피"
+description: >
+  5초에 직선 경로 위에 장애물 투입. 통과: 충돌 없이 도착 (nav:=nav2 필요.
+  nav:=simple 은 회피 기능이 없어 전방 정지 -> 3회 실패 -> NEEDS_HUMAN 으로 끝난다)
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 3.0, y: 0.0, yaw_deg: 90}
+events:
+  - {t: 5, type: obstacle, name: obstacle_1, x: -0.5, y: 0.0, size: [0.6, 1.2, 0.6]}

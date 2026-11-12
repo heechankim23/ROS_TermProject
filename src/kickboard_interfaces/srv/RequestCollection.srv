@@ -1,0 +1,12 @@
+uint8 FALLEN=1
+uint8 OUT_OF_ZONE=2
+uint8 LOW_BATTERY=3
+
+string scooter_id
+float64 lat
+float64 lon
+uint8 reason
+---
+bool accepted
+uint32 queue_position
+string message

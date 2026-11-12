@@ -1,0 +1,9 @@
+# [내부] mission_manager -> queue_manager. 점수 최고 항목을 IN_PROGRESS 로 바꾸고 반환
+float64 robot_x
+float64 robot_y
+---
+bool found
+string scooter_id
+uint8 reason
+geometry_msgs/PoseStamped target_pose
+float32 score

@@ -1,0 +1,6 @@
+name: "4. 배터리 부족"
+description: "초기 배터리 25%. 통과: 20% 도달 시 현재 대상을 반납하고 복귀, 80% 충전 후 재개"
+robot: {initial_battery_pct: 25, capacity: 4}
+scooters:
+  - {id: 1, x: 3.5, y: -1.0, yaw_deg: 0}
+  - {id: 2, x: 2.5, y: 1.5, yaw_deg: 0}

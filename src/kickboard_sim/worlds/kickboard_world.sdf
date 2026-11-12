@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!-- 킥보드 수거 시뮬레이션 world (Gazebo Harmonic).
+     방 10 x 8 m (x: -5~5, y: -4~4). world 프레임 = map 프레임 (simple 모드 기준).
+     맵 의존 값(충전소·주차구역·GPS 기준점)은 config/map_config.yaml 에 있다. world 를 바꾸면 거기도 맞출 것.
+     킥보드는 world 에 없다 — scooter_fleet_sim 이 시나리오 YAML 에 따라 생성한다. -->
+<sdf version="1.9">
+  <world name="kickboard_world">
+    <!-- 스텝 10 ms: Gazebo 는 스텝마다 /clock 을 내보내고, sim time 을 쓰는 노드가 전부 이를 처리한다.
+         4 ms(250 Hz) 에서는 파이썬 노드들의 CPU 가 크게 올라가서 10 ms(100 Hz) 로 낮췄다. -->
+    <physics name="default" type="ignored">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <!-- 이 VMware arm64 VM 에서는 ogre2 가 빈 화면/빈 라이다를 내므로 ogre(1) 사용 -->
+      <render_engine>ogre</render_engine>
+    </plugin>
+
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.8 0.85 0.9 1</background>
+      <grid>false</grid>
+    </scene>
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry></collision>
+        <visual name="v"><geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+          <material><ambient>0.55 0.55 0.55 1</ambient><diffuse>0.55 0.55 0.55 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- 벽 -->
+    <model name="walls">
+      <static>true</static>
+      <link name="link">
+        <collision name="n"><pose>0 4.05 0.4 0 0 0</pose><geometry><box><size>10.2 0.1 0.8</size></box></geometry></collision>
+        <visual name="n"><pose>0 4.05 0.4 0 0 0</pose><geometry><box><size>10.2 0.1 0.8</size></box></geometry></visual>
+        <collision name="s"><pose>0 -4.05 0.4 0 0 0</pose><geometry><box><size>10.2 0.1 0.8</size></box></geometry></collision>
+        <visual name="s"><pose>0 -4.05 0.4 0 0 0</pose><geometry><box><size>10.2 0.1 0.8</size></box></geometry></visual>
+        <collision name="e"><pose>5.05 0 0.4 0 0 0</pose><geometry><box><size>0.1 8.2 0.8</size></box></geometry></collision>
+        <visual name="e"><pose>5.05 0 0.4 0 0 0</pose><geometry><box><size>0.1 8.2 0.8</size></box></geometry></visual>
+        <collision name="w"><pose>-5.05 0 0.4 0 0 0</pose><geometry><box><size>0.1 8.2 0.8</size></box></geometry></collision>
+        <visual name="w"><pose>-5.05 0 0.4 0 0 0</pose><geometry><box><size>0.1 8.2 0.8</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <!-- 고정 장애물 (주행 경로 중앙은 비워 둠 — simple 백엔드는 회피를 못 한다) -->
+    <model name="shelf">
+      <static>true</static><pose>0 3.6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>2.0 0.6 0.8</size></box></geometry></collision>
+        <visual name="v"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>2.0 0.6 0.8</size></box></geometry>
+          <material><ambient>0.5 0.35 0.2 1</ambient><diffuse>0.5 0.35 0.2 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="pillar">
+      <static>true</static><pose>4.0 3.0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><pose>0 0 0.5 0 0 0</pose><geometry><cylinder><radius>0.3</radius><length>1.0</length></cylinder></geometry></collision>
+        <visual name="v"><pose>0 0 0.5 0 0 0</pose><geometry><cylinder><radius>0.3</radius><length>1.0</length></cylinder></geometry></visual>
+      </link>
+    </model>
+
+    <!-- 주차구역 표시 (바닥 패널, 충돌 없음). 좌표는 map_config.yaml parking_zones 와 일치 -->
+    <model name="parking_zone_A">
+      <static>true</static><pose>-2.0 3.0 0.002 0 0 0</pose>
+      <link name="link"><visual name="v"><geometry><box><size>2.0 1.4 0.004</size></box></geometry>
+        <material><ambient>0.2 0.7 0.3 1</ambient><diffuse>0.2 0.7 0.3 1</diffuse></material></visual></link>
+    </model>
+    <model name="parking_zone_B">
+      <static>true</static><pose>3.0 -3.0 0.002 0 0 0</pose>
+      <link name="link"><visual name="v"><geometry><box><size>2.0 1.4 0.004</size></box></geometry>
+        <material><ambient>0.2 0.7 0.3 1</ambient><diffuse>0.2 0.7 0.3 1</diffuse></material></visual></link>
+    </model>
+
+    <!-- 충전소: 태그 면이 +x 를 향함. 태그 위치 = (-4.548, 0) -->
+    <include>
+      <uri>model://charging_station</uri>
+      <name>charging_station</name>
+      <pose>-4.7 0 0 0 0 0</pose>
+    </include>
+  </world>
+</sdf>

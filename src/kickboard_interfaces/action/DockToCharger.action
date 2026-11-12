@@ -1,0 +1,9 @@
+string station_id
+---
+bool success
+float32 position_error_m
+float32 yaw_error_deg
+---
+string phase             # APPROACH / ALIGN / DOCKED
+float32 lateral_error
+float32 yaw_error

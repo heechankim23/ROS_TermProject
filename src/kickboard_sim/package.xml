@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>kickboard_sim</name>
+  <version>0.1.0</version>
+  <description>킥보드 수거 로봇 시뮬레이션 환경 (Gazebo Harmonic world, 모델, 시나리오, launch)</description>
+  <maintainer email="team@example.com">ROS TermProject Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>kickboard_robot</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <!-- 선택: nav2_bringup (nav:=nav2), apriltag_ros (perception:=apriltag) -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

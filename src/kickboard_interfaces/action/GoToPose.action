@@ -1,0 +1,10 @@
+# [내부] nav_bridge 가 제공. 우리 인터페이스와 Nav2(또는 간이 주행) 사이의 경계
+geometry_msgs/PoseStamped target_pose
+float32 standoff          # >0 이면 target 에서 로봇 쪽으로 이 거리만큼 떨어진 곳을 목표로 함
+---
+bool success
+uint8 attempts
+string message
+---
+float32 distance_remaining
+uint8 attempt

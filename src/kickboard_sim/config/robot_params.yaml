@@ -1,0 +1,62 @@
+# 노드별 기본 파라미터. 시나리오 YAML 의 robot.* 값이 launch 에서 덮어쓴다.
+queue_manager:
+  ros__parameters:
+    w_r: 10.0          # TODO(C): 가중치 실험 후 확정 (PRD 9장 미결)
+    w_t: 1.0
+    w_d: 5.0
+    d_max: 12.8        # 방 대각선 (10 x 8 m)
+    auto_cancel: true
+    tilt_threshold_deg: 45.0
+    battery_threshold_pct: 15.0
+
+mission_manager:
+  ros__parameters:
+    capacity: 4        # 적재함 4칸
+    return_battery_pct: 20.0
+    charge_target_pct: 80.0
+    start_docked: true
+    admin_alerts: true
+    drop_clearance: 1.05       # 주차구역 하역 때 로봇이 서는 자리의 벽 여유 (제자리 회전 반경 0.98)
+    scooter_battery_threshold_pct: 15.0   # 실은 킥보드 배터리가 이보다 낮으면 충전소, 아니면 주차구역에 하역
+
+battery_manager:
+  ros__parameters:
+    initial_pct: 100.0
+    k1_pct_per_m: 1.0
+    k2_pct_per_s: 0.02
+    charge_rate_pct_per_s: 2.0
+    return_battery_pct: 20.0
+
+collector:
+  ros__parameters:
+    approach_standoff: 1.6     # 로봇 중심 -> 킥보드 GPS 점 (로봇 1.7 x 0.9 m)
+    verify_timeout_sec: 10.0
+    align_distance: 1.35       # 로봇 중심 -> 킥보드 중심. 로봇팔이 발판에 닿는 거리 (자리는 nav_bridge 가 고름)
+    align_yaw_tol_deg: 10.0
+    load_time_sec: 3.0
+
+nav_bridge:
+  ros__parameters:
+    max_retries: 2
+    goal_timeout_sec: 120.0
+    goal_clearance: 1.1        # 목표 지점에서 장애물(벽 + 라이다)까지 최소 거리: 회전 반경 0.98 + 격자(0.1 m) 오차
+    inflation_radius: 1.1      # 경로가 장애물과 되도록 지키는 거리 (로봇을 덮는 원 + 격자 오차)
+    obstacle_stop_dist: 0.15   # 안전장치: 라이다 바로 앞 이 거리 안에 뭔가 있으면 정지 (회피는 경로 계획)
+
+scooter_fleet_sim:
+  ros__parameters:
+    gps_noise_sigma: 1.0
+    tilt_threshold_deg: 45.0
+    battery_threshold_pct: 15.0
+    remove_on_load: true
+
+sim_tag_detector:
+  ros__parameters:
+    hfov_deg: 62.2
+    max_range: 3.0
+    camera_offset_x: 0.76      # 카메라 = 캡 앞면 (model.sdf camera_link)
+
+arm_loader:
+  ros__parameters:
+    time_scale: 1.0            # 2.0 이면 팔 동작이 2배 느려짐
+    noise_pos: 0.02

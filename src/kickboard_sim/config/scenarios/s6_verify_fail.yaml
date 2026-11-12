@@ -1,0 +1,6 @@
+name: "6. 확인 실패"
+description: "1번은 요청만 오고 실물이 없음. 통과: 회전 탐색 후 실패 처리, 다음 대상(2번)으로 진행"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 1.0, y: 1.0, model: false}
+  - {id: 2, x: 2.0, y: -1.5, yaw_deg: 60}

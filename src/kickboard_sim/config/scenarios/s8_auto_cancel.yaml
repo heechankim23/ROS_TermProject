@@ -1,0 +1,9 @@
+name: "8. 자동 취소 (P1)"
+description: 2번이 대기 중일 때 다시 세워지고 주차구역 안에 있으면 대기열에서 제거
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 3.5, y: -1.0, yaw_deg: 0}         # 주차구역 밖 -> 먼저 처리
+  - {id: 2, x: -2.0, y: 3.0, yaw_deg: 0}         # 구역 A 안
+events:
+  - {t: 3, id: 2, type: fall}
+  - {t: 15, id: 2, type: stand}

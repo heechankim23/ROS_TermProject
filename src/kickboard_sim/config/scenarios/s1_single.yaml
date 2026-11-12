@@ -1,0 +1,9 @@
+name: "1. 단일 수거"
+description: >
+  킥보드 1대가 주차구역 밖(OUT_OF_ZONE)으로 요청 -> 10초에 넘어짐(FALLEN)으로 같은 ID 병합.
+  통과: 접근 -> 확인 -> 적재 -> 충전소 대기
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 1.5, y: -1.0, yaw_deg: 30}
+events:
+  - {t: 10, id: 1, type: fall}

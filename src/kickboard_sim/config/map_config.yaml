@@ -1,0 +1,22 @@
+# 맵에 종속된 값. world 를 바꾸면 이 파일만 고치면 된다 (PRD 7장).
+gps_origin:            # map (0,0) 의 위경도. +x = 동, +y = 북
+  lat: 37.5665
+  lon: 126.9780
+
+robot_spawn:           # simple/kinematic 모드에서 map->odom 정적 TF 로도 쓰인다 (= 도킹 pose)
+  x: -3.548
+  y: 0.0
+  yaw_deg: 180.0
+
+charger:
+  station_id: station_1
+  tag_id: 100          # 킥보드 태그(1~99)와 다른 ID 대역
+  tag_pose: {x: -4.548, y: 0.0, yaw_deg: 0.0}   # 태그 면 중심, yaw = 바깥쪽 법선
+  dock_distance: 1.0       # 도킹 완료 시 base_footprint 와 태그 사이 거리 (제자리 회전 반경 ~0.98 m)
+  pre_dock_distance: 2.0   # Nav2 로 먼저 가는 지점
+
+parking_zones:         # 폴리곤 (map 좌표). world 의 parking_zone_A/B 와 일치
+  - name: A
+    polygon: [[-3.0, 2.3], [-1.0, 2.3], [-1.0, 3.7], [-3.0, 3.7]]
+  - name: B
+    polygon: [[2.0, -3.7], [4.0, -3.7], [4.0, -2.3], [2.0, -2.3]]

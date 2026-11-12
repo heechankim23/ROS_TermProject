@@ -1,0 +1,9 @@
+# [내부] mission_manager -> queue_manager
+# status: DONE / FAILED / NEEDS_HUMAN / REQUEUE(대기열로 되돌림)
+string scooter_id
+string status
+string note
+bool has_corrected_pose
+geometry_msgs/Pose corrected_pose
+---
+bool success

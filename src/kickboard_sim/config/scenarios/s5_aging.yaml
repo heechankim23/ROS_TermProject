@@ -1,0 +1,14 @@
+name: "5. aging (기아 방지)"
+description: >
+  먼 곳의 배터리 부족(가중치 최저) 1건 + 충전소 근처에 넘어진 킥보드가 25초마다 생김.
+  통과: 먼 항목(1번)이 점수식 상한(queue_manager 시작 로그의 t_max) 안에 선택됨
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 3.5, y: -3.0, yaw_deg: 0, battery_pct: 8, spawn_at: 0}   # 먼 곳, 구역 B 안 -> LOW_BATTERY
+  # 로봇(1.7 x 0.9 m)이 도킹 자리(-3.55, 0)에서 제자리 회전(반경 ~1 m)할 수 있게 조금 떨어뜨려 둠
+  - {id: 2, x: -2.6, y: -1.6, tilt_deg: 90, spawn_at: 0}
+  - {id: 3, x: -2.6, y: 2.0, tilt_deg: 90, spawn_at: 25}
+  - {id: 4, x: -3.0, y: -2.6, tilt_deg: 90, spawn_at: 50}
+  - {id: 5, x: -1.8, y: 2.4, tilt_deg: 90, spawn_at: 75}
+  - {id: 6, x: -3.4, y: -1.4, tilt_deg: 90, spawn_at: 100}
+  - {id: 7, x: -1.8, y: -2.8, tilt_deg: 90, spawn_at: 125}

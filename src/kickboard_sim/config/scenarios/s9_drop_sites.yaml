@@ -1,0 +1,11 @@
+name: "9. 하역 장소 (주차구역 / 충전소)"
+description: >
+  배터리 정상인 넘어짐·구역 밖 킥보드는 주차구역에 로봇팔로 세워 두고,
+  배터리 부족 킥보드(넘어짐이어도)는 충전소에 하역.
+  통과: 4대 적재 -> DROPPING(주차구역 2대, 구역 안=True, 재요청 없음) -> 도킹 -> 충전소 하역 2대
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 1.5, y: -1.0, yaw_deg: 30, tilt_deg: 90, battery_pct: 80}   # 넘어짐, 배터리 정상 -> 주차구역
+  - {id: 2, x: 0.5, y: 1.0, yaw_deg: 0, battery_pct: 70}                   # 구역 밖, 배터리 정상 -> 주차구역
+  - {id: 3, x: -1.0, y: -2.0, yaw_deg: 0, tilt_deg: 90, battery_pct: 10}   # 넘어짐 + 배터리 부족 -> 충전소
+  - {id: 4, x: 2.5, y: -3.0, yaw_deg: 90, battery_pct: 8}                  # 배터리 부족 -> 충전소

@@ -1,0 +1,15 @@
+# arm_loader (sim:=gz 전용): 적재함의 킥보드를 꺼낸다. mission_manager 가 하역할 때 호출.
+#   remove_only = false : 로봇팔로 집어 target(world, 킥보드 바닥 중심 + yaw)에 세워 놓는다 (주차구역 하역)
+#   keep_as_cargo = true : 충전소 충전 자리에 세우되 정상 킥보드로 되돌리지 않음 (충전하러 맡김)
+#   remove_only = true  : 애니메이션 없이 지운다 (적재함 또는 충전 자리에서 — 충전 끝나 치움)
+string scooter_id
+bool remove_only
+bool keep_as_cargo
+geometry_msgs/Pose target
+---
+bool success
+string message
+geometry_msgs/Pose placed_pose   # 실제로 놓인 pose (world)
+---
+string phase
+float32 progress

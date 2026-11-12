@@ -1,0 +1,9 @@
+# 음수 값은 "변경하지 않음"
+float32 return_battery_pct
+int32 capacity
+float32 w_r
+float32 w_t
+float32 w_d
+---
+bool success
+string message

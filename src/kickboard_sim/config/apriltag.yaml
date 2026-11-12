@@ -1,0 +1,14 @@
+# apriltag_ros (christianrauch) — perception:=apriltag 일 때만 사용
+/**:
+  ros__parameters:
+    image_transport: raw
+    family: 36h11
+    size: 0.2            # 태그 한 변 (m). PRD: 20 cm 이상
+    max_hamming: 0
+    detector:
+      threads: 2
+      decimate: 1.0
+      blur: 0.0
+      refine: true
+      sharpening: 0.25
+      debug: false

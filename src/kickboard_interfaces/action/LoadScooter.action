@@ -1,0 +1,10 @@
+# arm_loader (sim:=gz 전용): 로봇팔로 킥보드 발판을 집어 들어 올리고(넘어져 있으면 세우고) 적재함 빈 칸에 꽂는다.
+# collector 의 LOADING 단계에서 호출. 서버가 없으면 collector 는 기존처럼 load_time_sec 정지로 대신한다.
+string scooter_id
+---
+bool success
+string message
+uint8 slot            # 실린 칸 번호 (0 = 맨 뒤 칸)
+---
+string phase          # REACH / DESCEND / GRIP / LIFT / SWING / PLACE / RELEASE / RETRACT
+float32 progress      # 전체 진행률 0~1

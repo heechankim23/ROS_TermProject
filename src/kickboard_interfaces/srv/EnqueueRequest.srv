@@ -1,0 +1,12 @@
+# [내부] request_gateway -> queue_manager
+string scooter_id
+uint8 reason
+float64 x
+float64 y
+float64 lat
+float64 lon
+---
+bool accepted
+bool merged
+uint32 queue_position
+string message
