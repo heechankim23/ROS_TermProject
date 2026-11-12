@@ -1,0 +1,232 @@
+"""노드 가공부(*_logic.py) 단위 테스트. ROS 없이 돈다: cd src/kickboard_robot && python3 -m pytest -q test/"""
+import math
+import random
+
+import numpy as np
+
+from kickboard_robot import battery_logic, collector_logic, dock_logic, gateway_logic, lidar_logic
+from kickboard_robot import localizer_logic, mission_logic as ml, nav_logic, queue_book, queue_logic as ql, tag_sim_logic
+from kickboard_robot.geo import GeoConverter
+from kickboard_robot.planner import Costmap
+
+
+# ---------------- battery ----------------
+def test_battery_drains_by_distance_and_time_and_charges():
+    b = battery_logic.BatteryModel(50.0, k1_pct_per_m=1.0, k2_pct_per_s=0.02, charge_rate_pct_per_s=2.0)
+    assert b.update(0.0, 'NAVIGATING') == 50.0          # 첫 호출은 dt = 0
+    b.add_odom(0.0, 0.0)
+    b.add_odom(2.0, 0.0)                                # 리셋으로 보고 무시 (> 1 m)
+    b.add_odom(2.5, 0.0)                                # 0.5 m
+    assert abs(b.update(10.0, 'NAVIGATING') - (50.0 - 0.5 - 0.2)) < 1e-9
+    assert b.update(20.0, 'IDLE') == b.pct              # IDLE: 변화 없음
+    assert abs(b.update(25.0, 'CHARGING') - (49.3 + 10.0)) < 1e-9
+    assert b.update(1000.0, 'CHARGING') == 100.0
+    assert not b.is_low(20.0)
+
+
+# ---------------- gateway ----------------
+def test_gateway_checks_and_range():
+    assert gateway_logic.check_request('', 1, 0, 0) == 'scooter_id 비어 있음'
+    assert 'reason' in gateway_logic.check_request('1', 9, 0, 0)
+    assert gateway_logic.check_request('1', 1, 91, 0) == '위경도 범위 오류'
+    assert gateway_logic.check_request('1', 2, 37.5, 127.0) == ''
+    geo = GeoConverter(37.5665, 126.9780)
+    x, y, err = gateway_logic.to_map_checked(geo, 37.5665, 126.9780, 500.0)
+    assert err == '' and abs(x) < 1e-6 and abs(y) < 1e-6
+    _, _, err = gateway_logic.to_map_checked(geo, 37.60, 126.9780, 500.0)
+    assert err.startswith('서비스 지역 밖')
+
+
+# ---------------- collector ----------------
+def test_collector_center_and_mean():
+    assert collector_logic.tag_id_of('7') == 7
+    assert 1 <= collector_logic.tag_id_of('abc') <= 90
+    c = collector_logic.center_from_tag(1.0, 0.0, 0.0, 0.2)       # 태그 법선 +x -> 중심은 -x 쪽
+    assert abs(c[0] - 0.8) < 1e-12 and c[1] == 0.0
+    m = collector_logic.mean_center([(0, 0, 0.1), (2, 2, 0.2), (4, 4, 0.3)], last_n=2)
+    assert m == (3.0, 3.0, 0.3)
+    assert collector_logic.mean_center([]) is None
+    assert collector_logic.arrived_by_tag(1.7, 1.6, 0.2) and not collector_logic.arrived_by_tag(1.9, 1.6, 0.2)
+
+
+# ---------------- dock ----------------
+CHARGER = {'tag_pose': {'x': -4.548, 'y': 0.0, 'yaw_deg': 0.0}, 'dock_distance': 1.0, 'pre_dock_distance': 2.0}
+
+
+def test_dock_poses_and_errors():
+    tag, dock, pre = dock_logic.charger_poses(CHARGER)
+    assert abs(dock[0] + 3.548) < 1e-9 and abs(pre[0] + 2.548) < 1e-9 and abs(dock[2] - math.pi) < 1e-9
+    pe, lat, ye = dock_logic.dock_errors((dock[0] + 0.03, dock[1] + 0.04, dock[2]), dock)
+    assert abs(pe - 0.05) < 1e-9 and abs(abs(lat) - 0.04) < 1e-9 and abs(ye) < 1e-9
+    ok, pe, ye = dock_logic.within_accept((dock[0] + 0.04, dock[1], dock[2] + math.radians(4)), dock)
+    assert ok
+    ok, _, _ = dock_logic.within_accept((dock[0] + 0.06, dock[1], dock[2]), dock)
+    assert not ok
+
+
+def test_dock_goal_filter_smooths_then_locks():
+    tag, dock, _ = dock_logic.charger_poses(CHARGER)
+    f = dock_logic.DockGoalFilter(dock, 1.0, alpha=0.15, lock_dist=0.10)
+    g = f.add_detection(tag[0], tag[1] + 0.1, tag[2])              # 첫 검출은 그대로
+    assert abs(g[1] - 0.1) < 1e-12 and abs(g[0] - dock[0]) < 1e-12
+    g = f.add_detection(tag[0], tag[1], tag[2])                    # 다음은 15% 만 따라감
+    assert abs(g[1] - 0.085) < 1e-12
+    assert not f.check_lock((0.0, 0.0, 0.0))
+    assert f.check_lock((g[0] + 0.05, g[1], 0.0)) and f.locked
+    assert f.add_detection(tag[0], tag[1] + 1.0, tag[2]) == g      # 고정 뒤에는 무시
+    assert not f.check_lock((g[0], g[1], 0.0))                     # 이미 고정: 다시 True 아님
+
+
+# ---------------- localizer ----------------
+def test_map_odom_filter_jumps_then_smooths():
+    f = localizer_logic.MapOdomFilter(0.1)
+    e = f.update((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    assert e == (1.0, 0.0, 0.0)
+    e = f.update((1.1, 0.0, 0.0), (0.0, 0.0, 0.0))                # 10 cm 차이 -> 10% 만
+    assert abs(e[0] - 1.01) < 1e-12
+    e = f.update((3.0, 0.0, 0.0), (0.0, 0.0, 0.0))                # 0.5 m 넘게 어긋나면 바로 맞춤
+    assert e[0] == 3.0
+
+
+# ---------------- sim tag detector ----------------
+def test_tag_sim_sees_scooter_in_front_only():
+    m = tag_sim_logic.CameraModel(noise_pos=0.0, noise_yaw_deg=0.0)
+    cam = tag_sim_logic.camera_pose((0.0, 0.0, 0.0), 0.07)
+    front = tag_sim_logic.detect(cam, [('3', 1.5, 0.0, math.pi)], None, 100, m, random.Random(0))
+    assert len(front) == 1 and front[0][0] == 3 and abs(front[0][4] - (1.5 - 0.3 - 0.07)) < 1e-9
+    behind = tag_sim_logic.detect(cam, [('3', -1.5, 0.0, 0.0)], None, 100, m, random.Random(0))
+    assert behind == []
+    far = tag_sim_logic.detect(cam, [('3', 5.0, 0.0, math.pi)], None, 100, m, random.Random(0))
+    assert far == []
+    charger = tag_sim_logic.detect(cam, [], (2.0, 0.0, math.pi), 100, m, random.Random(0))
+    assert charger and charger[0][0] == 100
+
+
+# ---------------- sim lidar ----------------
+def test_lidar_hits_wall_and_scooter():
+    g = np.zeros((40, 40), dtype=bool)          # 4 x 4 m, 0.1 m
+    g[:, 30] = True                             # x = 3.0 m 벽
+    sim = lidar_logic.LidarSim(g, 0.1, 0.0, 0.0, samples=4, range_min=0.12, range_max=3.5)
+    r = sim.cast(1.0, 2.0, 0.0, sim.grid_with([], {}))
+    assert abs(r[2] - 2.0) < 0.06                # 빔 2 = 0 rad (angles: -pi, -pi/2, 0, pi/2)
+    r2 = sim.cast(1.0, 2.0, 0.0, sim.grid_with([('1', 2.0, 2.0, 0.0)], {}))
+    assert r2[2] < 0.8                           # 킥보드 상자가 벽보다 먼저 맞음
+    noisy = sim.add_noise(r, 0.0)
+    assert noisy[2] == float(r[2])
+
+
+# ---------------- nav ----------------
+def test_filter_scan_masks_own_body_and_finds_front():
+    ranges = [0.5, float('inf'), 1.2, 0.3]
+    # 빔 각도: pi, -pi/2 (inf), 0, pi/2
+    front_min, own, _ = nav_logic.filter_scan(ranges, math.pi, -math.pi / 2, 0.12, 0.8, (-0.92, 0.89, 0.5))
+    assert front_min == 1.2
+    assert own[0] and own[3] and not own[2]      # 뒤로 0.5 m (x=0.3), 옆 0.3 m -> 차체 안
+
+
+def test_choose_goal_without_standoff_and_fallback():
+    g, fb = nav_logic.choose_goal((1.0, 2.0), 0.5, (0, 0), 0.0, 1.1, 0.0)
+    assert g == (1.0, 2.0, 0.5) and not fb
+    cm = Costmap(0.0, 0.0, 4.0, 4.0, res=0.1)
+    g, fb = nav_logic.choose_goal((2.0, 2.0), 0.0, (0.5, 2.0), 1.0, 0.5, 0.0, cm=cm)
+    assert g is not None and not fb and abs(math.hypot(g[0] - 2.0, g[1] - 2.0) - 1.0) < 0.15
+
+
+def test_path_follower_reaches_goal_on_empty_map():
+    cm = Costmap(0.0, 0.0, 6.0, 6.0, res=0.1)
+    f = nav_logic.PathFollower((4.0, 3.0, 0.0), nav_logic.FollowParams(), cm=cm)
+    x, y, th, t = 1.0, 3.0, 0.0, 0.0
+    for _ in range(4000):
+        r = f.step((x, y, th), t)
+        if r.kind == 'arrived':
+            break
+        assert r.kind in ('drive', 'again')
+        if r.kind == 'drive':
+            x += r.v * math.cos(th) * 0.05
+            y += r.v * math.sin(th) * 0.05
+            th += r.w * 0.05
+            t += 0.05
+    assert r.kind == 'arrived' and math.hypot(x - 4.0, y - 3.0) < 0.1
+
+
+def test_path_follower_safety_stop_times_out():
+    f = nav_logic.PathFollower((3.0, 0.0, 0.0), nav_logic.FollowParams(blocked_timeout_sec=1.0))   # 코스트맵 없음
+    r = f.step((0.0, 0.0, 0.0), 0.0, front_min=0.1)
+    assert r.kind == 'drive' and r.v == 0.0
+    r = f.step((0.0, 0.0, 0.0), 1.5, front_min=0.1)
+    assert r.kind == 'fail' and r.msg == 'blocked'
+
+
+# ---------------- queue ----------------
+def test_queue_book_merge_select_update_cancel():
+    b, w = queue_book.QueueBook(), ql.Weights()
+    assert b.enqueue('1', ql.OUT_OF_ZONE, 1.0, 0.0, 0, 0, 0.0) is False
+    assert b.enqueue('2', ql.LOW_BATTERY, 5.0, 0.0, 0, 0, 0.0) is False
+    assert b.enqueue('1', ql.FALLEN, 1.5, 0.0, 0, 0, 3.0) is True          # 병합: 사유·위치 갱신, 시각 유지
+    assert b.items['1'].reason == ql.FALLEN and b.items['1'].x == 1.5 and b.items['1'].t_enqueued == 0.0
+    it, s, n = b.select(10.0, (0.0, 0.0), w)
+    assert it.id == '1' and it.status == ql.IN_PROGRESS and n == 2
+    assert b.cancel('1') == (False, '처리 중인 항목은 취소할 수 없음(비선점)', it)
+    ok, it = b.update('1', 'REQUEUE', 'nav_failed: blocked', (1.2, 0.1))
+    assert ok and it.status == ql.WAITING and it.nav_failures == 1 and (it.x, it.y) == (1.2, 0.1)
+    ok, _ = b.update('1', 'BOGUS')
+    assert not ok
+    assert b.auto_cancel('2', 0.0, True, 80.0, 45.0, 15.0) is b.items['2'] and b.items['2'].status == ql.CANCELLED
+    assert b.auto_cancel('1', 90.0, True, 80.0, 45.0, 15.0) is None
+    rows = b.rows(20.0, (0.0, 0.0), w)
+    assert rows[0][0].id == '1' and rows[-1][0].status == ql.CANCELLED
+
+
+# ---------------- mission ----------------
+P = ml.MissionParams(capacity=4, return_battery_pct=20.0, charge_target_pct=80.0)
+
+
+def test_mission_tick_transitions():
+    assert ml.decide_tick(ml.SELECTING, 90, P, 0, 0, False, False).action == 'SELECT'
+    d = ml.decide_tick(ml.IDLE, 15, P, 3, 0, False, False)
+    assert (d.action, d.state) == ('SET', ml.CHARGING)
+    d = ml.decide_tick(ml.IDLE, 90, P, 1, 0, False, False)
+    assert (d.action, d.state) == ('SET', ml.SELECTING)
+    assert ml.decide_tick(ml.IDLE, 90, P, 0, 0, False, False).action == 'NONE'
+    assert ml.decide_tick(ml.NAVIGATING, 19, P, 0, 0, True, False).action == 'ABORT_COLLECT'
+    assert ml.decide_tick(ml.NAVIGATING, 19, P, 0, 0, True, True).action == 'NONE'     # 이미 취소 요청함
+    assert ml.decide_tick(ml.LOADING, 19, P, 0, 0, True, False).action == 'NONE'       # 적재 중엔 안 끊음
+    assert ml.decide_tick(ml.FAILED, 90, P, 0, 0.5, False, False).action == 'NONE'
+    assert ml.decide_tick(ml.FAILED, 90, P, 0, 1.5, False, False).state == ml.SELECTING
+    assert ml.decide_tick(ml.CHARGING, 80, P, 0, 0, False, False).state == ml.SELECTING
+
+
+def test_mission_select_and_queue_empty():
+    c = ml.Cargo()
+    assert ml.decide_select(True, c, 90, P).action == 'QUERY'
+    for k in range(4):
+        c.add(str(k), ml.PARKING if k < 3 else ml.CHARGER)
+    d = ml.decide_select(True, c, 90, P)
+    assert d.action == 'UNLOAD_AT_DOCK'                         # 도크에 있고 충전소행이 있음
+    d = ml.decide_select(False, c, 90, P)
+    assert (d.action, d.try_drop, d.fallback, d.why) == ('RETURN', True, 'DOCK', '(만재)')
+    d = ml.decide_select(False, c, 10, P)
+    assert d.try_drop is False and d.why == '(배터리 10%)'        # 배터리 부족: 충전부터
+    d = ml.decide_queue_empty(True, ml.Cargo())
+    assert (d.try_drop, d.fallback) == (False, ml.IDLE)
+    assert ml.classify_failure('nav_failed: blocked', True) == (ml.NEEDS_HUMAN, 'nav_failed')
+    assert ml.classify_failure('nav_failed: blocked', False) == (ml.FAILED, 'nav_failed')
+    assert ml.classify_failure('verify_failed: tag not found', True) == (ml.FAILED, 'verify_failed')
+    assert ml.drop_destination(10, 15) == ml.CHARGER and ml.drop_destination(None, 15) == ml.PARKING
+
+
+def test_cargo_and_charger_slots():
+    c = ml.Cargo()
+    c.add('a', ml.PARKING)
+    c.add('b', ml.CHARGER)
+    c.add('c', ml.PARKING)
+    assert ml.parking_jobs(c, [(0, 0, 0), (1, 1, 0)]) == [('c', (0, 0, 0), 'park'), ('a', (1, 1, 0), 'park')]
+    c.redirect_to_charger('a')
+    assert c.ids_for_dock(False) == ['a', 'b'] and c.ids_for_dock(True) == ['a', 'b', 'c']
+    s = ml.ChargerSlots([(0, 0, 0), (1, 0, 0)])
+    assert s.plan_unload(['x', 'y']) == [('y', (0, 0, 0), 'charger'), ('x', (1, 0, 0), 'charger')]
+    jobs = s.plan_unload(['z'])                                  # 꽉 참 -> 가장 오래된 y 를 치움
+    assert jobs == [('y', None, 'charged'), ('z', (0, 0, 0), 'charger')]
+    s.release('z')
+    assert s.occ == [None, 'x'] and s.fifo == [1]
+    assert ml.ChargerSlots([]).plan_unload(['q']) == [('q', None, 'remove')]

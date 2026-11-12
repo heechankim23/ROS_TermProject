@@ -39,7 +39,9 @@ from .occupancy import OccupancyMap
 IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING = 'IDLE', 'SELECTING', 'NAVIGATING', 'VERIFYING', 'LOADING'
 FAILED, RETURNING, DOCKING, CHARGING = 'FAILED', 'RETURNING', 'DOCKING', 'CHARGING'
 DROPPING = 'DROPPING'
-STATES = (IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING, FAILED, RETURNING, DOCKING, CHARGING, DROPPING)
+NEEDS_HUMAN = 'NEEDS_HUMAN'    # 도킹 반복 실패 등: 정지 후 관리자 처리 대기
+STATES = (IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING, FAILED, RETURNING, DOCKING, CHARGING, DROPPING,
+          NEEDS_HUMAN)
 PARKING, CHARGER = 'parking', 'charger'      # 킥보드별 하역 장소
 COLLECT_PHASE_TO_STATE = {'NAVIGATING': NAVIGATING, 'VERIFYING': VERIFYING,
                           'ALIGNING': LOADING, 'LOADING': LOADING}
@@ -329,10 +331,12 @@ class MissionManager(Node):
         else:
             self.dock_fail += 1
             if self.dock_fail >= self.p('max_dock_retries'):
-                self.alert('station', 'dock_failed', f'{self.dock_fail}회 도킹 실패')
+                # 충전·하역으로 넘어가지 않고 정지 (지표 왜곡 방지). 관리자가 처리할 때까지 대기
+                self.alert('station', 'dock_failed', f'{self.dock_fail}회 도킹 실패 -> 정지, 관리자 처리 필요')
+                self.ev.emit('dock_failed', attempts=self.dock_fail, position_error_m=res.position_error_m,
+                             yaw_error_deg=res.yaw_error_deg, cargo=len(self.cargo))
                 self.dock_fail = 0
-                self.at_dock = True                            # 사람이 옮겨준다고 가정
-                self.unload_at_dock(lambda n: self.set_state(CHARGING, '(도킹 실패 — 수동 처리 가정)'))
+                self.set_state(NEEDS_HUMAN, '(도킹 실패)')
             else:
                 self.start_dock(f'(도킹 재시도 {self.dock_fail})')
 

@@ -4,3 +4,6 @@ log/
 bags/
 __pycache__/
 *.pyc
+runs/
+.pytest_cache/
+*.egg-info/

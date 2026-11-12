@@ -128,3 +128,25 @@ def test_planner_same_cell_goal():
     cm = Costmap(0.0, 0.0, 4.0, 4.0, res=0.1)
     path = cm.plan((2.01, 2.01), (2.04, 2.03), t=0.0)
     assert path == [(2.04, 2.03)]
+
+
+def test_goto_hysteresis_no_translate_on_small_drift():
+    """도착 후 목표가 pos_tol 을 조금 넘게(<= pos_tol_exit) 흔들려도 이동 단계로 돌아가지 않고 방향만 맞춘다."""
+    c = GoToController(pos_tol=0.02, yaw_tol=math.radians(2.0), allow_reverse=True)
+    assert abs(c.pos_tol_exit - 0.05) < 1e-12
+    pose = (0.0, 0.0, 0.0)
+    v, w, done = c.step(pose, (0.01, 0.0, math.pi / 2))      # 1 cm: 도착, 방향 맞춤 중
+    assert c.arrived and v == 0.0 and w > 0.0 and not done
+    # 목표가 옆으로 3 cm 흔들림 (pos_tol 초과, pos_tol_exit 이하) -> 여전히 회전만, 목표 방향으로 회전
+    v, w, done = c.step(pose, (0.0, -0.03, math.pi / 2))
+    assert c.arrived and v == 0.0 and w > 0.0 and not done
+    v, w, done = c.step((0.0, 0.0, math.pi / 2), (0.0, -0.03, math.pi / 2))
+    assert done
+    # pos_tol_exit 를 넘으면 다시 이동 단계
+    v, w, done = c.step((0.0, 0.0, math.pi / 2), (0.10, 0.0, math.pi / 2))
+    assert not c.arrived and not done
+    # 이전 동작(히스테리시스 없음)이었다면 3 cm 목표를 향해 -90° 회전했을 것
+    c2 = GoToController(pos_tol=0.02, pos_tol_exit=0.02, allow_reverse=True)
+    c2.step(pose, (0.01, 0.0, math.pi / 2))
+    v, w, _ = c2.step(pose, (0.0, -0.03, math.pi / 2))
+    assert w < 0.0

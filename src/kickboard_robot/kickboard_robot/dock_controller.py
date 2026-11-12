@@ -123,6 +123,8 @@ class DockController(Node):
         dist = self.charger['dock_distance']
         goal = self.dock
         smooth = None              # 검출 노이즈(σ 2 cm) 저역 통과 -> 목표가 흔들리지 않게
+        lock_dist = 0.10           # 목표 10 cm 안이면 검출로 목표를 더 갱신하지 않음 (노이즈로 목표가 도는 것 방지)
+        locked = False
         t0 = now_sec(self)
         while True:
             if gh.is_cancel_requested:
@@ -141,7 +143,11 @@ class DockController(Node):
                 else:
                     self.get_logger().warn('도킹 정렬 타임아웃')
                 return self.done(gh, False)
-            d = self.fresh()
+            pose = self.pose.get()
+            if not locked and pose is not None and math.hypot(goal[0] - pose[0], goal[1] - pose[1]) < lock_dist:
+                locked = True
+                self.get_logger().info(f'도킹 목표 고정 ({goal[0]:.3f}, {goal[1]:.3f}, {math.degrees(goal[2]):.1f}°)')
+            d = None if locked else self.fresh()
             if d is not None:
                 ty = yaw_from_quat(d.pose.orientation)
                 raw = (d.pose.position.x + dist * math.cos(ty), d.pose.position.y + dist * math.sin(ty), ty)
@@ -152,7 +158,6 @@ class DockController(Node):
                     smooth = (smooth[0] + a * (raw[0] - smooth[0]), smooth[1] + a * (raw[1] - smooth[1]),
                               smooth[2] + a * wrap(raw[2] - smooth[2]))
                 goal = (smooth[0], smooth[1], smooth[2] + math.pi)
-            pose = self.pose.get()
             if pose is None:
                 sleep_sim(self, 0.05)
                 continue
