@@ -37,6 +37,9 @@ collector:
 
 nav_bridge:
   ros__parameters:
+    scan_timeout_sec: 1.0     # 센서 수신 중단 감지: 실제 시간 기준 (시뮬 정지 중에도 정지)
+    pose_timeout_sec: 1.0     # TF 타임스탬프 허용 나이: ROS 시간 기준
+    sensor_wait_timeout_sec: 5.0  # 센서 복구 대기 한도: 실제 시간 기준
     max_retries: 2
     goal_timeout_sec: 120.0
     goal_clearance: 1.1        # 목표 지점에서 장애물(벽 + 라이다)까지 최소 거리: 회전 반경 0.98 + 격자(0.1 m) 오차

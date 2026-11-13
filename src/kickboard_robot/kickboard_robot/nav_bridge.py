@@ -12,6 +12,7 @@ standoff > 0 이면 목표 주변 standoff 원 위에서 장애물과 goal_clear
 """
 import math
 import threading
+import time
 
 import numpy as np
 
@@ -22,11 +23,12 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
+from rclpy.time import Time
 
 from kickboard_interfaces.action import GoToPose
 
-from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single, wait_for
-from .motion import GoToController, quat_from_yaw, standoff_point, yaw_from_quat
+from .common import PoseTracker, future_wait, now_sec, run_blocking, spin_single
+from .motion import GoToController, quat_from_yaw, yaw_from_quat
 from .occupancy import OccupancyMap, free_standoff
 from .planner import Costmap, free_spot
 
@@ -53,6 +55,13 @@ class NavBridge(Node):
         self.declare_parameter('footprint', [-0.92, 0.89, 0.50])   # 차체 x 최소·최대, |y| (+여유): 여기 찍힌 점 무시
         self.declare_parameter('obstacle_memory_sec', 60.0)   # 라이다로 본 장애물을 다시 안 봐도 기억하는 시간
 
+        self.declare_parameter('scan_timeout_sec', 1.0)
+        self.declare_parameter('pose_timeout_sec', 1.0)
+        self.declare_parameter('sensor_wait_timeout_sec', 5.0)
+        self.goal_lock = threading.Lock()
+        self.last_scan_at = None
+        self.nav2_pending = None
+
         self.backend = self.get_parameter('backend').value
         self.omap = None
         self.cm = None
@@ -77,13 +86,50 @@ class NavBridge(Node):
             self.NavigateToPose = NavigateToPose
             self.nav2 = ActionClient(self, NavigateToPose, 'navigate_to_pose', callback_group=self.cb)
         self.server = ActionServer(self, GoToPose, '/nav_bridge/go_to_pose', self.execute,
-                                   goal_callback=lambda g: GoalResponse.ACCEPT,
+                                   goal_callback=self.accept_goal,
                                    cancel_callback=lambda g: CancelResponse.ACCEPT,
                                    callback_group=self.cb)
         self.get_logger().info(f'nav_bridge backend = {self.backend}')
 
+    def accept_goal(self, request):
+        # Reserve before execution so two accepted goals cannot drive together.
+        if self.nav2_pending is not None and not self.nav2_pending.done():
+            return GoalResponse.REJECT
+        p = request.target_pose.pose
+        values = (p.position.x, p.position.y, p.orientation.x, p.orientation.y,
+                  p.orientation.z, p.orientation.w, request.standoff)
+        if (request.target_pose.header.frame_id not in ('', 'map')
+                or not all(math.isfinite(v) for v in values) or request.standoff < 0):
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT if self.goal_lock.acquire(blocking=False) else GoalResponse.REJECT
+
+    def current_pose(self):
+        # Check TF age here without changing the shared PoseTracker.
+        try:
+            transform = self.pose.buf.lookup_transform('map', 'base_footprint', Time())
+            stamp = transform.header.stamp
+            age = now_sec(self) - (stamp.sec + stamp.nanosec * 1e-9)
+            if not 0.0 <= age <= self.get_parameter('pose_timeout_sec').value:
+                return None
+            tr = transform.transform
+            pose = (tr.translation.x, tr.translation.y, yaw_from_quat(tr.rotation))
+            return pose if all(math.isfinite(v) for v in pose) else None
+        except Exception:
+            return None
+
+    def scan_ready(self):
+        return (self.last_scan_at is not None
+                and time.monotonic() - self.last_scan_at <= self.get_parameter('scan_timeout_sec').value)
+
     def on_scan(self, msg):
         # 라이다는 앞 범퍼 위(x 0.80)에 있어서 뒤쪽 빔은 자기 차체에 맞는다 -> 차체 안에 찍힌 점은 버림
+        stamp = msg.header.stamp
+        age = now_sec(self) - (stamp.sec + stamp.nanosec * 1e-9)
+        if (not msg.ranges or not math.isfinite(msg.range_max) or msg.range_max <= msg.range_min
+                or not math.isfinite(msg.angle_min) or not math.isfinite(msg.angle_increment)
+                or not 0.0 <= age <= self.get_parameter('scan_timeout_sec').value):
+            self.last_scan_at = None
+            return
         off = self.get_parameter('scan_offset_x').value
         fx0, fx1, fy = self.get_parameter('footprint').value
         r = np.asarray(msg.ranges, dtype=float)
@@ -92,15 +138,26 @@ class NavBridge(Node):
             px, py = off + r * np.cos(a), r * np.sin(a)
             own = np.isfinite(r) & (px > fx0) & (px < fx1) & (np.abs(py) < fy)
             front = (np.abs(np.arctan2(np.sin(a), np.cos(a))) < math.radians(20)) & ~own \
-                & np.isfinite(r) & (r > msg.range_min)
+                & np.isfinite(r) & (r >= msg.range_min - 1e-6)
+        sector = (np.abs(np.arctan2(np.sin(a), np.cos(a))) < math.radians(20)) & ~own
+        usable = (np.isfinite(r) & (r >= msg.range_min - 1e-6) & (r <= msg.range_max + 1e-6)) | np.isposinf(r)
+        # Unknown/too-close forward beams must not be interpreted as clear space.
+        if not sector.any() or not np.all(usable[sector]):
+            self.last_scan_at = None
+            return
         self.front_min = float(r[front].min()) if front.any() else float('inf')
-        pose = self.pose.get()
-        if self.cm is None or pose is None:
+        pose = self.current_pose()
+        if pose is None:
+            self.last_scan_at = None
+            return
+        if self.cm is None:
+            self.last_scan_at = time.monotonic()
             return
         sx, sy = pose[0] + off * math.cos(pose[2]), pose[1] + off * math.sin(pose[2])
         with self.cm_lock:
             self.cm.update_scan(sx, sy, pose[2], r, msg.angle_min, msg.angle_increment,
                                 msg.range_min, msg.range_max, now_sec(self), ignore=own)
+        self.last_scan_at = time.monotonic()
 
     # ------------------------------------------------------------------
     async def execute(self, gh):
@@ -108,16 +165,47 @@ class NavBridge(Node):
         return await run_blocking(self._execute, gh)
 
     def _execute(self, gh):
-        g = gh.request
-        res = GoToPose.Result()
-        if not wait_for(self, lambda: self.pose.get() is not None, 5.0):
-            res.success, res.message = False, 'TF map->base_footprint 없음'
+        try:
+            return self._execute_goal(gh)
+        except Exception as exc:
+            self.stop()
+            self.get_logger().error(f'Navigation exception: {exc}')
+            res = GoToPose.Result()
+            res.success, res.message = False, str(exc)
             gh.abort()
             return res
+        finally:
+            self.goal_lock.release()
+
+    def _execute_goal(self, gh):
+        g = gh.request
+        res = GoToPose.Result()
+        deadline = time.monotonic() + self.get_parameter('sensor_wait_timeout_sec').value
+        while rclpy.ok() and (self.current_pose() is None or (not self.nav2 and not self.scan_ready())):
+            self.stop()
+            if gh.is_cancel_requested:
+                res.success, res.message = False, 'canceled'
+                gh.canceled()
+                return res
+            if time.monotonic() >= deadline:
+                res.success, res.message = False, 'pose/scan unavailable'
+                gh.abort()
+                return res
+            time.sleep(0.05)
         tries = 1 + self.get_parameter('max_retries').value
         for attempt in range(1, tries + 1):
             res.attempts = attempt
+            if gh.is_cancel_requested:
+                self.stop()
+                res.success, res.message = False, 'canceled'
+                gh.canceled()
+                return res
             goal = self.make_goal(g)
+            if goal is None:
+                self.stop()
+                res.success, res.message = False, 'no safe approach point or pose unavailable'
+                gh.abort()
+                return res
             self.get_logger().info(f'이동 시도 {attempt}/{tries} -> ({goal[0]:.2f}, {goal[1]:.2f}, '
                                    f'{math.degrees(goal[2]):.0f}°)')
             ok, msg = (self.run_nav2 if self.nav2 else self.run_simple)(gh, goal, attempt)
@@ -127,12 +215,20 @@ class NavBridge(Node):
                 gh.canceled()
                 return res
             if ok:
+                self.stop()
                 res.success, res.message = True, 'arrived'
                 gh.succeed()
                 return res
             self.get_logger().warn(f'이동 실패({msg}), 재시도')
-            sleep_sim(self, 1.0)
-        res.success, res.message = False, f'nav failed after {tries} attempts'
+            self.stop()
+            if not self.nav2 and msg in ('sensor timeout', 'shutdown'):
+                break
+            if msg == 'cancel pending':
+                break
+            if attempt < tries:
+                time.sleep(0.1)
+        self.stop()
+        res.success, res.message = False, f'nav failed after {attempt} attempts: {msg}'
         gh.abort()
         return res
 
@@ -140,7 +236,10 @@ class NavBridge(Node):
         p = g.target_pose.pose
         tx, ty = p.position.x, p.position.y
         if g.standoff > 0.0:
-            rx, ry, _ = self.pose.get()
+            pose = self.current_pose()
+            if pose is None:
+                return None
+            rx, ry, _ = pose
             # PRD: 킥보드에서 standoff 만큼 떨어진 '빈 공간'. 로봇 쪽 방향이 막혀 있으면 각도를 돌려 재탐색.
             # 코스트맵(정적 지도 + 라이다로 본 킥보드)으로 판정 -> 다른 킥보드·벽 옆 자리는 고르지 않음
             clearance = self.get_parameter('goal_clearance').value
@@ -150,8 +249,7 @@ class NavBridge(Node):
             else:
                 goal = free_standoff(self.omap, (tx, ty), (rx, ry), g.standoff, clearance)
             if goal is None:
-                self.get_logger().warn('주변에 빈 접근 지점이 없음 -> 직선 offset 사용')
-                goal = standoff_point((tx, ty), (rx, ry), g.standoff)
+                self.get_logger().warn('No safe approach point; stopping')
             return goal
         return tx, ty, yaw_from_quat(p.orientation)
 
@@ -165,20 +263,29 @@ class NavBridge(Node):
                               yaw_tol=math.radians(gp('yaw_tol_deg').value))
         t0 = now_sec(self)
         blocked_since = None
+        sensor_missing_since = None
         fb = GoToPose.Feedback(attempt=attempt)
         stop_d = gp('obstacle_stop_dist').value
         path, planned_at = None, -1e9
         while rclpy.ok():
             if gh.is_cancel_requested:
+                self.stop()
                 return False, 'canceled'
             now = now_sec(self)
             if now - t0 > gp('goal_timeout_sec').value:
                 self.stop()
                 return False, 'timeout'
-            pose = self.pose.get()
-            if pose is None:
-                sleep_sim(self, 0.05)
+            pose = self.current_pose()
+            if pose is None or not self.scan_ready():
+                self.stop()
+                path = None
+                if sensor_missing_since is None:
+                    sensor_missing_since = time.monotonic()
+                if time.monotonic() - sensor_missing_since > gp('sensor_wait_timeout_sec').value:
+                    return False, 'sensor timeout'
+                time.sleep(0.05)
                 continue
+            sensor_missing_since = None
             dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
 
             # ---- 경로 계획 (코스트맵이 있을 때) ----
@@ -189,6 +296,9 @@ class NavBridge(Node):
                         tight = self.cm.dist_at(goal[0], goal[1], now) < gp('goal_clearance').value - 0.05
                     if tight:
                         new = self.make_goal(gh.request)
+                        if new is None:
+                            self.stop()
+                            return False, 'no safe approach point'
                         self.get_logger().info(f'목표 주변에 새 장애물 -> 목표 변경 ({goal[0]:.2f}, {goal[1]:.2f}) -> '
                                                f'({new[0]:.2f}, {new[1]:.2f})')
                         goal, path = new, None
@@ -201,15 +311,18 @@ class NavBridge(Node):
                         planned_at = now
                 if path is None:
                     self.stop()
-                    blocked_since = blocked_since or now
+                    blocked_since = now if blocked_since is None else blocked_since
                     if now - blocked_since > gp('blocked_timeout_sec').value:
                         return False, 'no path'
-                    sleep_sim(self, 0.2)
+                    time.sleep(0.05)
                     continue
                 look = gp('lookahead').value
                 if not path:
                     path = [goal[:2]]
                 while len(path) > 1 and math.hypot(path[0][0] - pose[0], path[0][1] - pose[1]) < look:
+                    with self.cm_lock:
+                        if not self.cm.segment_ok(pose[:2], path[1], self.cm.cost_grid(now), 1e18):
+                            break
                     path.pop(0)
                 wp = path[0]
             else:
@@ -223,8 +336,8 @@ class NavBridge(Node):
                 path.pop(0)
                 continue
             if v > 0 and self.front_min < stop_d:          # 안전장치: 계획에 없던 가까운 장애물
-                v = 0.0
-                blocked_since = blocked_since or now
+                v, w = 0.0, 0.0
+                blocked_since = now if blocked_since is None else blocked_since
                 if now - blocked_since > gp('blocked_timeout_sec').value:
                     self.stop()
                     return False, 'blocked'
@@ -235,7 +348,8 @@ class NavBridge(Node):
             self.cmd_pub.publish(tw)
             fb.distance_remaining = dist
             gh.publish_feedback(fb)
-            sleep_sim(self, 0.05)
+            time.sleep(0.05)
+        self.stop()
         return False, 'shutdown'
 
     # ---------------- nav2 backend ----------------
@@ -260,12 +374,17 @@ class NavBridge(Node):
         if handle is None or not handle.accepted:
             return False, 'goal rejected'
         rf = handle.get_result_async()
+        self.nav2_pending = rf
         t0 = now_sec(self)
         while rclpy.ok() and not rf.done():
             if gh.is_cancel_requested or now_sec(self) - t0 > self.get_parameter('goal_timeout_sec').value:
                 handle.cancel_goal_async()
-                return False, 'canceled/timeout'
-            sleep_sim(self, 0.1)
+                self.stop()
+                deadline = time.monotonic() + 2.0
+                while rclpy.ok() and not rf.done() and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                return False, 'canceled/timeout' if rf.done() else 'cancel pending'
+            time.sleep(0.05)
         from action_msgs.msg import GoalStatus
         r = rf.result()
         return (r is not None and r.status == GoalStatus.STATUS_SUCCEEDED), f'status={getattr(r, "status", "?")}'
