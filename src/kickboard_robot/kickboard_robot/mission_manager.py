@@ -16,12 +16,18 @@
 주차구역에 빈 자리가 없으면 충전소에서 전부 하역한다.
 
 판단은 SELECTING 한 곳에서만 한다 -> 이동 중 새 요청이 와도 현재 경로를 끊지 않음(비선점).
+
+이 파일은 통신부다: 메시지 변환, 서비스·액션 호출 순서, 로그만 맡는다.
+판단 규칙(decide_*), 적재함(Cargo), 충전 자리 배정(ChargerSlots)은 mission_logic.py (가공부, ROS 없음) 에 있다.
+KICKBOARD_PROFILE=1 이면 판단 1회 시간을 로그에 남긴다 ('tick', 'select').
 """
+import dataclasses
 import math
 
 import rclpy
 import yaml
 from geometry_msgs.msg import Pose, PoseStamped
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.action import ActionClient
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
@@ -33,58 +39,49 @@ from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
 from .drop_zones import charger_spots, choose_plan, edge_plans
+from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
+                            NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
+                            MissionParams, classify_failure, decide_queue_empty, decide_select, decide_tick,
+                            dock_should_stop, drop_destination, parking_jobs)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
+from .profiling import Profiler
 
-IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING = 'IDLE', 'SELECTING', 'NAVIGATING', 'VERIFYING', 'LOADING'
-FAILED, RETURNING, DOCKING, CHARGING = 'FAILED', 'RETURNING', 'DOCKING', 'CHARGING'
-DROPPING = 'DROPPING'
-NEEDS_HUMAN = 'NEEDS_HUMAN'    # 도킹 반복 실패 등: 정지 후 관리자 처리 대기
-STATES = (IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING, FAILED, RETURNING, DOCKING, CHARGING, DROPPING,
-          NEEDS_HUMAN)
-PARKING, CHARGER = 'parking', 'charger'      # 킥보드별 하역 장소
-COLLECT_PHASE_TO_STATE = {'NAVIGATING': NAVIGATING, 'VERIFYING': VERIFYING,
-                          'ALIGNING': LOADING, 'LOADING': LOADING}
-
-
-def should_go_charge(load, capacity, battery, return_pct):
-    return load >= capacity or battery <= return_pct
-
-
-def drop_destination(battery_pct, threshold_pct):
-    """실은 킥보드의 하역 장소. 배터리를 모르면(보고 없음) 주차구역."""
-    return CHARGER if battery_pct is not None and battery_pct < threshold_pct else PARKING
+MISSION_PARAM_NAMES = tuple(f.name for f in dataclasses.fields(MissionParams))
 
 
 class MissionManager(Node):
     def __init__(self):
         super().__init__('mission_manager')
+        # 판단에 쓰는 값 (MissionParams 와 이름이 같아야 한다. /set_config 가 capacity·return_battery_pct 를 바꾼다)
         self.declare_parameter('capacity', 3)
         self.declare_parameter('return_battery_pct', 20.0)
         self.declare_parameter('charge_target_pct', 80.0)
-        self.declare_parameter('start_docked', True)
-        self.declare_parameter('station_id', 'station_1')
         self.declare_parameter('admin_alerts', True)        # F14 (P1)
         self.declare_parameter('max_dock_retries', 3)
         self.declare_parameter('scooter_battery_threshold_pct', 15.0)   # 이보다 낮으면 충전소에 하역
+        # 통신부 설정
+        self.declare_parameter('start_docked', True)
+        self.declare_parameter('station_id', 'station_1')
         self.declare_parameter('map_config_file', '')      # 주차구역 (없으면 주차구역 하역 안 함)
         self.declare_parameter('map_yaml', '')             # 로봇이 설 자리 빈 공간 판정
         self.declare_parameter('drop_clearance', 1.05)
         self.declare_parameter('unload_sim_sec', 1.5)      # 로봇팔이 없을 때(kinematic) 1대 하역 시간
+        self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
+        self.add_on_set_parameters_callback(self.on_set_params)
 
         self.cb = MutuallyExclusiveCallbackGroup()   # 모든 콜백 직렬화 -> 상태 경합 없음
         self.pose = PoseTracker(self)
         self.ev = EventLog(self)
+        self.prof = Profiler(self.get_name(), self.get_logger().info)
         self.state = SELECTING
         self.at_dock = self.get_parameter('start_docked').value
-        self.cargo = []                # [(킥보드 id, PARKING|CHARGER)] 실은 순서
+        self.cargo = Cargo()           # 실은 순서대로 (킥보드 id, PARKING | CHARGER)
         self.scooter_batt = {}         # id -> 최근 보고 배터리
         self.used_spots = []           # 주차구역에 이미 세운 자리 (x, y)
         self.dock_unload_all = False   # 주차구역 자리가 없을 때 충전소에서 전부 하역
         self.drop_plan = None
-        self.charger_spots = []        # 충전소 충전 자리 [(x, y, yaw)]
-        self.charger_occ = []          # 자리별로 맡긴 킥보드 id (None = 빈 자리)
-        self.charger_fifo = []         # 맡긴 순서 (가득 차면 가장 오래된 것을 '충전 끝'으로 치움)
+        self.charger = ChargerSlots([])   # 충전소 충전 자리 배정 (map_config 를 읽으면 채움)
         self.battery = 100.0
         self.target = None             # scooter id
         self.waiting_items = 0
@@ -119,11 +116,17 @@ class MissionManager(Node):
         return self.get_parameter(n).value
 
     @property
-    def load(self):
-        return len(self.cargo)
+    def mp(self):
+        """판단에 쓰는 파라미터. 바뀐 뒤 처음 읽을 때만 다시 만든다."""
+        if self._mp is None:
+            self._mp = MissionParams(**{n: self.p(n) for n in MISSION_PARAM_NAMES})
+        return self._mp
 
-    def cargo_for(self, dest):
-        return [sid for sid, d in self.cargo if d == dest]
+    def on_set_params(self, params):
+        # 값이 실제로 적용되기 전에 불린다 -> 여기서는 캐시만 비우고, 다음에 읽을 때 적용된 값을 가져온다
+        if any(p.name in MISSION_PARAM_NAMES for p in params):
+            self._mp = None
+        return SetParametersResult(successful=True)
 
     def load_drop_plans(self):
         if not self.p('map_config_file'):
@@ -133,8 +136,7 @@ class MissionManager(Node):
             mc = yaml.safe_load(f)
         zones = mc.get('parking_zones', [])
         tag = mc['charger']['tag_pose']
-        self.charger_spots = charger_spots(tag['x'], tag['y'], math.radians(tag['yaw_deg']))
-        self.charger_occ = [None] * len(self.charger_spots)
+        self.charger = ChargerSlots(charger_spots(tag['x'], tag['y'], math.radians(tag['yaw_deg'])))
         omap = OccupancyMap(self.p('map_yaml')) if self.p('map_yaml') else None
         plans = []
         for z in zones:
@@ -146,14 +148,15 @@ class MissionManager(Node):
     def set_state(self, s, why=''):
         if s != self.state:
             self.get_logger().info(f'[상태] {self.state} -> {s} {why}')
-            self.ev.emit('state', frm=self.state, to=s, why=why, load=self.load, battery=round(self.battery, 1))
+            self.ev.emit('state', frm=self.state, to=s, why=why, load=self.cargo.load,
+                         battery=round(self.battery, 1))
             self.state = s
             self.state_since = now_sec(self)
             self.publish_status()
 
     def publish_status(self):
         self.status_pub.publish(RobotStatus(
-            battery_pct=float(self.battery), load_count=int(self.load), capacity=int(self.p('capacity')),
+            battery_pct=float(self.battery), load_count=int(self.cargo.load), capacity=int(self.mp.capacity),
             state=self.state, current_target_id=self.target or ''))
 
     def on_queue(self, m):
@@ -166,7 +169,7 @@ class MissionManager(Node):
         self.update_cli.call_async(req)
 
     def alert(self, sid, reason, message):
-        if not self.p('admin_alerts'):
+        if not self.mp.admin_alerts:
             return
         a = AdminAlert(id=sid, reason=reason, message=message)
         a.stamp = self.get_clock().now().to_msg()
@@ -185,48 +188,41 @@ class MissionManager(Node):
             self.state_since = now_sec(self)
         if self.pending:
             return
-
-        s = self.state
-        if s == SELECTING:
+        with self.prof.section('tick'):
+            d = decide_tick(self.state, self.battery, self.mp, self.waiting_items, now_sec(self) - self.state_since,
+                            self.collect_handle is not None, self.abort_for_battery)
+        if d.action == 'SELECT':
             self.do_select()
-        elif s == IDLE:
-            if self.battery <= self.p('return_battery_pct'):
-                self.set_state(CHARGING, f'(대기 중 배터리 {self.battery:.0f}%)')
-            elif self.waiting_items > 0:
-                self.set_state(SELECTING, '(새 요청)')
-        elif s in (NAVIGATING, VERIFYING, LOADING):
-            if (self.battery <= self.p('return_battery_pct') and self.collect_handle is not None
-                    and not self.abort_for_battery and s != LOADING):
-                self.abort_for_battery = True
-                self.get_logger().warn('주행 중 배터리 부족 -> 현재 대상 반납 후 복귀')
-                self.collect_handle.cancel_goal_async()
-        elif s == FAILED:
-            if now_sec(self) - self.state_since > 1.0:
-                self.set_state(SELECTING)
-        elif s == CHARGING:
-            if self.battery >= self.p('charge_target_pct'):
-                self.set_state(SELECTING, f'(충전 {self.battery:.0f}%)')
+        elif d.action == 'SET':
+            self.set_state(d.state, d.why)
+        elif d.action == 'ABORT_COLLECT':
+            self.abort_for_battery = True
+            self.get_logger().warn('주행 중 배터리 부족 -> 현재 대상 반납 후 복귀')
+            self.collect_handle.cancel_goal_async()
 
     def do_select(self):
-        if self.at_dock and (self.cargo_for(CHARGER) or (self.dock_unload_all and self.cargo)):
+        with self.prof.section('select'):
+            d = decide_select(self.at_dock, self.cargo, self.battery, self.mp, self.dock_unload_all)
+        if d.action == 'UNLOAD_AT_DOCK':
             self.unload_at_dock(lambda n: self.set_state(SELECTING, f'(충전소 하역 {n}대)'))
-            return
-        low = self.battery <= self.p('return_battery_pct')
-        if low or self.load >= self.p('capacity'):
-            why = f'(배터리 {self.battery:.0f}%)' if low else '(만재)'
-            if not low and self.cargo_for(PARKING) and self.start_drop(why):
+        elif d.action == 'RETURN':
+            self.go_return(d)
+        elif d.action == 'QUERY':
+            pose = self.pose.get()
+            if pose is None:
                 return
-            if self.at_dock:
-                self.set_state(CHARGING, why)
-            else:
-                self.start_dock(why)
+            self.pending = True
+            fut = self.select_cli.call_async(SelectNextTarget.Request(robot_x=pose[0], robot_y=pose[1]))
+            fut.add_done_callback(self.on_selected)
+
+    def go_return(self, d):
+        """RETURN 판단 실행: try_drop 이면 주차구역 하역부터 시도, 안 되면 fallback (CHARGING | IDLE | 'DOCK')."""
+        if d.try_drop and self.start_drop(d.why):
             return
-        pose = self.pose.get()
-        if pose is None:
-            return
-        self.pending = True
-        fut = self.select_cli.call_async(SelectNextTarget.Request(robot_x=pose[0], robot_y=pose[1]))
-        fut.add_done_callback(self.on_selected)
+        if d.fallback == 'DOCK':
+            self.start_dock(d.why)
+        else:
+            self.set_state(d.fallback, d.why)
 
     def on_selected(self, fut):
         self.pending = False
@@ -234,12 +230,7 @@ class MissionManager(Node):
         if r is None:
             return
         if not r.found:
-            if self.cargo_for(PARKING) and self.start_drop('(대기열 빈)'):
-                return
-            if self.at_dock:
-                self.set_state(IDLE, '(대기열 빈)')
-            else:
-                self.start_dock('(대기열 빈)')
+            self.go_return(decide_queue_empty(self.at_dock, self.cargo))
             return
         self.start_collect(r.scooter_id, r.target_pose)
 
@@ -275,15 +266,15 @@ class MissionManager(Node):
         sid, self.collect_handle = self.target, None
         if res.success:
             batt = self.scooter_batt.get(sid)
-            dest = drop_destination(batt, self.p('scooter_battery_threshold_pct'))
-            self.cargo.append((sid, dest))
+            dest = drop_destination(batt, self.mp.scooter_battery_threshold_pct)
+            self.cargo.add(sid, dest)
             self.report(sid, 'DONE', 'loaded', res.corrected_pose.pose)
             self.ev.emit('collected', id=sid, corrected_x=res.corrected_pose.pose.position.x,
-                         corrected_y=res.corrected_pose.pose.position.y, load=self.load, dest=dest)
+                         corrected_y=res.corrected_pose.pose.position.y, load=self.cargo.load, dest=dest)
             self.target = None
             where = '충전소' if dest == CHARGER else '주차구역'
             batt_s = '?' if batt is None else f'{batt:.0f}%'
-            self.set_state(SELECTING, f'(적재 {self.load}/{self.p("capacity")}, 킥보드 {sid} 배터리 {batt_s} '
+            self.set_state(SELECTING, f'(적재 {self.cargo.load}/{self.mp.capacity}, 킥보드 {sid} 배터리 {batt_s} '
                                       f'-> {where} 하역 예정)')
         elif self.abort_for_battery:
             self.report(sid, 'REQUEUE', 'battery low')
@@ -291,10 +282,9 @@ class MissionManager(Node):
             self.start_dock('(배터리 부족)')
         else:
             reason = res.failure_reason
-            is_nav = reason.startswith('nav')
-            status = 'NEEDS_HUMAN' if (is_nav and self.p('admin_alerts')) else 'FAILED'
+            status, kind = classify_failure(reason, self.mp.admin_alerts)
             self.report(sid, status, reason)
-            self.alert(sid, 'nav_failed' if is_nav else 'verify_failed', reason)
+            self.alert(sid, kind, reason)
             self.ev.emit('collect_failed', id=sid, reason=reason)
             self.target = None
             self.set_state(FAILED, f'({reason})')
@@ -326,15 +316,15 @@ class MissionManager(Node):
             self.dock_fail = 0
             self.at_dock = True
             self.ev.emit('docked', position_error_m=res.position_error_m, yaw_error_deg=res.yaw_error_deg,
-                         unloaded=len(self.cargo_for(CHARGER)))
+                         unloaded=len(self.cargo.for_dest(CHARGER)))
             self.unload_at_dock(lambda n: self.set_state(CHARGING, f'(충전소 하역 {n}대)'))
         else:
             self.dock_fail += 1
-            if self.dock_fail >= self.p('max_dock_retries'):
+            if dock_should_stop(self.dock_fail, self.mp.max_dock_retries):
                 # 충전·하역으로 넘어가지 않고 정지 (지표 왜곡 방지). 관리자가 처리할 때까지 대기
                 self.alert('station', 'dock_failed', f'{self.dock_fail}회 도킹 실패 -> 정지, 관리자 처리 필요')
                 self.ev.emit('dock_failed', attempts=self.dock_fail, position_error_m=res.position_error_m,
-                             yaw_error_deg=res.yaw_error_deg, cargo=len(self.cargo))
+                             yaw_error_deg=res.yaw_error_deg, cargo=self.cargo.load)
                 self.dock_fail = 0
                 self.set_state(NEEDS_HUMAN, '(도킹 실패)')
             else:
@@ -343,30 +333,17 @@ class MissionManager(Node):
     # ---------------- 하역 ----------------
     def unload_at_dock(self, then):
         """충전소: 충전소행(또는 dock_unload_all 이면 전부) 킥보드를 로봇팔로 충전 자리에 세움.
-        자리가 다 차 있으면 가장 오래 맡긴 킥보드를 '충전 끝 -> 치움' 처리하고 그 자리를 쓴다."""
-        ids = [sid for sid, d in self.cargo if d == CHARGER or self.dock_unload_all]
+        자리 배정(다 차 있으면 가장 오래 맡긴 킥보드를 '충전 끝 -> 치움')은 ChargerSlots 가 한다."""
+        ids = self.cargo.ids_for_dock(self.dock_unload_all)
         self.dock_unload_all = False
-        jobs = []
-        for sid in reversed(ids):                      # 나중에 실은 것(앞 칸)부터
-            if not self.charger_spots:
-                jobs.append((sid, None, 'remove'))
-                continue
-            if None in self.charger_occ:
-                idx = self.charger_occ.index(None)
-            else:
-                idx = self.charger_fifo.pop(0)
-                jobs.append((self.charger_occ[idx], None, 'charged'))
-            self.charger_occ[idx] = sid
-            self.charger_fifo.append(idx)
-            jobs.append((sid, self.charger_spots[idx], 'charger'))
-        self.run_unloads(jobs, lambda n: then(n))
+        self.run_unloads(self.charger.plan_unload(ids), then)
 
     def start_drop(self, why):
         """가장 가까운 주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)"""
         pose = self.pose.get()
         if pose is None:
             return False
-        parking = self.cargo_for(PARKING)
+        parking = self.cargo.for_dest(PARKING)
         ch = choose_plan(self.drop_plans, self.used_spots, pose[:2], need=len(parking))
         if ch is None:
             self.get_logger().warn('주차구역에 빈 자리 없음 -> 충전소에서 전부 하역')
@@ -401,8 +378,7 @@ class MissionManager(Node):
             return
         plan, spots = self.drop_plan
         # 나중에 실은 것(앞 칸)부터 꺼낸다 -> 팔이 다른 킥보드 위로 지나가지 않음
-        parking = list(reversed(self.cargo_for(PARKING)))
-        jobs = [(sid, spot, 'park') for sid, spot in zip(parking, spots)]
+        jobs = parking_jobs(self.cargo, spots)
         self.run_unloads(jobs, lambda n: self.set_state(SELECTING, f'(주차구역 {plan["zone"]} 하역 {n}대)'))
 
     def on_drop_nav_failed(self, why):
@@ -469,7 +445,7 @@ class MissionManager(Node):
                 self.get_logger().info(f'킥보드 {sid} 충전 끝 -> 충전 자리에서 치움')
                 next_job()
                 return
-            self.cargo = [c for c in self.cargo if c[0] != sid]
+            self.cargo.remove(sid)
             done[0] += 1
             if kind == 'park':
                 self.used_spots.append((spot[0], spot[1]))
@@ -495,16 +471,13 @@ class MissionManager(Node):
         def job_failed(sid, spot, kind, why):
             self.get_logger().warn(f'킥보드 {sid} 하역 실패 ({kind}): {why}')
             if kind == 'park':                   # 주차구역에 못 내리면 충전소에서 내림
-                self.cargo = [(s, CHARGER if s == sid else d) for s, d in self.cargo]
+                self.cargo.redirect_to_charger(sid)
                 self.used_spots.append((spot[0], spot[1]))     # 그 자리는 다시 쓰지 않음
             elif kind == 'charger':              # 충전 자리에 못 세우면 적재함에서 바로 지움
                 jobs.insert(0, (sid, None, 'remove'))
-                if sid in self.charger_occ:
-                    idx = self.charger_occ.index(sid)
-                    self.charger_occ[idx] = None
-                    self.charger_fifo.remove(idx)
+                self.charger.release(sid)
             elif kind == 'remove':
-                self.cargo = [c for c in self.cargo if c[0] != sid]
+                self.cargo.remove(sid)
                 self.ev.emit('unloaded_at_charger', id=sid)
             next_job()
 
