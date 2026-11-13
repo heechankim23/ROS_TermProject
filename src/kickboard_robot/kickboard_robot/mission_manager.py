@@ -28,6 +28,7 @@ import rclpy
 import yaml
 from geometry_msgs.msg import Pose, PoseStamped
 from rcl_interfaces.msg import SetParametersResult
+from rcl_interfaces.srv import GetParameters
 from rclpy.action import ActionClient
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
@@ -42,8 +43,9 @@ from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
                             LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
-                            MissionParams, WaitGuard, classify_failure, decide_queue_empty, decide_select, decide_tick,
-                            dock_should_stop, drop_destination, drop_next_points, parking_jobs)
+                            EnergyModel, MissionParams, WaitGuard, affordable, charge_needed, classify_failure,
+                            collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
+                            drop_cost, drop_destination, drop_next_points, must_head_home, parking_jobs)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 from .profiling import Profiler
@@ -79,6 +81,14 @@ class MissionManager(Node):
         self.declare_parameter('dock_timeout_sec', 600.0)       # dock_controller: 이동 3회 x 120 s + 정렬 40 s
         self.declare_parameter('drop_nav_timeout_sec', 480.0)   # nav_bridge: 3회 x 120 s
         self.declare_parameter('unload_timeout_sec', 120.0)     # 로봇팔 1대 하역 (Gazebo 약 21 s)
+        # 배터리 판단: '갔다가 가장 가까운 충전소까지 돌아올 수 있나'. false 면 예전처럼 20% 기준만 쓴다
+        # 소모 계수 k1·k2 는 battery_manager 파라미터를 읽어 온다 (못 읽으면 EnergyModel 기본값 = battery_manager 기본값)
+        self.declare_parameter('energy_check', True)
+        self.declare_parameter('energy_reserve_pct', 5.0)       # 충전소 도착 때 남길 배터리
+        self.declare_parameter('energy_detour', 1.2)            # 직선거리 -> 경로 길이 배율
+        self.declare_parameter('energy_speed_mps', 0.2)
+        self.declare_parameter('energy_collect_sec', 40.0)
+        self.declare_parameter('energy_unload_sec', 25.0)
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
 
@@ -112,6 +122,9 @@ class MissionManager(Node):
         self.unload_handle = None
         self.unload_on_timeout = None  # 하역 1대가 시간 초과됐을 때 부를 실패 처리
         self.missing_servers = set()   # 사라진 서버 (알림을 한 번만 보내려고)
+        self.battery_k = None          # battery_manager 의 (k1, k2)
+        self.battery_k_asked = False
+        self.charge_goal = None        # 다음 일에 80% 보다 더 필요하면 그만큼 충전 (CHARGING 을 나가면 지움)
         self.abort_for_battery = False
         self.dock_fail = 0
         self.ready = False
@@ -132,6 +145,8 @@ class MissionManager(Node):
         self.dock_ac = ActionClient(self, DockToCharger, '/dock_to_charger', callback_group=self.cb)
         self.nav_ac = ActionClient(self, GoToPose, '/nav_bridge/go_to_pose', callback_group=self.cb)
         self.unload_ac = ActionClient(self, UnloadScooter, '/arm_loader/unload', callback_group=self.cb)
+        self.batt_param_cli = self.create_client(GetParameters, '/battery_manager/get_parameters',
+                                                 callback_group=self.cb)
         self.drop_plans = self.load_drop_plans()
         self.create_timer(0.2, self.tick, callback_group=self.cb)
         self.create_timer(0.5, self.publish_status, callback_group=self.cb)
@@ -177,6 +192,8 @@ class MissionManager(Node):
             self.get_logger().info(f'[상태] {self.state} -> {s} {why}')
             self.ev.emit('state', frm=self.state, to=s, why=why, load=self.cargo.load,
                          battery=round(self.battery, 1))
+            if self.state == CHARGING:
+                self.charge_goal = None
             self.state = s
             self.state_since = now_sec(self)
             self.publish_status()
@@ -204,6 +221,61 @@ class MissionManager(Node):
         a.stamp = self.get_clock().now().to_msg()
         self.alert_pub.publish(a)
         self.get_logger().warn(f'[관리자 알림] {sid}: {reason} {message}')
+
+    # ---------------- 배터리 판단 ----------------
+    @property
+    def energy(self):
+        k1, k2 = self.battery_k or (EnergyModel.k1_pct_per_m, EnergyModel.k2_pct_per_s)
+        return EnergyModel(k1_pct_per_m=k1, k2_pct_per_s=k2, detour=self.p('energy_detour'),
+                           speed_mps=self.p('energy_speed_mps'), collect_sec=self.p('energy_collect_sec'),
+                           unload_sec=self.p('energy_unload_sec'), reserve_pct=self.p('energy_reserve_pct'))
+
+    def chargers(self):
+        """충전할 수 있는 곳 [(x, y)]. 지금은 충전소 1곳 (map_config robot_spawn = 도킹 위치)."""
+        return [self.dock_xy] if self.dock_xy is not None else []
+
+    def ask_battery_params(self):
+        """battery_manager 의 소모 계수를 한 번 읽어 온다 (두 노드의 예측식이 어긋나지 않게)."""
+        if self.battery_k_asked or not self.batt_param_cli.service_is_ready():
+            return
+        self.battery_k_asked = True
+
+        def done(f):
+            r = f.result()
+            if r is None or len(r.values) != 2:
+                self.get_logger().warn('battery_manager 소모 계수를 못 읽음 -> 기본값 사용')
+                return
+            self.battery_k = (r.values[0].double_value, r.values[1].double_value)
+            self.get_logger().info(f'배터리 소모 계수 k1={self.battery_k[0]} %/m, k2={self.battery_k[1]} %/s')
+        self.batt_param_cli.call_async(GetParameters.Request(names=['k1_pct_per_m', 'k2_pct_per_s'])) \
+            .add_done_callback(done)
+
+    def energy_ok_for_collect(self, sid, target_pose):
+        """대상까지 가서 싣고 충전소까지 돌아올 배터리가 있나. 없으면 대상을 돌려놓고 충전하러 간다 (False)."""
+        pose = self.pose.get()
+        if not self.p('energy_check') or pose is None:
+            return True
+        m, ch = self.energy, self.chargers()
+        txy = (target_pose.pose.position.x, target_pose.pose.position.y)
+        cost = collect_cost(m, pose[:2], txy, ch)
+        if affordable(self.battery, cost, m):
+            return True
+        # 충전소(대상에 가장 유리한 곳)에서 출발할 때 필요한 양
+        need = charge_needed(min(collect_cost(m, c, txy, ch) for c in ch) if ch else cost, m)
+        self.ev.emit('energy_check', what='collect', id=sid, cost=round(cost, 1), battery=round(self.battery, 1),
+                     need=round(need, 1))
+        if need > 100.0:                           # 가득 충전해도 못 감 -> 사람에게
+            self.report(sid, NEEDS_HUMAN, f'out of range: need {need:.0f}%')
+            self.alert(sid, 'out_of_range', f'가득 충전해도 다녀올 수 없음 (필요 {need:.0f}%)')
+            return False
+        self.report(sid, 'REQUEUE', 'battery low (예측)')
+        self.charge_goal = need
+        why = f'(배터리 부족 예측: 킥보드 {sid} 다녀오기 {cost:.0f}%, 남음 {self.battery:.0f}%)'
+        if self.at_dock:
+            self.set_state(CHARGING, why)
+        else:
+            self.start_dock(why)
+        return False
 
     # ---------------- 멈춤 방지 ----------------
     WAIT_TIMEOUT_PARAM = {'collect': 'collect_timeout_sec', 'dock': 'dock_timeout_sec',
@@ -277,27 +349,41 @@ class MissionManager(Node):
             self.ready = True
             self.get_logger().info('모든 서버 준비 완료, 미션 시작')
             self.state_since = now_sec(self)
+        if self.battery_k is None:
+            self.ask_battery_params()
         self.check_drop_stall()
         kind = self.wait.expired(now_sec(self))
         if kind is not None:
             self.on_wait_timeout(kind)
         if self.pending:
             return
+        must = False
+        if (self.p('energy_check') and self.state in (NAVIGATING, VERIFYING) and self.collect_handle is not None
+                and not self.abort_for_battery):
+            pose = self.pose.get()
+            must = pose is not None and must_head_home(self.battery, self.energy, pose[:2], self.chargers())
+        p = self.mp
+        if self.charge_goal is not None and self.charge_goal > p.charge_target_pct:
+            p = dataclasses.replace(p, charge_target_pct=min(100.0, self.charge_goal))
         with self.prof.section('tick'):
-            d = decide_tick(self.state, self.battery, self.mp, self.waiting_items, now_sec(self) - self.state_since,
-                            self.collect_handle is not None, self.abort_for_battery)
+            d = decide_tick(self.state, self.battery, p, self.waiting_items, now_sec(self) - self.state_since,
+                            self.collect_handle is not None, self.abort_for_battery, must_return=must)
         if d.action == 'SELECT':
             self.do_select()
         elif d.action == 'SET':
             self.set_state(d.state, d.why)
         elif d.action == 'ABORT_COLLECT':
             self.abort_for_battery = True
-            self.get_logger().warn('주행 중 배터리 부족 -> 현재 대상 반납 후 복귀')
+            why = ('충전소까지 갈 배터리만 남음' if self.battery > self.mp.return_battery_pct
+                   else f'{self.mp.return_battery_pct:.0f}% 이하')
+            self.get_logger().warn(f'주행 중 배터리 부족 ({why}) -> 현재 대상 반납 후 복귀')
+            self.ev.emit('energy_abort', battery=round(self.battery, 1), why=why, target=self.target or '')
             self.collect_handle.cancel_goal_async()
 
     def do_select(self):
         with self.prof.section('select'):
-            d = decide_select(self.at_dock, self.cargo, self.battery, self.mp, self.dock_unload_all)
+            d = decide_select(self.at_dock, self.cargo, self.battery, self.mp, self.dock_unload_all,
+                              drop_when_low=self.p('energy_check'))
         if d.action == 'UNLOAD_AT_DOCK':
             self.unload_at_dock(lambda n: self.set_state(SELECTING, f'(충전소 하역 {n}대)'))
         elif d.action == 'RETURN':
@@ -329,6 +415,8 @@ class MissionManager(Node):
             return
         if not r.found:
             self.go_return(decide_queue_empty(self.at_dock, self.cargo), queue_empty=True)
+            return
+        if not self.energy_ok_for_collect(r.scooter_id, r.target_pose):
             return
         self.start_collect(r.scooter_id, r.target_pose)
 
@@ -464,8 +552,16 @@ class MissionManager(Node):
                                    f' -> 충전소에서 전부 하역')
             self.dock_unload_all = True
             return False
-        self.drop_plan = ch
         plan, spots = ch
+        if self.p('energy_check'):                 # 하역하고 충전소까지 갈 배터리가 되나 (안 되면 그냥 복귀)
+            cost = drop_cost(self.energy, pose[:2], plan['robot'][:2], len(parking), self.chargers())
+            if not affordable(self.battery, cost, self.energy):
+                self.get_logger().warn(f'주차구역 {plan["zone"]} 하역 후 복귀에 {cost:.0f}% 필요, 남음 '
+                                       f'{self.battery:.0f}% -> 하역 미루고 충전 먼저')
+                self.ev.emit('energy_check', what='drop', zone=plan['zone'], cost=round(cost, 1),
+                             battery=round(self.battery, 1))
+                return False
+        self.drop_plan = ch
         self.ev.emit('drop_plan', zone=plan['zone'], robot_x=round(pose[0], 2), robot_y=round(pose[1], 2),
                      next=('waiting' if not queue_empty and self.waiting_xy else 'dock' if next_xys else 'none'),
                      n_next=len(next_xys))

@@ -6,10 +6,12 @@ mission_manager(통신부)는 0.2 s 마다 decide_tick 을 부르고, 결과에 
   decide_tick        : 상태별 다음 행동 (SELECTING 이면 decide_select 로)
   decide_select      : 충전소 하역 / 복귀(주차구역 하역 먼저 시도) / 대기열에 다음 대상 요청
   decide_queue_empty : 대기열이 비었을 때 (주차구역 하역 -> 도크면 IDLE, 아니면 복귀)
+  EnergyModel, collect_cost, drop_cost, must_head_home : 배터리로 '갔다가 충전소까지 돌아올 수 있나' 판단
   drop_next_points   : 주차구역 하역 후 갈 곳 후보 (하역 자리를 고를 때 그다음 이동 거리까지 보려고)
   classify_failure   : 수거 실패 사유 -> 대기열 상태(FAILED / NEEDS_HUMAN)와 알림 종류
   Cargo, ChargerSlots: 적재함 내용, 충전 자리 배정
 """
+import math
 from dataclasses import dataclass
 
 IDLE, SELECTING, NAVIGATING, VERIFYING, LOADING = 'IDLE', 'SELECTING', 'NAVIGATING', 'VERIFYING', 'LOADING'
@@ -64,8 +66,9 @@ def drop_destination(battery_pct, threshold_pct):
     return CHARGER if battery_pct is not None and battery_pct < threshold_pct else PARKING
 
 
-def decide_tick(state, battery, p, waiting_items, state_age, collect_active, abort_requested):
-    """0.2 s 마다. state_age = 현재 상태에 머문 시간(s)."""
+def decide_tick(state, battery, p, waiting_items, state_age, collect_active, abort_requested, must_return=False):
+    """0.2 s 마다. state_age = 현재 상태에 머문 시간(s).
+    must_return: 지금 위치에서 충전소까지 갈 배터리만 남음 (must_head_home) -> 20% 전이라도 수거를 끊고 복귀."""
     if state == SELECTING:
         return Decision('SELECT')
     if state == IDLE:
@@ -74,7 +77,7 @@ def decide_tick(state, battery, p, waiting_items, state_age, collect_active, abo
         if waiting_items > 0:
             return Decision('SET', SELECTING, '(새 요청)')
     elif state in (NAVIGATING, VERIFYING):          # 적재(LOADING) 중에는 끊지 않음
-        if battery <= p.return_battery_pct and collect_active and not abort_requested:
+        if (battery <= p.return_battery_pct or must_return) and collect_active and not abort_requested:
             return Decision('ABORT_COLLECT')
     elif state == FAILED:
         if state_age > FAILED_RETRY_SEC:
@@ -85,15 +88,18 @@ def decide_tick(state, battery, p, waiting_items, state_age, collect_active, abo
     return Decision('NONE')
 
 
-def decide_select(at_dock, cargo, battery, p, dock_unload_all=False):
-    """SELECTING 에서 할 일."""
+def decide_select(at_dock, cargo, battery, p, dock_unload_all=False, drop_when_low=False):
+    """SELECTING 에서 할 일.
+    drop_when_low: 배터리가 부족해도 (충전소 밖이면) 주차구역 하역을 먼저 시도한다.
+    하역하고 충전소까지 갈 배터리가 되는지는 하역 자리를 고른 뒤 drop_cost 로 확인한다 (안 되면 그냥 복귀)."""
     if at_dock and (cargo.for_dest(CHARGER) or (dock_unload_all and cargo.load)):
         return Decision('UNLOAD_AT_DOCK')
     low = battery <= p.return_battery_pct
     if low or cargo.load >= p.capacity:
         why = f'(배터리 {battery:.0f}%)' if low else '(만재)'
-        # 배터리가 부족하면 주차구역행 킥보드를 실은 채 먼저 충전하고, 충전 후 하역한다
-        return Decision('RETURN', why=why, try_drop=not low and bool(cargo.for_dest(PARKING)),
+        # drop_when_low 가 아니면: 배터리가 부족할 때 주차구역행 킥보드를 실은 채 먼저 충전하고, 충전 후 하역한다
+        drop_ok = not low or (drop_when_low and not at_dock)
+        return Decision('RETURN', why=why, try_drop=drop_ok and bool(cargo.for_dest(PARKING)),
                         fallback=CHARGING if at_dock else 'DOCK')
     return Decision('QUERY')
 
@@ -111,6 +117,61 @@ def drop_next_points(queue_empty, waiting_xy, dock_xy):
     if not queue_empty and waiting_xy:
         return list(waiting_xy)
     return [dock_xy] if dock_xy is not None else []
+
+
+@dataclass
+class EnergyModel:
+    """배터리 소모 예측. battery_manager 와 같은 식: 이동거리 x k1 + 경과시간 x k2.
+    거리는 직선거리 x detour (실제 경로는 돌아가므로). 경로 거리를 알게 되면 dist 함수만 바꿔 넣는다.
+    kinematic s4 실측: 충전소 -> 6.2 m 떨어진 킥보드 수거 5.3 %, 복귀 5.5 % -> detour 1.2 이면 조금 넉넉한 쪽."""
+    k1_pct_per_m: float = 1.0
+    k2_pct_per_s: float = 0.02
+    detour: float = 1.2
+    speed_mps: float = 0.2          # 평균 이동 속도 (nav v_max 0.22)
+    collect_sec: float = 40.0       # 확인·정렬·적재 (Gazebo 팔 약 25 s)
+    unload_sec: float = 25.0        # 1대 하역 (Gazebo 팔 약 21 s)
+    reserve_pct: float = 5.0        # 충전소에 도착했을 때 남겨 둘 배터리
+
+    def travel(self, d_m):
+        path = d_m * self.detour
+        return self.k1_pct_per_m * path + self.k2_pct_per_s * path / self.speed_mps
+
+    def work(self, sec):
+        return self.k2_pct_per_s * sec
+
+
+def straight(a, b):
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def home_cost(m, xy, chargers, dist=straight):
+    """xy 에서 가장 가까운 충전소까지 가는 데 드는 배터리(%). 충전소를 모르면 0."""
+    return min(m.travel(dist(xy, c)) for c in chargers) if chargers else 0.0
+
+
+def collect_cost(m, robot_xy, target_xy, chargers, dist=straight):
+    """대상까지 가서 싣고, 거기서 가장 가까운 충전소까지 가는 데 드는 배터리(%)."""
+    return m.travel(dist(robot_xy, target_xy)) + m.work(m.collect_sec) + home_cost(m, target_xy, chargers, dist)
+
+
+def drop_cost(m, robot_xy, stand_xy, n, chargers, dist=straight):
+    """하역 위치까지 가서 n 대 내리고, 거기서 가장 가까운 충전소까지 가는 데 드는 배터리(%)."""
+    return m.travel(dist(robot_xy, stand_xy)) + m.work(m.unload_sec * n) + home_cost(m, stand_xy, chargers, dist)
+
+
+def affordable(battery, cost, m):
+    """cost 만큼 쓰고도 충전소 도착 때 reserve 이상 남는가."""
+    return battery - cost >= m.reserve_pct
+
+
+def must_head_home(battery, m, robot_xy, chargers, dist=straight):
+    """지금 바로 충전소로 가야 reserve 를 지킬 수 있는가 (이동 중 확인)."""
+    return bool(chargers) and battery - home_cost(m, robot_xy, chargers, dist) < m.reserve_pct
+
+
+def charge_needed(cost, m):
+    """cost 짜리 일을 하려면 충전소에서 몇 % 까지 채워야 하나. 100 을 넘으면 한 번 충전으로는 못 함."""
+    return cost + m.reserve_pct
 
 
 # collector 실패 사유 앞부분 -> 관리자 알림 종류 (앞에서부터 처음 맞는 것)
