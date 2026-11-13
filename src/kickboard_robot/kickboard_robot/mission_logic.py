@@ -111,11 +111,18 @@ def drop_next_points(queue_empty, waiting_xy, dock_xy):
     return [dock_xy] if dock_xy is not None else []
 
 
+# collector 실패 사유 앞부분 -> 관리자 알림 종류 (앞에서부터 처음 맞는 것)
+FAILURE_KINDS = (('nav', 'nav_failed'), ('verify', 'verify_failed'), ('align', 'align_failed'), ('load', 'load_failed'))
+
+
 def classify_failure(reason, admin_alerts):
-    """수거 실패 사유 -> (대기열 상태, 알림 종류). 이동 실패는 사람이 봐야 하는 NEEDS_HUMAN (알림 켜졌을 때)."""
+    """수거 실패 사유 -> (대기열 상태, 알림 종류). 이동 실패는 사람이 봐야 하는 NEEDS_HUMAN (알림 켜졌을 때).
+    알림 종류는 사유 앞부분으로 정한다 (예전에는 이동 실패가 아니면 전부 verify_failed 로 보냈다:
+    'align_failed: nav failed ...' 도 태그 확인 실패로 보고됐음). 모르는 사유는 collect_failed."""
     is_nav = reason.startswith('nav')
     status = NEEDS_HUMAN if (is_nav and admin_alerts) else FAILED
-    return status, ('nav_failed' if is_nav else 'verify_failed')
+    kind = next((k for prefix, k in FAILURE_KINDS if reason.startswith(prefix)), 'collect_failed')
+    return status, kind
 
 
 def dock_should_stop(fail_count, max_retries):
