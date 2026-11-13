@@ -6,6 +6,7 @@ mission_manager(통신부)는 0.2 s 마다 decide_tick 을 부르고, 결과에 
   decide_tick        : 상태별 다음 행동 (SELECTING 이면 decide_select 로)
   decide_select      : 충전소 하역 / 복귀(주차구역 하역 먼저 시도) / 대기열에 다음 대상 요청
   decide_queue_empty : 대기열이 비었을 때 (주차구역 하역 -> 도크면 IDLE, 아니면 복귀)
+  drop_next_points   : 주차구역 하역 후 갈 곳 후보 (하역 자리를 고를 때 그다음 이동 거리까지 보려고)
   classify_failure   : 수거 실패 사유 -> 대기열 상태(FAILED / NEEDS_HUMAN)와 알림 종류
   Cargo, ChargerSlots: 적재함 내용, 충전 자리 배정
 """
@@ -31,6 +32,7 @@ class MissionParams:
     scooter_battery_threshold_pct: float = 15.0
     admin_alerts: bool = True
     max_dock_retries: int = 3
+    drop_next_weight: float = 1.0      # 하역 자리 고를 때 '하역 후 갈 곳' 거리 가중치 (0 = 가장 가까운 곳, 예전 방식)
 
 
 @dataclass
@@ -98,6 +100,15 @@ def decide_queue_empty(at_dock, cargo):
     """대기열에 고를 대상이 없을 때."""
     return Decision('RETURN', why='(대기열 빈)', try_drop=bool(cargo.for_dest(PARKING)),
                     fallback=IDLE if at_dock else 'DOCK')
+
+
+def drop_next_points(queue_empty, waiting_xy, dock_xy):
+    """주차구역 하역 후 갈 곳 후보 (하역 자리 고르기에 씀).
+    대기열이 비어 하역하면 충전소로 돌아가고, 만재로 하역하면 대기 중인 킥보드 중 하나로 간다.
+    대기 중인 킥보드 위치를 모르면 충전소. 충전소 위치도 모르면 [] (-> 로봇에서 가장 가까운 자리)."""
+    if not queue_empty and waiting_xy:
+        return list(waiting_xy)
+    return [dock_xy] if dock_xy is not None else []
 
 
 def classify_failure(reason, admin_alerts):

@@ -49,15 +49,26 @@ def free_spots(plan, used):
             if all(math.hypot(s[0] - u[0], s[1] - u[1]) >= MIN_GAP for u in used)]
 
 
-def choose_plan(plans, used, robot_xy, need=1):
-    """빈 자리가 있는 후보 중 가장 가까운 것. 빈 자리가 need 개 이상인 후보를 우선. 없으면 None."""
+def plan_cost(plan, robot_xy, next_xys=None, next_weight=1.0):
+    """로봇 -> 하역 위치 거리 + next_weight x (하역 위치 -> 다음 목적지 후보 중 가장 가까운 곳까지 거리).
+    직선 거리라 실제 경로보다 짧지만, 후보끼리 비교하는 데는 충분하다. next_weight=0 이면 예전 방식(가장 가까운 곳).
+    무작위 환경 검증(tools/drop_choice_eval.py): 1 을 넘기면 오히려 나빠졌다."""
+    rx, ry = plan['robot'][0], plan['robot'][1]
+    d = math.hypot(rx - robot_xy[0], ry - robot_xy[1])
+    if next_xys and next_weight:
+        d += next_weight * min(math.hypot(rx - x, ry - y) for x, y in next_xys)
+    return d
+
+
+def choose_plan(plans, used, robot_xy, need=1, next_xys=None, next_weight=1.0):
+    """빈 자리가 있는 후보 중 plan_cost 가 가장 작은 것. 빈 자리가 need 개 이상인 후보를 우선. 없으면 None.
+    next_xys: 하역 후 갈 곳 후보 [(x, y)] (충전소, 대기 중인 킥보드). 없으면 로봇에서 가장 가까운 후보."""
     best = None
     for p in plans:
         fs = free_spots(p, used)
         if not fs:
             continue
-        d = math.hypot(p['robot'][0] - robot_xy[0], p['robot'][1] - robot_xy[1])
-        key = (len(fs) < need, d)
+        key = (len(fs) < need, plan_cost(p, robot_xy, next_xys, next_weight))
         if best is None or key < best[0]:
             best = (key, p, fs)
     return None if best is None else (best[1], best[2])

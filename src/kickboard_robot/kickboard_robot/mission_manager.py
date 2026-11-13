@@ -42,7 +42,7 @@ from .drop_zones import charger_spots, choose_plan, edge_plans
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
                             MissionParams, classify_failure, decide_queue_empty, decide_select, decide_tick,
-                            dock_should_stop, drop_destination, parking_jobs)
+                            dock_should_stop, drop_destination, drop_next_points, parking_jobs)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 from .profiling import Profiler
@@ -60,6 +60,7 @@ class MissionManager(Node):
         self.declare_parameter('admin_alerts', True)        # F14 (P1)
         self.declare_parameter('max_dock_retries', 3)
         self.declare_parameter('scooter_battery_threshold_pct', 15.0)   # 이보다 낮으면 충전소에 하역
+        self.declare_parameter('drop_next_weight', 1.0)    # 하역 자리: 하역 후 갈 곳 거리 가중치 (0 = 예전 방식)
         # 통신부 설정
         self.declare_parameter('start_docked', True)
         self.declare_parameter('station_id', 'station_1')
@@ -85,6 +86,8 @@ class MissionManager(Node):
         self.battery = 100.0
         self.target = None             # scooter id
         self.waiting_items = 0
+        self.waiting_xy = []           # 대기 중인 킥보드 위치 (하역 후 갈 곳 후보)
+        self.dock_xy = None            # 도킹 위치 (map_config robot_spawn)
         self.pending = False           # 비동기 호출 진행 중
         self.collect_handle = None
         self.abort_for_battery = False
@@ -136,6 +139,8 @@ class MissionManager(Node):
             mc = yaml.safe_load(f)
         zones = mc.get('parking_zones', [])
         tag = mc['charger']['tag_pose']
+        if 'robot_spawn' in mc:                       # = 도킹 pose
+            self.dock_xy = (mc['robot_spawn']['x'], mc['robot_spawn']['y'])
         self.charger = ChargerSlots(charger_spots(tag['x'], tag['y'], math.radians(tag['yaw_deg'])))
         omap = OccupancyMap(self.p('map_yaml')) if self.p('map_yaml') else None
         plans = []
@@ -160,7 +165,8 @@ class MissionManager(Node):
             state=self.state, current_target_id=self.target or ''))
 
     def on_queue(self, m):
-        self.waiting_items = sum(1 for i in m.items if i.status == 'WAITING')
+        self.waiting_xy = [(i.x, i.y) for i in m.items if i.status == 'WAITING']
+        self.waiting_items = len(self.waiting_xy)
 
     def report(self, sid, status, note='', corrected=None):
         req = UpdateRequestStatus.Request(scooter_id=sid, status=status, note=note)
@@ -215,9 +221,9 @@ class MissionManager(Node):
             fut = self.select_cli.call_async(SelectNextTarget.Request(robot_x=pose[0], robot_y=pose[1]))
             fut.add_done_callback(self.on_selected)
 
-    def go_return(self, d):
+    def go_return(self, d, queue_empty=False):
         """RETURN 판단 실행: try_drop 이면 주차구역 하역부터 시도, 안 되면 fallback (CHARGING | IDLE | 'DOCK')."""
-        if d.try_drop and self.start_drop(d.why):
+        if d.try_drop and self.start_drop(d.why, queue_empty):
             return
         if d.fallback == 'DOCK':
             self.start_dock(d.why)
@@ -230,7 +236,7 @@ class MissionManager(Node):
         if r is None:
             return
         if not r.found:
-            self.go_return(decide_queue_empty(self.at_dock, self.cargo))
+            self.go_return(decide_queue_empty(self.at_dock, self.cargo), queue_empty=True)
             return
         self.start_collect(r.scooter_id, r.target_pose)
 
@@ -338,19 +344,25 @@ class MissionManager(Node):
         self.dock_unload_all = False
         self.run_unloads(self.charger.plan_unload(ids), then)
 
-    def start_drop(self, why):
-        """가장 가까운 주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)"""
+    def start_drop(self, why, queue_empty=False):
+        """주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)
+        자리는 '로봇 -> 하역 위치 + 하역 위치 -> 다음 갈 곳'이 가장 짧은 것 (다음 갈 곳: drop_next_points)"""
         pose = self.pose.get()
         if pose is None:
             return False
         parking = self.cargo.for_dest(PARKING)
-        ch = choose_plan(self.drop_plans, self.used_spots, pose[:2], need=len(parking))
+        next_xys = drop_next_points(queue_empty, self.waiting_xy, self.dock_xy)
+        ch = choose_plan(self.drop_plans, self.used_spots, pose[:2], need=len(parking), next_xys=next_xys,
+                         next_weight=self.mp.drop_next_weight)
         if ch is None:
             self.get_logger().warn('주차구역에 빈 자리 없음 -> 충전소에서 전부 하역')
             self.dock_unload_all = True
             return False
         self.drop_plan = ch
         plan, spots = ch
+        self.ev.emit('drop_plan', zone=plan['zone'], robot_x=round(pose[0], 2), robot_y=round(pose[1], 2),
+                     next=('waiting' if not queue_empty and self.waiting_xy else 'dock' if next_xys else 'none'),
+                     n_next=len(next_xys))
         self.at_dock = False
         self.set_state(DROPPING, f'{why} -> 주차구역 {plan["zone"]} ({len(parking)}대)')
         rx, ry, ryaw = plan['robot']
