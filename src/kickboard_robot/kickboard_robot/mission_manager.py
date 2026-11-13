@@ -41,7 +41,7 @@ from .common import EventLog, PoseTracker, now_sec, spin_single
 from .drop_zones import charger_spots, choose_plan, edge_plans
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
-                            MissionParams, classify_failure, decide_queue_empty, decide_select, decide_tick,
+                            MissionParams, WaitGuard, classify_failure, decide_queue_empty, decide_select, decide_tick,
                             dock_should_stop, drop_destination, drop_next_points, parking_jobs)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
@@ -68,6 +68,12 @@ class MissionManager(Node):
         self.declare_parameter('map_yaml', '')             # 로봇이 설 자리 빈 공간 판정
         self.declare_parameter('drop_clearance', 1.05)
         self.declare_parameter('unload_sim_sec', 1.5)      # 로봇팔이 없을 때(kinematic) 1대 하역 시간
+        # 멈춤 방지: 응답·결과가 이 시간(sim s) 안에 안 오면 취소하고 복구한다. 아래 노드들의 자체 제한보다 넉넉하게
+        self.declare_parameter('response_timeout_sec', 10.0)    # 서비스 응답, 액션 goal 수락
+        self.declare_parameter('collect_timeout_sec', 900.0)    # collector: 이동 3회 x 120 s + 정렬 90 s + 팔 120 s ...
+        self.declare_parameter('dock_timeout_sec', 600.0)       # dock_controller: 이동 3회 x 120 s + 정렬 40 s
+        self.declare_parameter('drop_nav_timeout_sec', 480.0)   # nav_bridge: 3회 x 120 s
+        self.declare_parameter('unload_timeout_sec', 120.0)     # 로봇팔 1대 하역 (Gazebo 약 21 s)
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
 
@@ -88,8 +94,14 @@ class MissionManager(Node):
         self.waiting_items = 0
         self.waiting_xy = []           # 대기 중인 킥보드 위치 (하역 후 갈 곳 후보)
         self.dock_xy = None            # 도킹 위치 (map_config robot_spawn)
-        self.pending = False           # 비동기 호출 진행 중
+        self.pending = False           # 비동기 호출 진행 중 (tick 의 판단을 쉼)
+        self.wait = WaitGuard()        # 지금 기다리는 응답 (멈춤 방지)
         self.collect_handle = None
+        self.dock_handle = None
+        self.drop_handle = None
+        self.unload_handle = None
+        self.unload_on_timeout = None  # 하역 1대가 시간 초과됐을 때 부를 실패 처리
+        self.missing_servers = set()   # 사라진 서버 (알림을 한 번만 보내려고)
         self.abort_for_battery = False
         self.dock_fail = 0
         self.ready = False
@@ -182,6 +194,68 @@ class MissionManager(Node):
         self.alert_pub.publish(a)
         self.get_logger().warn(f'[관리자 알림] {sid}: {reason} {message}')
 
+    # ---------------- 멈춤 방지 ----------------
+    WAIT_TIMEOUT_PARAM = {'collect': 'collect_timeout_sec', 'dock': 'dock_timeout_sec',
+                          'drop_nav': 'drop_nav_timeout_sec', 'unload': 'unload_timeout_sec'}
+
+    def begin_wait(self, kind):
+        """응답 대기 시작. 결과 대기(collect·dock·drop_nav·unload)는 각자 제한, 나머지는 response_timeout_sec."""
+        return self.wait.begin(kind, now_sec(self), self.p(self.WAIT_TIMEOUT_PARAM.get(kind, 'response_timeout_sec')))
+
+    def guarded(self, token, fn):
+        """token 의 대기가 아직 살아 있을 때만 fn 을 부르는 콜백 (시간 초과 뒤 늦게 온 응답은 버린다)."""
+        def cb(arg):
+            if not self.wait.end(token):
+                self.get_logger().warn(f'시간 초과 뒤 늦게 온 응답 무시: {fn.__name__}')
+                return
+            fn(arg)
+        return cb
+
+    def server_up(self, name, ready):
+        """서버가 사라지거나 돌아올 때 한 번씩만 알린다. ready 를 그대로 돌려준다."""
+        if ready and name in self.missing_servers:
+            self.missing_servers.discard(name)
+            self.get_logger().info(f'{name} 다시 연결됨 -> 재개')
+            self.ev.emit('server_back', name=name)
+        elif not ready and name not in self.missing_servers:
+            self.missing_servers.add(name)
+            self.alert(name, 'server_missing', f'{name} 응답 없음 -> 대기')
+            self.ev.emit('server_missing', name=name, state=self.state)
+        return ready
+
+    @staticmethod
+    def cancel(handle):
+        if handle is not None:
+            handle.cancel_goal_async()
+
+    def on_wait_timeout(self, kind):
+        self.get_logger().warn(f'[응답 없음] {kind} 제한 시간 초과 -> 취소하고 복구 (상태 {self.state})')
+        self.ev.emit('wait_timeout', kind=kind, state=self.state, target=self.target or '')
+        if kind == 'select':                       # SELECTING 그대로 -> 다음 tick 에 다시 묻는다
+            self.pending = False
+        elif kind in ('collect_accept', 'collect'):
+            self.cancel(self.collect_handle)
+            self.collect_handle, self.pending = None, False
+            sid, self.target = self.target, None
+            if sid:
+                self.report(sid, 'REQUEUE', 'collect timeout')
+                self.alert(sid, 'timeout', f'수거 응답 없음 ({kind})')
+            self.set_state(FAILED, '(수거 응답 없음)')
+        elif kind in ('dock_accept', 'dock'):
+            self.cancel(self.dock_handle)
+            self.dock_handle = None
+            self.dock_failed(None, f'응답 없음 ({kind})')
+        elif kind in ('drop_accept', 'drop_nav'):
+            self.cancel(self.drop_handle)
+            self.drop_handle = None
+            self.on_drop_nav_failed(f'응답 없음 ({kind})')
+        elif kind == 'unload':                     # 하역 묶음은 계속 진행 (pending 유지)
+            self.cancel(self.unload_handle)
+            self.unload_handle = None
+            cb, self.unload_on_timeout = self.unload_on_timeout, None
+            if cb is not None:
+                cb()
+
     # ---------------- main loop ----------------
     def tick(self):
         if not self.ready:
@@ -192,6 +266,9 @@ class MissionManager(Node):
             self.ready = True
             self.get_logger().info('모든 서버 준비 완료, 미션 시작')
             self.state_since = now_sec(self)
+        kind = self.wait.expired(now_sec(self))
+        if kind is not None:
+            self.on_wait_timeout(kind)
         if self.pending:
             return
         with self.prof.section('tick'):
@@ -214,12 +291,15 @@ class MissionManager(Node):
         elif d.action == 'RETURN':
             self.go_return(d)
         elif d.action == 'QUERY':
+            # collector 가 없으면 대상을 받지 않는다 (받으면 IN_PROGRESS -> 시간 초과 -> REQUEUE 를 끝없이 반복)
+            if not self.server_up('collector', self.collect_ac.server_is_ready()):
+                return
             pose = self.pose.get()
             if pose is None:
                 return
             self.pending = True
             fut = self.select_cli.call_async(SelectNextTarget.Request(robot_x=pose[0], robot_y=pose[1]))
-            fut.add_done_callback(self.on_selected)
+            fut.add_done_callback(self.guarded(self.begin_wait('select'), self.on_selected))
 
     def go_return(self, d, queue_empty=False):
         """RETURN 판단 실행: try_drop 이면 주차구역 하역부터 시도, 안 되면 fallback (CHARGING | IDLE | 'DOCK')."""
@@ -249,7 +329,7 @@ class MissionManager(Node):
         self.pending = True
         goal = CollectScooter.Goal(scooter_id=sid, target_pose=target_pose)
         f = self.collect_ac.send_goal_async(goal, feedback_callback=self.on_collect_fb)
-        f.add_done_callback(self.on_collect_accepted)
+        f.add_done_callback(self.guarded(self.begin_wait('collect_accept'), self.on_collect_accepted))
 
     def on_collect_fb(self, m):
         st = COLLECT_PHASE_TO_STATE.get(m.feedback.phase)
@@ -265,7 +345,7 @@ class MissionManager(Node):
             return
         self.collect_handle = h
         self.pending = False
-        h.get_result_async().add_done_callback(self.on_collect_done)
+        h.get_result_async().add_done_callback(self.guarded(self.begin_wait('collect'), self.on_collect_done))
 
     def on_collect_done(self, f):
         res = f.result().result
@@ -301,7 +381,7 @@ class MissionManager(Node):
         self.pending = True
         f = self.dock_ac.send_goal_async(DockToCharger.Goal(station_id=self.p('station_id')),
                                          feedback_callback=self.on_dock_fb)
-        f.add_done_callback(self.on_dock_accepted)
+        f.add_done_callback(self.guarded(self.begin_wait('dock_accept'), self.on_dock_accepted))
 
     def on_dock_fb(self, m):
         if m.feedback.phase in ('ALIGN', 'DOCKED') and self.state == RETURNING:
@@ -309,13 +389,14 @@ class MissionManager(Node):
 
     def on_dock_accepted(self, f):
         h = f.result()
-        if h is None or not h.accepted:
-            self.pending = False
-            self.set_state(FAILED, '(dock rejected)')
+        if h is None or not h.accepted:              # 거절도 도킹 실패로 센다 (예전: 횟수 없이 무한 재시도)
+            self.dock_failed(None, 'dock rejected')
             return
-        h.get_result_async().add_done_callback(self.on_dock_done)
+        self.dock_handle = h
+        h.get_result_async().add_done_callback(self.guarded(self.begin_wait('dock'), self.on_dock_done))
 
     def on_dock_done(self, f):
+        self.dock_handle = None
         self.pending = False
         res = f.result().result
         if res.success:
@@ -325,16 +406,22 @@ class MissionManager(Node):
                          unloaded=len(self.cargo.for_dest(CHARGER)))
             self.unload_at_dock(lambda n: self.set_state(CHARGING, f'(충전소 하역 {n}대)'))
         else:
-            self.dock_fail += 1
-            if dock_should_stop(self.dock_fail, self.mp.max_dock_retries):
-                # 충전·하역으로 넘어가지 않고 정지 (지표 왜곡 방지). 관리자가 처리할 때까지 대기
-                self.alert('station', 'dock_failed', f'{self.dock_fail}회 도킹 실패 -> 정지, 관리자 처리 필요')
-                self.ev.emit('dock_failed', attempts=self.dock_fail, position_error_m=res.position_error_m,
-                             yaw_error_deg=res.yaw_error_deg, cargo=self.cargo.load)
-                self.dock_fail = 0
-                self.set_state(NEEDS_HUMAN, '(도킹 실패)')
-            else:
-                self.start_dock(f'(도킹 재시도 {self.dock_fail})')
+            self.dock_failed(res, 'dock failed')
+
+    def dock_failed(self, res, why):
+        """도킹 실패 1회 (결과 실패·goal 거절·응답 없음). 한계에 닿으면 정지, 아니면 재시도."""
+        self.dock_fail += 1
+        if dock_should_stop(self.dock_fail, self.mp.max_dock_retries):
+            # 충전·하역으로 넘어가지 않고 정지 (지표 왜곡 방지). 관리자가 처리할 때까지 대기
+            self.alert('station', 'dock_failed', f'{self.dock_fail}회 도킹 실패 ({why}) -> 정지, 관리자 처리 필요')
+            self.ev.emit('dock_failed', attempts=self.dock_fail, why=why,
+                         position_error_m=None if res is None else res.position_error_m,
+                         yaw_error_deg=None if res is None else res.yaw_error_deg, cargo=self.cargo.load)
+            self.dock_fail = 0
+            self.pending = False
+            self.set_state(NEEDS_HUMAN, '(도킹 실패)')
+        else:
+            self.start_dock(f'(도킹 재시도 {self.dock_fail}: {why})')
 
     # ---------------- 하역 ----------------
     def unload_at_dock(self, then):
@@ -373,7 +460,7 @@ class MissionManager(Node):
         o.x, o.y, o.z, o.w = quat_from_yaw(ryaw)
         self.pending = True
         f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0))
-        f.add_done_callback(self.on_drop_nav_accepted)
+        f.add_done_callback(self.guarded(self.begin_wait('drop_accept'), self.on_drop_nav_accepted))
         return True
 
     def on_drop_nav_accepted(self, f):
@@ -381,9 +468,11 @@ class MissionManager(Node):
         if h is None or not h.accepted:
             self.on_drop_nav_failed('nav goal rejected')
             return
-        h.get_result_async().add_done_callback(self.on_drop_nav_done)
+        self.drop_handle = h
+        h.get_result_async().add_done_callback(self.guarded(self.begin_wait('drop_nav'), self.on_drop_nav_done))
 
     def on_drop_nav_done(self, f):
+        self.drop_handle = None
         r = f.result()
         if r is None or not r.result.success:
             self.on_drop_nav_failed(r.result.message if r is not None else 'no result')
@@ -434,16 +523,26 @@ class MissionManager(Node):
                 q = quat_from_yaw(spot[2])
                 goal.target.orientation.x, goal.target.orientation.y = q[0], q[1]
                 goal.target.orientation.z, goal.target.orientation.w = q[2], q[3]
-            self.unload_ac.send_goal_async(goal).add_done_callback(lambda f: on_accepted(f, sid, spot, kind))
+            tok = self.begin_wait('unload')          # 수락 + 결과를 한 제한 시간으로
+            self.unload_on_timeout = lambda: job_failed(sid, spot, kind, '응답 없음')
+            self.unload_ac.send_goal_async(goal).add_done_callback(lambda f: on_accepted(f, sid, spot, kind, tok))
 
-        def on_accepted(f, sid, spot, kind):
+        def on_accepted(f, sid, spot, kind, tok):
+            if not self.wait.is_current(tok):        # 이미 시간 초과로 넘어감
+                return
             h = f.result()
             if h is None or not h.accepted:
+                self.wait.end(tok)
+                self.unload_on_timeout = None
                 job_failed(sid, spot, kind, 'unload rejected')
                 return
-            h.get_result_async().add_done_callback(lambda rf: on_result(rf, sid, spot, kind))
+            self.unload_handle = h
+            h.get_result_async().add_done_callback(lambda rf: on_result(rf, sid, spot, kind, tok))
 
-        def on_result(rf, sid, spot, kind):
+        def on_result(rf, sid, spot, kind, tok):
+            if not self.wait.end(tok):
+                return
+            self.unload_handle = self.unload_on_timeout = None
             r = rf.result()
             if r is None or not r.result.success:
                 job_failed(sid, spot, kind, r.result.message if r is not None else 'no result')

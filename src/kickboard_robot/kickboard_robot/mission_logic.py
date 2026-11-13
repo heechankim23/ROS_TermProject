@@ -123,6 +123,41 @@ def dock_should_stop(fail_count, max_retries):
     return fail_count >= max_retries
 
 
+class WaitGuard:
+    """서비스 응답·액션 결과를 기다리는 일 하나를 추적한다 (미션은 한 번에 하나만 기다린다).
+
+    begin 으로 시작하면 token 을 준다. 제한 시간이 지나면 expired 가 그 종류를 한 번 돌려주고 대기를 지운다.
+    그 뒤 늦게 도착한 응답은 end(token) 이 False 라서 버린다 -> 시간 초과로 이미 복구한 일을 다시 처리하지 않는다.
+    """
+
+    def __init__(self):
+        self.token = 0
+        self.kind = None
+        self.deadline = None
+
+    def begin(self, kind, now, timeout):
+        self.token += 1
+        self.kind, self.deadline = kind, now + timeout
+        return self.token
+
+    def is_current(self, token):
+        return token == self.token and self.kind is not None
+
+    def end(self, token):
+        """이 token 의 대기를 끝낸다. 이미 시간 초과됐거나 다른 대기로 바뀐 token 이면 False (응답을 버려야 함)."""
+        if not self.is_current(token):
+            return False
+        self.kind = self.deadline = None
+        return True
+
+    def expired(self, now):
+        """제한 시간이 지난 대기의 종류 (한 번만). 없으면 None."""
+        if self.kind is not None and now > self.deadline:
+            kind, self.kind, self.deadline = self.kind, None, None
+            return kind
+        return None
+
+
 class Cargo:
     """적재함: [(킥보드 id, PARKING | CHARGER)] 실은 순서대로."""
 
