@@ -22,6 +22,8 @@ PARKING, CHARGER = 'parking', 'charger'      # 킥보드별 하역 장소
 COLLECT_PHASE_TO_STATE = {'NAVIGATING': NAVIGATING, 'VERIFYING': VERIFYING,
                           'ALIGNING': LOADING, 'LOADING': LOADING}
 FAILED_RETRY_SEC = 1.0                       # FAILED 에서 다시 SELECTING 으로 가기까지
+# 대기열 항목 중 아직 그 자리에 놓여 있을 킥보드 (하역 위치를 고를 때 피함). DONE·CANCELLED 는 이미 없음
+LYING_STATUSES = ('WAITING', 'IN_PROGRESS', 'FAILED', 'NEEDS_HUMAN')
 
 
 @dataclass

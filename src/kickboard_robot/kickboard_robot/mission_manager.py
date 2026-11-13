@@ -38,8 +38,9 @@ from kickboard_interfaces.msg import AdminAlert, QueueStatus, RobotStatus, Scoot
 from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
-from .drop_zones import charger_spots, choose_plan, edge_plans
+from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
+                            LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
                             MissionParams, WaitGuard, classify_failure, decide_queue_empty, decide_select, decide_tick,
                             dock_should_stop, drop_destination, drop_next_points, parking_jobs)
@@ -61,6 +62,10 @@ class MissionManager(Node):
         self.declare_parameter('max_dock_retries', 3)
         self.declare_parameter('scooter_battery_threshold_pct', 15.0)   # 이보다 낮으면 충전소에 하역
         self.declare_parameter('drop_next_weight', 1.0)    # 하역 자리: 하역 후 갈 곳 거리 가중치 (0 = 예전 방식)
+        self.declare_parameter('drop_keepout_m', 1.5)      # 대기·실패 킥보드에서 이보다 가까운 하역 위치는 안 씀 (0 = 끔)
+        self.declare_parameter('max_drop_attempts', 2)     # 하역 이동 실패 시 다른 하역 위치까지 몇 곳 시도
+        self.declare_parameter('drop_block_sec', 60.0)     # 이동에 실패한 하역 위치를 쓰지 않는 시간 (코스트맵 장애물 기억과 같게)
+        self.declare_parameter('drop_stall_sec', 6.0)      # 하역 이동 피드백이 이만큼 없으면(경로 없음) 취소하고 다른 위치로 (0 = 끔)
         # 통신부 설정
         self.declare_parameter('start_docked', True)
         self.declare_parameter('station_id', 'station_1')
@@ -93,6 +98,11 @@ class MissionManager(Node):
         self.target = None             # scooter id
         self.waiting_items = 0
         self.waiting_xy = []           # 대기 중인 킥보드 위치 (하역 후 갈 곳 후보)
+        self.lying_xy = []             # 아직 그 자리에 놓여 있을 킥보드 위치 (하역 위치에서 피함, GPS 값일 수 있음)
+        self.blocked_stands = []       # 이동에 실패한 하역 위치 [(x, y, 다시 쓸 시각)]
+        self.drop_why, self.drop_queue_empty, self.drop_attempt = '', False, 1
+        self.drop_progress_t = 0.0     # 하역 이동 피드백을 마지막으로 받은 시각
+        self.drop_stall_sent = False
         self.dock_xy = None            # 도킹 위치 (map_config robot_spawn)
         self.pending = False           # 비동기 호출 진행 중 (tick 의 판단을 쉼)
         self.wait = WaitGuard()        # 지금 기다리는 응답 (멈춤 방지)
@@ -179,6 +189,7 @@ class MissionManager(Node):
     def on_queue(self, m):
         self.waiting_xy = [(i.x, i.y) for i in m.items if i.status == 'WAITING']
         self.waiting_items = len(self.waiting_xy)
+        self.lying_xy = [(i.x, i.y) for i in m.items if i.status in LYING_STATUSES]
 
     def report(self, sid, status, note='', corrected=None):
         req = UpdateRequestStatus.Request(scooter_id=sid, status=status, note=note)
@@ -266,6 +277,7 @@ class MissionManager(Node):
             self.ready = True
             self.get_logger().info('모든 서버 준비 완료, 미션 시작')
             self.state_since = now_sec(self)
+        self.check_drop_stall()
         kind = self.wait.expired(now_sec(self))
         if kind is not None:
             self.on_wait_timeout(kind)
@@ -431,18 +443,25 @@ class MissionManager(Node):
         self.dock_unload_all = False
         self.run_unloads(self.charger.plan_unload(ids), then)
 
-    def start_drop(self, why, queue_empty=False):
+    def start_drop(self, why, queue_empty=False, attempt=1):
         """주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)
-        자리는 '로봇 -> 하역 위치 + 하역 위치 -> 다음 갈 곳'이 가장 짧은 것 (다음 갈 곳: drop_next_points)"""
+        자리는 '로봇 -> 하역 위치 + 하역 위치 -> 다음 갈 곳'이 가장 짧은 것 (다음 갈 곳: drop_next_points)
+        attempt: 몇 번째 하역 위치 시도인지 (이동 실패 시 on_drop_nav_failed 가 다음 위치로 다시 부른다)"""
+        self.drop_why, self.drop_queue_empty, self.drop_attempt = why, queue_empty, attempt
         pose = self.pose.get()
         if pose is None:
             return False
         parking = self.cargo.for_dest(PARKING)
         next_xys = drop_next_points(queue_empty, self.waiting_xy, self.dock_xy)
-        ch = choose_plan(self.drop_plans, self.used_spots, pose[:2], need=len(parking), next_xys=next_xys,
+        plans = clear_plans(self.drop_plans, self.lying_xy, self.p('drop_keepout_m'))
+        plans = clear_plans(plans, self.blocked_xy(), 0.3)      # 방금 이동에 실패한 위치는 잠시 안 씀
+        if len(plans) < len(self.drop_plans):
+            self.ev.emit('drop_keepout', excluded=len(self.drop_plans) - len(plans), left=len(plans))
+        ch = choose_plan(plans, self.used_spots, pose[:2], need=len(parking), next_xys=next_xys,
                          next_weight=self.mp.drop_next_weight)
         if ch is None:
-            self.get_logger().warn('주차구역에 빈 자리 없음 -> 충전소에서 전부 하역')
+            self.get_logger().warn(f'주차구역에 빈 자리 없음 (근처에 킥보드가 있어 뺀 후보 {len(self.drop_plans) - len(plans)}곳)'
+                                   f' -> 충전소에서 전부 하역')
             self.dock_unload_all = True
             return False
         self.drop_plan = ch
@@ -459,7 +478,9 @@ class MissionManager(Node):
         o = target.pose.orientation
         o.x, o.y, o.z, o.w = quat_from_yaw(ryaw)
         self.pending = True
-        f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0))
+        self.drop_progress_t, self.drop_stall_sent = now_sec(self), False
+        f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0),
+                                        feedback_callback=self.on_drop_fb)
         f.add_done_callback(self.guarded(self.begin_wait('drop_accept'), self.on_drop_nav_accepted))
         return True
 
@@ -482,8 +503,37 @@ class MissionManager(Node):
         jobs = parking_jobs(self.cargo, spots)
         self.run_unloads(jobs, lambda n: self.set_state(SELECTING, f'(주차구역 {plan["zone"]} 하역 {n}대)'))
 
+    def blocked_xy(self):
+        now = now_sec(self)
+        self.blocked_stands = [b for b in self.blocked_stands if b[2] > now]
+        return [(x, y) for x, y, _ in self.blocked_stands]
+
+    def on_drop_fb(self, m):
+        self.drop_progress_t = now_sec(self)
+
+    def check_drop_stall(self):
+        """nav_bridge 는 경로를 못 찾는 동안 피드백을 안 보낸다 -> drop_stall_sec 동안 없으면 취소하고 다른 위치로.
+        (그대로 두면 8 s x 3회 = 약 27 s 를 기다린 뒤 실패한다)"""
+        lim = self.p('drop_stall_sec')
+        if (self.state != DROPPING or self.drop_handle is None or self.drop_stall_sent or lim <= 0
+                or now_sec(self) - self.drop_progress_t <= lim):
+            return
+        self.drop_stall_sent = True
+        self.get_logger().warn(f'하역 위치로 {lim:.0f} s 동안 진행 없음 (경로 없음) -> 취소하고 다른 위치로')
+        self.ev.emit('drop_stall', zone=self.drop_plan[0]['zone'] if self.drop_plan else '')
+        self.drop_handle.cancel_goal_async()       # 결과(실패)는 on_drop_nav_done -> on_drop_nav_failed 로 온다
+
     def on_drop_nav_failed(self, why):
         self.pending = False
+        self.drop_handle = None
+        plan = self.drop_plan[0] if self.drop_plan else None
+        if plan is not None:                       # 이 위치는 한동안 안 씀
+            self.blocked_stands.append((plan['robot'][0], plan['robot'][1], now_sec(self) + self.p('drop_block_sec')))
+        self.ev.emit('drop_failed', zone=plan['zone'] if plan else '', why=why, attempt=self.drop_attempt)
+        if self.drop_attempt < self.p('max_drop_attempts'):
+            self.get_logger().warn(f'주차구역 이동 실패 ({why}) -> 다른 하역 위치 시도 {self.drop_attempt + 1}')
+            if self.start_drop(self.drop_why, self.drop_queue_empty, attempt=self.drop_attempt + 1):
+                return
         self.alert('drop', 'nav_failed', f'주차구역 이동 실패: {why} -> 충전소에서 전부 하역')
         self.dock_unload_all = True
         self.start_dock('(주차구역 이동 실패)')

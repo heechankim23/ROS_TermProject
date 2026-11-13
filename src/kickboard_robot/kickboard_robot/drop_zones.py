@@ -60,6 +60,13 @@ def plan_cost(plan, robot_xy, next_xys=None, next_weight=1.0):
     return d
 
 
+def clear_plans(plans, obstacles_xy, keepout):
+    """로봇이 서는 위치가 장애물(누워 있는 킥보드 등)에서 keepout 이상 떨어진 후보만.
+    s5 에서 정렬 실패한 킥보드가 서는 위치 0.83 m 옆에 있어 경로를 못 찾고 전부 충전소에 내린 일이 있었다."""
+    return [p for p in plans
+            if all(math.hypot(p['robot'][0] - x, p['robot'][1] - y) >= keepout for x, y in obstacles_xy)]
+
+
 def choose_plan(plans, used, robot_xy, need=1, next_xys=None, next_weight=1.0):
     """빈 자리가 있는 후보 중 plan_cost 가 가장 작은 것. 빈 자리가 need 개 이상인 후보를 우선. 없으면 None.
     next_xys: 하역 후 갈 곳 후보 [(x, y)] (충전소, 대기 중인 킥보드). 없으면 로봇에서 가장 가까운 후보."""
