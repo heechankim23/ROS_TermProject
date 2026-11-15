@@ -235,7 +235,8 @@ events:              # type: fall | stand | battery(pct) | move(x,y) | obstacle(
   - {t: 10, id: 1, type: fall}
 ```
 
-요청 조건(펌웨어 판정): 기울기 > 45° → `FALLEN`, 주차구역 밖 → `OUT_OF_ZONE`, 배터리 < 15% → `LOW_BATTERY`.
+요청 조건(펌웨어 판정, 2026-11-15 확정): 기울기 > 45° → `FALLEN`, 주차구역 밖 → `OUT_OF_ZONE`, 배터리 < 15% → `LOW_BATTERY`.
+정확히 45°·15% 는 정상으로 본다. 자동 취소(F13)는 반대 조건(≤ 45°, 구역 안, ≥ 15%)을 모두 만족할 때 (s8 로 확인).
 
 ---
 
