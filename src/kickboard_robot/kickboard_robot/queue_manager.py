@@ -210,6 +210,8 @@ class QueueManager(Node):
         active = [q for q in items if q.status in ql.ACTIVE]
         smax = max([q.score for q in active], default=1.0)
         smin = min([q.score for q in active], default=0.0)
+        waiting = [q for q in active if q.status == ql.WAITING]       # 이미 점수순으로 정렬돼 있음
+        rank = {q.id: n + 1 for n, q in enumerate(waiting)}
         for k, q in enumerate(active):
             r = 1.0 if smax == smin else (q.score - smin) / (smax - smin)
             for typ, mid in ((Marker.CYLINDER, 2 * k), (Marker.TEXT_VIEW_FACING, 2 * k + 1)):
@@ -227,7 +229,9 @@ class QueueManager(Node):
                     mk.pose.position.z = 0.6
                     mk.scale.z = 0.2
                     mk.color.r = mk.color.g = mk.color.b = mk.color.a = 1.0
-                    mk.text = f'{q.id} {ql.REASON_NAMES.get(q.reason, "?")} S={q.score:.0f}'
+                    head = 'NOW' if q.status == ql.IN_PROGRESS else f'#{rank[q.id]}'
+                    mk.text = (f'{head} id{q.id} {ql.REASON_NAMES.get(q.reason, "?")}\n'
+                               f'S={q.score:.0f} wait {q.wait_sec:.0f}s')
                 ma.markers.append(mk)
         self.marker_pub.publish(ma)
 
