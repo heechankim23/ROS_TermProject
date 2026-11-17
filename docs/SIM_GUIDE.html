@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0">
+<title>킥보드 수거 로봇 시뮬 가이드</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* layout: 한 열짜리 문서. 위에 목차 띠, 본문은 68ch, 표·도면만 넓게 */
+:root{
+  --bg:#f4f5f3; --surface:#ffffff; --fg:#1b1f1d; --muted:#5d6661; --line:#d5dad6;
+  --accent:#0b6b4f; --accent-soft:#e2f1ea; --warn:#a25a00; --warn-soft:#fbefd9;
+  --bad:#a4262c; --bad-soft:#f9e3e3; --code:#eceeeb; --sky:#cfe3f1;
+  --display:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141816; --surface:#1c211f; --fg:#e7ebe8; --muted:#9aa5a0; --line:#323a36;
+  --accent:#5fd0a6; --accent-soft:#1b3329; --warn:#f0b35a; --warn-soft:#3a2c14;
+  --bad:#ff8f8f; --bad-soft:#3d1d1f; --code:#252b28; --sky:#22303a; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#141816; --surface:#1c211f; --fg:#e7ebe8; --muted:#9aa5a0; --line:#323a36;
+  --accent:#5fd0a6; --accent-soft:#1b3329; --warn:#f0b35a; --warn-soft:#3a2c14;
+  --bad:#ff8f8f; --bad-soft:#3d1d1f; --code:#252b28; --sky:#22303a; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.25;margin:0;text-wrap:balance}
+header p{color:var(--muted);margin:8px 0 0;max-width:68ch}
+nav{display:flex;flex-wrap:wrap;gap:8px}
+nav a{font-size:.88rem;padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--fg);text-decoration:none;background:var(--surface)}
+nav a:hover,nav a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+section{display:flex;flex-direction:column;gap:14px;padding-top:22px;border-top:2px solid var(--fg)}
+h2{font-family:var(--display);font-size:1.45rem;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-size:1.1rem;margin:10px 0 0}
+p,ul,ol{margin:0;max-width:72ch}
+ul,ol{padding-left:1.3em}
+li+li{margin-top:4px}
+code{font-family:var(--mono);font-size:.86em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{font-family:var(--mono);font-size:.84rem;line-height:1.55;background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;margin:0}
+pre code{background:none;padding:0}
+.note{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:12px 16px}
+.note strong{color:var(--warn)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.55}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:.8rem;letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ok,.fix,.ng{display:inline-block;font-size:.76rem;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--accent-soft);color:var(--accent)}
+.fix{background:var(--warn-soft);color:var(--warn)}
+.ng{background:var(--bad-soft);color:var(--bad)}
+.formula{font-family:var(--mono);font-size:1.02rem;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);padding:12px 16px;border-radius:6px;overflow-x:auto}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.grid2>div{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.grid2 h4{margin:0;font-size:.98rem}
+.grid2 p{font-size:.92rem;line-height:1.65}
+figure{margin:0;display:flex;flex-direction:column;gap:6px}
+figure .map{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#9e9e99}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-size:.84rem;color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.86rem}
+.flow span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+.flow b{color:var(--muted);font-weight:400}
+small{color:var(--muted)}
+a{color:var(--accent)}
+
+.viewbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.viewbar button{font:inherit;font-size:.88rem;padding:5px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.viewbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+.viewbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.viewbar .sp{flex:1}
+#view{position:relative;width:100%;height:min(66vh,620px);min-height:340px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sky);touch-action:none}
+#view canvas{display:block}
+#hint{position:absolute;left:10px;bottom:8px;font-size:.78rem;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:2px 8px;opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid var(--line)}
+td code{white-space:nowrap}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>공유 킥보드 자율 수거·충전 로봇 — 알고리즘, 테스트 결과, 시나리오, 시뮬레이션 환경</h1>
+  <p>ROS 2 Humble 워크스페이스 <code>~/lecture_2026_2/Ros_TermProject/my_ws</code> 기준. 도로 맵 하나와 시나리오 19개(기존 9개 + 현실 상황 10개), Gazebo 실행 명령, 2D 배치도, 3D 보기를 모았습니다. 실내·캠퍼스는 제외했습니다. 2026-11-16 갱신.</p>
+</header>
+
+<div class="note"><strong>읽기 전에.</strong> 로봇은 차도와 주차장으로만 다니고 인도에는 올라가지 않습니다. 실내·캠퍼스 시나리오와 캠퍼스 맵은 <code>src/kickboard_sim/archive/</code> 로 옮겨 빌드·실행 대상에서 뺐습니다. 수정 가운데 <code>nav_bridge.py</code>·<code>planner.py</code>·<code>sim_lidar.py</code>(C), <code>motion.py</code>(C), <code>collector.py</code>·<code>mission_manager.py</code>(D), <code>queue_manager.py</code>(B)는 다른 담당자 파일이므로 <code>my_ws/patches_for_team/</code> 의 패치를 담당자에게 넘겨 반영해야 합니다.</div>
+
+<nav><a href="#run">실행 명령</a><a href="#scen">시나리오 19개</a><a href="#map2d">맵 2D</a><a href="#map3d">맵 3D</a><a href="#algo">알고리즘</a><a href="#real">현실 운영</a><a href="#todo">팀 전달·남은 일</a></nav>
+
+
+<section id="run">
+<h2>1. Ubuntu 터미널 명령</h2>
+<h3>처음 한 번, 또는 코드를 고친 뒤</h3>
+<pre><code>cd ~/lecture_2026_2/Ros_TermProject/my_ws
+source /opt/ros/humble/setup.bash
+colcon build
+source install/setup.bash</code></pre>
+<h3>시나리오 실행 (새 터미널마다 앞의 세 줄 먼저)</h3>
+<pre><code>cd ~/lecture_2026_2/Ros_TermProject/my_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch kickboard_sim bringup.launch.py scenario:=s10_road_collect</code></pre>
+<p>한 번에 하나만 실행하고, 끝내려면 Ctrl+C 입니다. 위 과정을 한 번에 해 주는 스크립트도 있습니다.</p>
+<pre><code>./run_gazebo.sh                    # 시나리오 목록
+./run_gazebo.sh s10_road_collect   # 빌드가 필요하면 빌드 후 실행</code></pre>
+<h3>기존 9개</h3>
+<pre><code>ros2 launch kickboard_sim bringup.launch.py scenario:=s1_single
+ros2 launch kickboard_sim bringup.launch.py scenario:=s2_new_request
+ros2 launch kickboard_sim bringup.launch.py scenario:=s3_full_load
+ros2 launch kickboard_sim bringup.launch.py scenario:=s4_low_battery
+ros2 launch kickboard_sim bringup.launch.py scenario:=s5_aging
+ros2 launch kickboard_sim bringup.launch.py scenario:=s6_verify_fail
+ros2 launch kickboard_sim bringup.launch.py scenario:=s7_obstacle
+ros2 launch kickboard_sim bringup.launch.py scenario:=s8_auto_cancel
+ros2 launch kickboard_sim bringup.launch.py scenario:=s9_drop_sites</code></pre>
+<h3>현실 상황 10개</h3>
+<pre><code>ros2 launch kickboard_sim bringup.launch.py scenario:=s10_road_collect
+ros2 launch kickboard_sim bringup.launch.py scenario:=s11_side_street_blocked
+ros2 launch kickboard_sim bringup.launch.py scenario:=s12_bus_stop_cluster
+ros2 launch kickboard_sim bringup.launch.py scenario:=s13_rent_waiting
+ros2 launch kickboard_sim bringup.launch.py scenario:=s14_rent_in_progress
+ros2 launch kickboard_sim bringup.launch.py scenario:=s15_moved_waiting
+ros2 launch kickboard_sim bringup.launch.py scenario:=s16_refall_after_drop
+ros2 launch kickboard_sim bringup.launch.py scenario:=s17_night_battery
+ros2 launch kickboard_sim bringup.launch.py scenario:=s18_double_parked
+ros2 launch kickboard_sim bringup.launch.py scenario:=s19_peak_stream</code></pre>
+<div class="tbl"><table>
+<tr><th>명령 뒤에 붙이는 것</th><th>뜻</th></tr>
+<tr><td><code>rviz:=true</code></td><td>RViz 도 함께 (대기열 마커, 스캔)</td></tr>
+<tr><td><code>gui:=false rviz:=true</code></td><td>Gazebo 화면 없이 RViz 로만 (PC 가 느릴 때)</td></tr>
+<tr><td><code>gui:=false sensors:=false</code></td><td>화면 없이 로그만 (SSH)</td></tr>
+<tr><td><code>sim:=kinematic rviz:=true</code></td><td>Gazebo 없이 로직만 빠르게</td></tr>
+<tr><td><code>arm:=false</code></td><td>로봇팔 동작 대신 3초 정지로 적재</td></tr>
+<tr><td><code>start_delay:=15</code></td><td>Gazebo 가 늦게 뜨는 PC 에서 노드 시작을 늦춤</td></tr>
+</table></div>
+<h3>실행 중 확인 (다른 터미널)</h3>
+<pre><code>ros2 topic echo /robot_status        # 로봇 상태·배터리·적재 수
+ros2 topic echo /queue_status        # 대기열과 점수
+ros2 topic echo /admin_alerts        # 관리자 알림
+ros2 param set /arm_loader time_scale 2.0   # 로봇팔을 2배 느리게</code></pre>
+<p>Gazebo 창이 뜨면 킥보드가 먼저 전부 배치되고 약 10초 뒤 로봇이 출발합니다. 터미널의 <code>[상태] A -&gt; B</code> 줄이 진행 상황이고 마지막에 <code>CHARGING -&gt; SELECTING -&gt; IDLE</code> 이 나오면 끝입니다. 같은 내용이 워크스페이스의 <code>GAZEBO_COMMANDS.md</code> 에 있습니다(문제 해결 표 포함).</p>
+</section>
+
+<section id="scen">
+<h2>2. 시나리오 19개</h2>
+<p>전부 도로 맵에서 돕니다. Gazebo 서버 모드(<code>gui:=false sensors:=false</code>, 로봇팔 포함)로 한 번씩 끝까지 돌린 결과입니다. Gazebo 화면(GUI)을 띄운 실행은 이 환경에서 확인하지 못했습니다. 인식은 팀 결정대로 시뮬레이션 검출기 기준입니다.</p>
+<p><strong>실행 조건에 대한 주의.</strong> 검증할 때 시뮬레이션을 2–3개씩 동시에 돌렸는데, 3개 동시에서는 CPU 8코어가 포화되어 제어가 늦어지고 로봇 위치가 엉뚱하게 찍히는 실패가 여러 번 났습니다(S10·S11 등). 같은 시나리오를 1–2개만 돌리면 통과했습니다. 아래 결과는 통과한 실행 기준이며, <strong>실제로 쓸 때는 한 번에 하나만 실행하세요.</strong> 도중에 PC 가 절전에 들어간 묶음은 전부 다시 돌렸습니다.</p>
+<p><strong>이번에 추가로 고친 것.</strong> 로봇이 주행 오차로 인도 쪽으로 밀려나면 출발 칸이 진입 금지라 어떤 목표로도 길을 못 찾고 그 자리에 영영 서는 문제가 있었습니다. 진입 금지 구역 안에서 출발할 때는 그 구역을 지나 차도로 되돌아오도록 <code>planner.py</code> 를 고쳤습니다(오프라인 계산으로 확인, Gazebo 에서 이 복구가 실제로 발동한 실행은 없었습니다). 길이 없을 때 이유를 남기는 로그도 <code>nav_bridge.py</code> 에 넣었습니다.</p>
+<h3>기존 9개 (PRD 검증 시나리오를 도로 맵으로 옮김)</h3>
+<div class="tbl"><table><tr><th>시나리오</th><th>상황</th><th>통과 기준</th><th>Gazebo 결과</th></tr><tr><td><code>s1_single</code></td><td>구역 밖 1대, 10초에 넘어져 같은 ID 로 병합</td><td>접근 → 확인 → 적재 → 주차구역 하역 → 복귀·충전</td><td><span class="ok">통과</span> 병합 확인, 1/1, 주행 45 m</td></tr><tr><td><code>s2_new_request</code></td><td>2건 처리 중 주차구역의 1대가 넘어짐</td><td>현재 대상을 끝낸 뒤 재평가, 3건 수거</td><td><span class="ok">통과</span> 3/3 (주차구역 2·충전소 1), 84 m</td></tr><tr><td><code>s3_full_load</code></td><td>적재함 4칸, 요청 5건</td><td>4대 하역 뒤 남은 1대</td><td><span class="ok">통과</span> 5/5, 4대 하역 뒤 1대, 104 m</td></tr><tr><td><code>s4_low_battery</code></td><td>로봇 배터리 22% 로 시작</td><td>주행 중 20% → 대상 반납 → 충전 → 재개</td><td><span class="ok">통과</span> 주행 중 20% → 반납 → 충전 → 2/2</td></tr><tr><td><code>s5_aging</code></td><td>먼 구역의 배터리 부족 1대 + 가까운 구역에서 차례로 넘어지는 4대</td><td>가까운 새 요청이 대기 중인데도 먼 1번이 선택됨</td><td><span class="ok">통과</span> 5/5. 1번은 대기 102초에, 방금 넘어진 4번이 기다리는데도 먼저 선택됨</td></tr><tr><td><code>s6_verify_fail</code></td><td>1번은 요청만 오고 실물 없음</td><td>회전 탐색 후 실패·알림, 2번 수거</td><td><span class="ok">통과</span> 1번 확인 실패·알림, 2번 수거</td></tr><tr><td><code>s7_obstacle</code></td><td>간선도로 위에 장애물이 생김</td><td>차도 안에서 돌아가 접촉 없이 수거</td><td><span class="ok">통과</span> 장애물과 최소 0.70 m, 접촉 없음</td></tr><tr><td><code>s8_auto_cancel</code></td><td>대기 중인 킥보드가 다시 세워짐</td><td>대기열에서 자동 취소</td><td><span class="ok">통과</span> 2번 자동 취소, 1번 수거</td></tr><tr><td><code>s9_drop_sites</code></td><td>배터리 정상 2대 + 부족 2대</td><td>주차구역 2대, 충전소 2대</td><td><span class="ok">통과</span> 주차구역 2대 + 충전소 2대</td></tr></table></div>
+<h3>현실 상황 10개</h3>
+<div class="tbl"><table><tr><th>시나리오</th><th>상황</th><th>통과 기준</th><th>Gazebo 결과</th></tr><tr><td><code>s10_road_collect</code></td><td>넘어진 2대 + 샛길 옆에 나란히 세워진 3대(배터리 부족)</td><td>5대 수거 → 주차구역 2대 → 충전소 3대 → 로봇 충전</td><td><span class="ok">통과</span> 5/5, 주차구역 2·충전소 3, 로봇 80% 충전, 118 m</td></tr><tr><td><code>s11_side_street_blocked</code></td><td>샛길 입구를 공사 펜스가 막음</td><td>연결로·뒷길로 돌아 들어가 2대 수거</td><td><span class="ok">통과</span> 순환로로 우회해 2/2, 128 m, 펜스와 최소 1.27 m</td></tr><tr><td><code>s12_bus_stop_cluster</code></td><td>버스정류장 주변 세워진 4대 + 넘어진 1대</td><td>5대 수거 (4대 → 하역 → 1대)</td><td><span class="ok">통과</span> 5/5 (4대 → 하역 → 1대)</td></tr><tr><td><code>s13_rent_waiting</code></td><td>대기 중 누가 빌려 감, 뒤에 넘어진 채 반납</td><td>자동 취소 → 반납 후 재요청·수거</td><td><span class="ok">통과</span> 보고 끊김으로 취소 → 반납 후 수거, 2/2</td></tr><tr><td><code>s14_rent_in_progress</code></td><td>로봇이 가는 도중 누가 빌려 감</td><td>확인 실패·알림 후 다음 대상 수거</td><td><span class="ok">통과</span> 1번 확인 실패·알림, 2번 수거</td></tr><tr><td><code>s15_moved_waiting</code></td><td>대기 중 누가 12 m 옮겨 놓음</td><td>병합으로 위치 갱신, 새 자리에서 수거</td><td><span class="ok">통과</span> 병합으로 위치 갱신, 2/2</td></tr><tr><td><code>s16_refall_after_drop</code></td><td>주차구역에 세워 둔 킥보드가 다시 넘어짐</td><td>같은 킥보드 두 번 수거</td><td><span class="ok">통과</span> 같은 킥보드 2회 수거·하역</td></tr><tr><td><code>s17_night_battery</code></td><td>밤, 주차구역 안 배터리 부족 5대 (충전 자리 4곳)</td><td>5번째는 오래 맡긴 것을 치우고 하역</td><td><span class="ok">통과</span> 5/5 충전소, 오래된 1대 치움, 157 m</td></tr><tr><td><code>s18_double_parked</code></td><td>불법 주차 차량이 킥보드 앞 차도를 막음</td><td>열린 곳의 1대 수거, 막힌 1대는 사람 호출</td><td><span class="fix">부분</span> 2번 수거, 1번은 nav_failed 알림(기대한 동작). 단 접근 자리를 찾다가 주차 차량과 접촉 1회</td></tr><tr><td><code>s19_peak_stream</code></td><td>15초마다 킥보드가 반납됨, 총 6대</td><td>6대 수거, 대기 시간 측정</td><td><span class="ok">통과</span> 6/6, 대기 평균 173초·최대 328초, 126 m</td></tr></table></div>
+<h3>시나리오 파일 형식</h3>
+<pre><code>name: "이름"
+map: street
+gps_noise_sigma: 1.0     # GPS 오차 (m), 생략하면 1.0
+robot: {initial_battery_pct: 55, capacity: 4}
+scooters:                # spawn_at 을 안 쓰면 처음부터 놓여 있음
+  - {id: 1, x: -8.0, y: 5.4, yaw_deg: 180, tilt_deg: 90, battery_pct: 70}   # tilt 90 = 넘어짐
+  - {id: 2, x: -3.4, y: 7.2, yaw_deg: 90, battery_pct: 8}                   # 세워짐, 배터리 부족
+events:                  # fall | stand | battery | move | rent | return | obstacle | remove_obstacle | pedestrian
+  - {t: 30, id: 1, type: fall}</code></pre>
+<ul>
+<li>킥보드는 연석에서 0.4 m 안쪽 인도에, 연석과 나란히 둡니다. 더 깊으면 로봇팔이 닿지 않아 관리자 알림으로 넘어갑니다.</li>
+<li><code>yaw_deg</code> 는 넘어질 때 기둥이 인도 안쪽으로 눕는 방향으로 줍니다: 북쪽 인도 180, 남쪽 인도 0, 샛길 서쪽 −90, 동쪽 연석 90. 반대로 주면 차도 쪽으로 넘어져 접근 자리를 막습니다.</li>
+<li>주차구역 안 자리: N1 은 (−14…−11, 5.45), S1 은 (9…12, −1.45), E1 은 (12.55, 6.5…9.5).</li>
+<li>새 시나리오를 쓴 뒤 <code>python3 src/kickboard_sim/scripts/check_env.py --all</code> 로 팔이 닿는지·길이 있는지 먼저 점검하세요.</li>
+</ul>
+</section>
+
+<section id="map2d">
+<h2>3. 맵 2D 배치도</h2>
+<figure><div class="map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" font-family="sans-serif">
+<rect width="640" height="480" fill="rgb(158,158,153)"/>
+<rect x="3.2" y="160.0" width="633.6" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="272.0" y="64.0" width="80.0" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="528.0" y="64.0" width="64.0" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="3.2" y="3.2" width="633.6" height="60.8" fill="rgb(56,56,61)"/>
+<rect x="176.0" y="256.0" width="80.0" height="32.0" fill="rgb(56,56,61)"/>
+<rect x="3.2" y="288.0" width="400.0" height="188.8" fill="rgb(91,91,96)"/>
+<rect x="3.2" y="64.0" width="268.8" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="352.0" y="64.0" width="176.0" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="592.0" y="64.0" width="44.8" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="3.2" y="256.0" width="172.8" height="32.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="256.0" y="256.0" width="380.8" height="32.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="403.2" y="288.0" width="233.6" height="188.8" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="3.2" y="207.2" width="633.6" height="1.6" fill="rgb(242,216,51)"/>
+<rect x="75.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="115.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="155.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="195.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="235.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="275.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="315.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="355.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="395.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="96.0" y="137.6" width="48.0" height="22.4" fill="rgb(51,178,76)"/>
+<rect x="505.6" y="88.0" width="22.4" height="48.0" fill="rgb(51,178,76)"/>
+<rect x="464.0" y="256.0" width="48.0" height="22.4" fill="rgb(51,178,76)"/>
+<rect x="0.0" y="0.0" width="640.0" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="0.0" y="476.8" width="640.0" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="636.8" y="0.0" width="3.2" height="480.0" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="0.0" y="0.0" width="3.2" height="480.0" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="24.0" y="80.0" width="200.0" height="44.8" fill="rgb(183,132,102)" stroke="#222" stroke-width="0.8"/>
+<text x="124.0" y="107.4" font-size="14" text-anchor="middle" fill="#111">상가</text>
+<rect x="384.0" y="92.8" width="112.0" height="38.4" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="440.0" y="117.0" font-size="14" text-anchor="middle" fill="#111">카페·편의점</text>
+<rect x="448.0" y="328.0" width="176.0" height="128.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="536.0" y="397.0" font-size="14" text-anchor="middle" fill="#111">오피스</text>
+<rect x="544.0" y="275.2" width="48.0" height="9.6" fill="rgb(76,127,153)" stroke="#222" stroke-width="0.8"/>
+<text x="568.0" y="285.0" font-size="10" text-anchor="middle" fill="#111">버스정류장</text>
+<circle cx="56.0" cy="139.2" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="620.8" cy="144.0" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="368.0" cy="281.6" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<rect x="3.2" y="286.4" width="172.8" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="256.0" y="286.4" width="147.2" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="401.6" y="289.6" width="3.2" height="187.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="80.8" y="400.8" width="30.4" height="72.0" fill="rgb(51,76,140)" stroke="#222" stroke-width="0.8"/>
+<rect x="120.8" y="400.8" width="30.4" height="72.0" fill="rgb(216,216,224)" stroke="#222" stroke-width="0.8"/>
+<rect x="200.8" y="400.8" width="30.4" height="72.0" fill="rgb(153,38,38)" stroke="#222" stroke-width="0.8"/>
+<rect x="280.8" y="400.8" width="30.4" height="72.0" fill="rgb(51,76,140)" stroke="#222" stroke-width="0.8"/>
+<rect x="320.8" y="400.8" width="30.4" height="72.0" fill="rgb(216,216,224)" stroke="#222" stroke-width="0.8"/>
+<rect x="360.8" y="400.8" width="30.4" height="72.0" fill="rgb(153,38,38)" stroke="#222" stroke-width="0.8"/>
+<rect x="96.0" y="137.6" width="48.0" height="22.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="120.0" y="152.8" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">N1</text>
+<rect x="505.6" y="88.0" width="22.4" height="48.0" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="516.8" y="116.0" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">E1</text>
+<rect x="464.0" y="256.0" width="48.0" height="22.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="488.0" y="271.2" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">S1</text>
+<text x="144.0" y="212.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">간선도로</text>
+<text x="312.0" y="116.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">샛길</text>
+<text x="560.0" y="116.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">연결로</text>
+<text x="448.0" y="37.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">뒷길</text>
+<text x="216.0" y="276.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">진입로</text>
+<text x="192.0" y="340.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">공영 주차장</text>
+<text x="136.0" y="148.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">인도 (진입 금지)</text>
+<circle cx="6.4" cy="376.0" r="7" fill="#1a4fd0" stroke="#fff" stroke-width="1.5"/>
+<rect x="11.2" y="368.8" width="27.2" height="14.4" fill="#f5c400" stroke="#222" stroke-width="1"/>
+<text x="24.8" y="364.0" font-size="12" text-anchor="middle" font-weight="bold" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">충전소·로봇</text>
+<text x="2" y="476" font-size="10" fill="#fff">-20</text>
+<text x="162" y="476" font-size="10" fill="#fff">-10</text>
+<text x="322" y="476" font-size="10" fill="#fff">0</text>
+<text x="482" y="476" font-size="10" fill="#fff">10</text>
+<text x="642" y="476" font-size="10" fill="#fff">20</text>
+<text x="2" y="478" font-size="10" fill="#fff">-15</text>
+<text x="2" y="318" font-size="10" fill="#fff">-5</text>
+<text x="2" y="158" font-size="10" fill="#fff">5</text>
+<text x="2" y="-2" font-size="10" fill="#fff">15</text>
+</svg></div>
+<figcaption><strong>street — 일반 도로, 40 × 30 m.</strong> 어두운 면 = 차도·주차장(주행 가능), 흰 테두리의 밝은 면 = 인도(진입 금지). 초록 테두리 = 킥보드 주차구역 N1·E1·S1(인도 위, 한 변이 연석). 노란 사각형 = 충전소에 도킹한 로봇. 눈금 m.</figcaption></figure>
+<ul>
+<li>차도망: 간선도로(폭 6 m) + 가운데 샛길(5 m) + 동쪽 연결로(4 m) + 뒷길(3.8 m). 샛길–뒷길–연결로가 북동 블록을 한 바퀴 도는 순환로입니다.</li>
+<li>충전소는 간선도로 남쪽 진입로 안 공영 주차장 서쪽 벽. 주차구역까지 차도 경로: N1 20 m, S1 31 m, E1 38 m.</li>
+<li>로봇은 차도 가장자리(연석에서 0.8 m 이상)에 서서 인도의 킥보드를 집고, 주차구역에는 연석 밖 0.95 m 에 서서 내려놓습니다.</li>
+<li>Gazebo 측정(S10 과 같은 배치, 119 m): 로봇 중심과 바퀴는 인도에 0회 진입. 차체 모서리는 14% 시간 동안 연석선을 최대 22 cm 넘음(킥보드 앞 정렬·제자리 회전 때). 인도는 6 cm 높이의 시각 표시이고 충돌체는 없습니다.</li>
+<li>배치 파일: <code>src/kickboard_sim/scripts/build_env.py</code> 의 <code>street()</code>. 고친 뒤 스크립트를 돌리면 Gazebo world·지도 2장·맵 설정·배치도가 함께 다시 만들어집니다.</li>
+</ul>
+</section>
+
+<section id="map3d">
+<h2>4. 맵 3D</h2>
+<div class="viewbar">
+  <button id="b-labels" aria-pressed="true">이름 표시</button>
+  <button id="b-top">위에서 보기</button>
+  <button id="b-reset">기본 시점</button>
+</div>
+<div id="view"><div id="hint">끌기: 회전 · 휠/두 손가락: 확대 · 오른쪽 끌기: 이동</div></div>
+<div class="legend">
+  <span><i style="background:#38383d"></i>차도·주차장</span><span><i style="background:#bcb7ad"></i>인도 (진입 금지, 솟은 면)</span>
+  <span><i style="background:#33b34d"></i>킥보드 주차구역</span><span><i style="background:#1a4fd0"></i>충전소</span><span><i style="background:#f5c400"></i>로봇</span>
+  <span><i style="background:#e21a1a"></i>넘어진 킥보드</span><span><i style="background:#ff8000"></i>세워진 킥보드 (보라 기둥 = 배터리 부족)</span>
+</div>
+<p id="desc"></p>
+<p><small>이 3D 화면과 Gazebo world(<code>worlds/street.sdf</code>)는 같은 배치 데이터에서 만들어져 건물·울타리·차량의 위치와 크기가 같습니다. 인도 높이는 Gazebo 에서 6 cm, 여기서는 잘 보이게 15 cm 로 그렸습니다. 놓여 있는 킥보드는 S10 의 처음 배치입니다.</small></p>
+</section>
+<section id="algo">
+<h2>5. 시스템과 알고리즘</h2>
+<p>킥보드가 스스로 이상을 알리면 로봇이 대기열에서 하나를 골라 찾아가고, 카메라로 확인해 싣고, 상태에 따라 주차구역이나 충전소에 내려놓습니다. 사람은 실패 알림이 올 때만 개입합니다.</p>
+<div class="flow">
+  <span>킥보드 보고 1 Hz</span><b>→</b><span>요청 접수·GPS 변환</span><b>→</b><span>대기열 점수</span><b>→</b><span>접근(A*)</span><b>→</b><span>태그 확인</span><b>→</b><span>정렬·적재</span><b>→</b><span>주차구역 / 충전소 하역</span><b>→</b><span>도킹·충전</span>
+</div>
+
+<h3>5-1. 요청은 언제 생기나 (<code>scooter_fleet_sim</code>, 킥보드 펌웨어 흉내)</h3>
+<p>킥보드는 1초마다 GPS·기울기·배터리를 보고합니다. 아래 조건을 위에서부터 검사해 처음 걸리는 사유 하나로 수거 요청을 보냅니다.</p>
+<div class="tbl"><table>
+<tr><th>우선</th><th>사유</th><th>조건</th><th>가중치 R</th></tr>
+<tr><td class="n">1</td><td>FALLEN 넘어짐</td><td>기울기 &gt; 45°</td><td class="n">3</td></tr>
+<tr><td class="n">2</td><td>OUT_OF_ZONE 구역 밖</td><td>주차구역 다각형 밖 (point-in-polygon)</td><td class="n">2</td></tr>
+<tr><td class="n">3</td><td>LOW_BATTERY 배터리 부족</td><td>배터리 &lt; 15% (서 있고 구역 안일 때)</td><td class="n">1</td></tr>
+</table></div>
+<p>사유가 바뀔 때만 다시 보냅니다. 같은 ID 의 요청이 이미 대기열에 있으면 새 항목을 만들지 않고 <strong>병합</strong>합니다(사유만 갱신, 접수 시각은 유지). GPS 에는 표준편차 1 m 의 오차를 섞습니다.</p>
+
+<h3>5-2. GPS → 지도 좌표 (<code>geo.py</code>)</h3>
+<p>위경도를 지구 중심 좌표(ECEF)로 바꾼 뒤, 지도 원점을 기준으로 동(E)·북(N) 방향 거리로 바꿉니다. 지도의 +x 가 동쪽, +y 가 북쪽입니다. 수 km 안에서는 오차가 mm 수준이라, 위치 오차는 사실상 전부 GPS 수신 오차입니다. 그래서 GPS 는 "대략 여기"까지만 믿고 마지막은 카메라로 맞춥니다.</p>
+
+<h3>5-3. 누구부터 갈까 — 점수식 (<code>queue_logic.py</code>)</h3>
+<div class="formula">S = w_r · R + w_t · t − w_d · d &nbsp;&nbsp;&nbsp; (기본 w_r = 10, w_t = 1, w_d = 5)</div>
+<ul>
+  <li><strong>R</strong> 사유 가중치(3/2/1). 넘어진 킥보드가 보행에 가장 위험하므로 가장 큽니다.</li>
+  <li><strong>t</strong> 기다린 시간(초). 오래 기다릴수록 점수가 올라갑니다. 이것이 aging 입니다.</li>
+  <li><strong>d</strong> 로봇에서 킥보드까지 직선 거리(m). 가까울수록 유리합니다.</li>
+</ul>
+<p>예: 로봇에서 2 m 떨어진 방금 넘어진 킥보드는 30 + 0 − 10 = <strong>20점</strong>. 8 m 떨어진 배터리 부족 킥보드는 10 + t − 40 이므로 50초를 기다려야 20점이 됩니다. 즉 먼 요청도 기다리면 결국 이깁니다.</p>
+<p><strong>기아 방지 상한 t_max</strong> = (w_r · (3 − 1) + w_d · d_max) / w_t. 실내 맵(대각선 12.8 m)에서는 (20 + 64) / 1 = 84초입니다. 84초를 넘게 기다린 항목은 나중에 들어온 어떤 요청에도 밀리지 않습니다. 단, 이것은 "우선순위에서 안 밀린다"는 보장이지 "84초 안에 수거된다"는 보장이 아닙니다. 로봇이 하던 일을 끝내야 다음 선택을 하기 때문입니다(비선점).</p>
+
+<h3>5-4. 미션 상태 머신 (<code>mission_manager</code>)</h3>
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> SELECTING
+  SELECTING --> IDLE: 대기열 빔 (도킹 상태)
+  IDLE --> SELECTING: 새 요청
+  SELECTING --> NAVIGATING: 점수 1등 선택
+  NAVIGATING --> VERIFYING: 접근 완료
+  VERIFYING --> LOADING: 태그 확인
+  LOADING --> SELECTING: 적재 +1
+  NAVIGATING --> FAILED: 이동 3회 실패
+  VERIFYING --> FAILED: 10초 미검출
+  FAILED --> SELECTING: 관리자 알림 후
+  SELECTING --> DROPPING: 만재 또는 대기열 빔 (주차구역행 있음)
+  DROPPING --> SELECTING: 주차구역에 세움
+  SELECTING --> RETURNING: 만재 / 배터리 20% 이하 / 할 일 없음
+  NAVIGATING --> RETURNING: 주행 중 배터리 20% 이하 (대상 반납)
+  RETURNING --> DOCKING
+  DOCKING --> CHARGING: 충전소행 하역
+  CHARGING --> SELECTING: 80% 이상
+</pre>
+<p>판단은 SELECTING 한 곳에서만 합니다. 이동 중에 더 급한 요청이 와도 지금 가던 길을 끊지 않습니다. 단 하나의 예외가 로봇 배터리입니다. 주행 중 20% 이하가 되면 대상을 대기열에 되돌리고(대기 시간은 유지) 충전하러 갑니다.</p>
+
+<h3>5-5. 수거 4단계 (<code>collector</code>)</h3>
+<div class="grid2">
+  <div><h4>① 접근 NAVIGATING</h4><p>GPS 점에서 1.6 m 떨어진 빈 자리로 갑니다. GPS 가 1 m 쯤 틀리므로 일부러 떨어져 섭니다. 가는 도중 태그가 1.8 m 안에서 보이면 바로 도착으로 칩니다.</p></div>
+  <div><h4>② 확인 VERIFYING</h4><p>킥보드 ID 와 같은 번호의 AprilTag 를 찾습니다. 안 보이면 제자리에서 돌며 10초간 찾고, 못 찾으면 실패(실물 없음)로 넘깁니다. 카메라 시야는 62°, 3 m 입니다.</p></div>
+  <div><h4>③ 정렬 ALIGNING</h4><p>태그 위치를 1초 평균해 킥보드 중심을 구하고(GPS 오차 1 m 대 → 0.1 m 이내), 중심에서 1.35 m 떨어진 빈 자리로 옮겨 킥보드를 바라봅니다. 팔이 닿는 거리입니다.</p></div>
+  <div><h4>④ 적재 LOADING</h4><p>로봇팔이 발판을 집어 적재함 4칸 중 빈 칸에 꽂습니다(약 25초). Gazebo 가 아닌 kinematic 모드에서는 3초 정지로 대신합니다.</p></div>
+</div>
+
+<h3>5-6. 길 찾기 (<code>nav_bridge</code> + <code>planner.py</code>)</h3>
+<ul>
+  <li><strong>코스트맵</strong>: 정적 지도(벽·건물)와 라이다로 본 장애물(킥보드·보행자)을 격자에 합칩니다. 라이다 빔이 지나간 칸은 비우고 맞은 칸은 60초 기억합니다.</li>
+  <li><strong>비용</strong>: 장애물에서 0.47 m(로봇 반폭) 안은 통과 불가, 1.1 m(로봇 전체를 덮는 원) 안은 가까울수록 비쌉니다. 그래서 넓은 길 가운데로 다니고, 좁은 틈은 꼭 필요할 때만 지납니다.</li>
+  <li><strong>A*</strong>: 8방향 격자 탐색으로 비용이 가장 작은 경로를 찾고, 직선으로 보이는 구간은 건너뛰어 꺾임을 줄입니다. 1초(도로 맵은 2초)마다, 또는 새 장애물이 경로를 막으면 즉시 다시 계획합니다.</li>
+  <li><strong>추종</strong>: "돌고 → 직진하고 → 마지막에 방향 맞춤" 방식의 P 제어. 바로 앞 0.15 m 안에 뭔가 있으면 멈추는 안전장치가 따로 있습니다.</li>
+  <li><strong>빈 자리 고르기</strong>: 목표 둘레 원 위에서 로봇 쪽 방향부터 좌우로 15°씩 넓혀 가며 장애물과 1.1 m 이상 떨어진 점을 찾습니다.</li>
+</ul>
+
+<h3>5-7. 어디에 내려놓나, 배터리, 도킹</h3>
+<ul>
+  <li><strong>하역 장소</strong>: 실을 때 킥보드 배터리를 보고 정합니다. 15% 미만이면 충전소(충전 자리 4곳, 가득 차면 가장 오래된 것부터 "충전 끝" 처리), 아니면 가장 가까운 주차구역. 주차구역 변 밖 0.95 m 에 서서 0.45 m 간격으로 나란히 세웁니다.</li>
+  <li><strong>로봇 배터리</strong>: 소모 = 이동 거리 × k1 + 시간 × k2. 실내 맵은 1 %/m 로 일부러 빨리 닳게 했고, 실외 맵은 0.12 %/m 입니다. 20% 이하면 복귀, 80% 까지 충전합니다.</li>
+  <li><strong>도킹</strong>: 충전소 2 m 앞(pre-dock)까지는 경로 주행, 그 뒤 1 m 는 충전소 태그를 보며 저속(0.08 m/s) P 제어. 태그 위치를 저역 통과해 흔들림을 줄입니다. 목표는 5 cm, 5° 이내이고 이번 실행들에서는 최대 5.0 cm, 4.4° 였습니다(기준에 딱 걸린 실행이 1회).</li>
+</ul>
+</section>
+
+<section id="real">
+<h2>6. 현실에서는 어떻게 운영되나</h2>
+<p>지금 공유 킥보드 수거·충전은 거의 전부 사람이 합니다. 이 프로젝트는 그중 "찾아가서 싣고 옮기는" 부분을 로봇으로 바꿔 보는 것입니다.</p>
+<div class="tbl"><table>
+<tr><th>항목</th><th>현실</th><th>우리 프로젝트</th></tr>
+<tr><td>누가 움직이나</td><td>운영 인력이 승합차·트럭으로 순회합니다. 초기에는 일반인이 밤에 집으로 가져가 충전하는 방식(해외의 긱 워커 모델)도 있었지만 품질 문제로 대부분 직영·위탁 인력으로 바뀌었습니다.</td><td>1.7 × 0.9 m 로봇 1대가 4대씩 실어 나릅니다.</td></tr>
+<tr><td>충전</td><td>요즘 기기는 대부분 교체형 배터리입니다. 기기를 옮기지 않고 현장에서 배터리만 갈아 끼웁니다. 한 사업자는 교체형이면 기기 1대당 배터리 약 1.5개가 필요하다고 밝혔습니다. 충전 거치대(도킹 스테이션)는 일부 지역에서만 씁니다.</td><td>배터리 부족 킥보드를 통째로 충전소에 가져다 둡니다. 현실과 가장 다른 부분입니다.</td></tr>
+<tr><td>이상 감지</td><td>기기의 GPS·IMU·배터리 정보가 LTE 로 서버에 올라갑니다. 넘어짐·구역 밖 주차·저전압을 서버가 판정하고, 시민 신고(QR, 지자체 신고 시스템)도 큰 비중입니다.</td><td>같은 구조를 1 Hz 보고로 흉내 냅니다. 시민 신고는 <code>/request_collection</code> 서비스 수동 호출에 해당합니다.</td></tr>
+<tr><td>주차 관리</td><td>앱의 지오펜스(반납 금지·권장 구역), 반납 사진 확인. 서울시는 2021년부터 조례로 불법 주정차 기기를 견인하고 견인료를 사업자에게 물립니다. 다른 지자체도 견인과 전용 주차구역 확대를 진행 중입니다(평택시 견인료 2만 원, 고양시 전용 주차구역 확대 등 2026년 보도).</td><td>주차구역 다각형 밖이면 OUT_OF_ZONE 요청. 로봇이 견인 대신 가까운 주차구역에 세워 둡니다.</td></tr>
+<tr><td>작업 순서 정하기</td><td>수요 예측과 차량 경로 문제(VRP)로 여러 대 차량의 순회 경로를 한꺼번에 짭니다. 배터리 잔량·민원 기한(견인 유예 시간)·재배치 수요가 함께 들어갑니다.</td><td>로봇 1대가 매번 점수 1등 하나만 고르는 탐욕(greedy) 방식. 단순하지만 요청이 계속 들어오는 상황에 강하고 설명하기 쉽습니다.</td></tr>
+<tr><td>위치 오차</td><td>도심 GPS 는 건물 사이에서 수 m 에서 10 m 넘게도 틀립니다. 작업자는 앱 지도와 벨 소리로 찾습니다.</td><td>GPS(σ 1 m)로 근처까지 가고 AprilTag 로 확정. 실제 기기에는 태그가 없으므로 QR·차체 인식으로 바꿔야 합니다.</td></tr>
+<tr><td>자율화 시도</td><td>2021년 Spin 이 Segway 의 3륜 T60 과 Tortoise 의 원격 조종으로 "킥보드가 스스로 자리를 옮기는" 시범을 미국 보이시에서 했습니다. 이후 대규모 상용화 소식은 확인하지 못했습니다. 수거 로봇이 돌아다니는 방식은 상용 사례를 찾지 못했습니다.</td><td>킥보드는 그대로 두고 별도 로봇이 수거. 캠퍼스·주차장처럼 닫힌 구역에서 먼저 성립할 만한 형태입니다.</td></tr>
+<tr><td>제도 (한국)</td><td>2021년 5월 도로교통법 개정으로 면허·안전모가 의무가 됐습니다. 대여업 등록제·총량 관리 같은 전용 법은 2025년 9월 토론회 시점까지 없다는 지적이 있었고, 그 뒤의 제정 여부는 확인하지 못했습니다. 2026년 7월부터 서울 지하철은 리튬배터리 PM 반입을 제한합니다.</td><td>로봇이 보도를 달리려면 실외이동로봇 운행 인증 같은 별도 절차가 필요합니다. 시뮬레이션에서는 다루지 않습니다.</td></tr>
+</table></div>
+<p><small>출처: <a href="https://www.mt.co.kr/policy/2026/10/01/2026093011227846444">머니투데이 2026-10-01</a>, <a href="https://m.go.seoul.co.kr/news/2026/06/26/20260626500101">서울신문 2026-06-26 (평택시 견인료)</a>, <a href="https://www.metroseoul.co.kr/article/20261022500070">메트로신문 2026-10-22 (고양시)</a>, <a href="https://zdnet.co.kr/view/?no=20250917150226">ZDNet Korea 2025-09-17</a>, <a href="https://www.youthassembly.kr/news/967352">지하철 PM 반입 제한</a>, <a href="https://ceoscoredaily.com/page/view/2021052515253505626">2021 도로교통법 개정</a>, <a href="https://www.bird.co/?p=12336">Bird: 교체형 배터리</a>, <a href="https://thevergenews.pages.dev/2021/1/27/22252156/spin-scooter-remote-control-tortoise-segway">Spin·Tortoise·Segway T60</a>. 출처가 붙지 않은 운영 방식 설명은 일반적으로 알려진 내용을 정리한 것이므로 보고서에 쓰기 전에 확인이 필요합니다.</small></p>
+<h3>시나리오를 짤 때 현실에서 가져올 것</h3>
+<ul>
+  <li><strong>시간대</strong>: 출근(역·정류장에 몰림), 수업 직후(강의동 앞), 야간(배터리 일괄 수거).</li>
+  <li><strong>사람</strong>: 가는 도중 누가 빌려 감, 옮겨 놓음, 다시 넘어뜨림, 보행자 통행.</li>
+  <li><strong>장소</strong>: 횡단보도, 주차 차량 사이, 잔디·계단처럼 로봇이 못 들어가는 곳, 건물 옆 GPS 음영.</li>
+  <li><strong>자원 한계</strong>: 적재함 4칸, 충전 자리 4곳, 주차구역 자리 수, 로봇 배터리.</li>
+</ul>
+</section>
+
+
+<section id="todo">
+<h2>7. 팀에 넘길 것과 남은 일</h2>
+<ul>
+<li><strong>담당자 패치.</strong> <code>my_ws/patches_for_team/</code>: <code>C_nav_lidar.patch</code>(인도 진입 금지, 도킹 방향 맞춤, 스캔 시각 보정, 가까운 빈 자리, 장애물 스캔 반영), <code>D_collector_mission.patch</code>(팔 도달 거리 확인, 상태 되돌아감 수정), <code>B_queue_manager.patch</code>(보고 끊긴 대기 항목 자동 취소), <code>B_README_additions.patch</code>(옛 내용 — README 는 새로 써야 함). 지금 워크스페이스에는 이 수정이 들어가 있고 시나리오가 여기에 의존합니다.</li>
+<li><strong>E 에게 알릴 것.</strong> S1–S9 가 도로 맵 기준으로 바뀜(좌표·배터리 초기값·S5 구성 변경), 새 토픽 <code>/sim/obstacles</code>(std_msgs/String). msg·srv·action 정의는 바꾸지 않았습니다.</li>
+<li><strong>보관.</strong> 실내 시나리오 17개, 캠퍼스 시나리오 6개, 캠퍼스 맵, 옛 도로 시나리오는 <code>src/kickboard_sim/archive/</code>. 실내 world(<code>kickboard_world.sdf</code>)와 그 지도는 다른 설정이 참조하므로 제자리에 두었습니다. 처음 상태의 전체 백업은 <code>~/lecture_2026_2/Ros_TermProject/my_ws_src_backup_20261116.tar.gz</code>.</li>
+<li><strong>다른 작업과 겹침.</strong> 11월 16일 22:31 에 제가 만들지 않은 "확장 프로필"이 워크스페이스에 추가돼 있습니다(<code>extended.launch.py</code>, <code>extended_*.py</code> 노드 8개, <code>config/scenarios_extended/</code> 의 다른 s10–s19, <code>street_extended</code>·<code>campus_extended</code> 맵). 이 페이지의 19개와는 별개이고 저는 그쪽을 실행·검증하지 않았습니다. 그쪽 테스트 <code>test_legacy_manifest_hashes</code> 는 "기존 파일이 안 바뀌었는지" 해시로 확인하는데, 그 뒤 제가 <code>nav_bridge.py</code>·<code>planner.py</code> 를 고쳤기 때문에 지금은 실패합니다(나머지 35개 테스트는 통과). 어느 쪽을 기준으로 할지 정해 주시면 맞추겠습니다.</li>
+<li><strong>확인하지 못한 것.</strong> Gazebo 화면(GUI)을 띄운 실행, Nav2 모드, 반복 실행에 의한 성공률(시나리오당 1회).</li>
+<li><strong>알려진 한계.</strong> 새로 보인 장애물 바로 뒤가 목표이면 로봇이 그 앞에서 제자리 회전을 반복함(S11 주의). 주차구역에 이미 세워진 킥보드를 인식하지 못함. 처리 중인 대상은 대여돼도 취소되지 않음(S14). 인도는 시각 표시뿐이고 충돌체가 없음. 보행자·횡단보도 시나리오는 차도 전용 맵으로 바뀌며 빠짐.</li>
+</ul>
+</section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const MAPS = {street: {"name": "street", "title": "일반 도로 (차도 주행) + 공영 주차장", "bounds": [-20, -15, 20, 15], "outline": null, "solids": [{"k": "box", "x": 0.0, "y": 14.9, "a": 40, "b": 0.2, "h": 1.0, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": 0.0, "y": -14.9, "a": 40, "b": 0.2, "h": 1.0, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": 19.9, "y": 0.0, "a": 0.2, "b": 30, "h": 1.0, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": -19.9, "y": 0.0, "a": 0.2, "b": 30, "h": 1.0, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": -12.25, "y": 8.6, "a": 12.5, "b": 2.8, "h": 4.0, "c": [0.72, 0.52, 0.4], "label": "상가"}, {"k": "box", "x": 7.5, "y": 8.0, "a": 7, "b": 2.3999999999999995, "h": 3.5, "c": [0.8, 0.74, 0.6], "label": "카페·편의점"}, {"k": "box", "x": 13.5, "y": -9.5, "a": 11, "b": 8.0, "h": 6.0, "c": [0.55, 0.62, 0.72], "label": "오피스"}, {"k": "box", "x": 15.5, "y": -2.5, "a": 3, "b": 0.5999999999999996, "h": 2.4, "c": [0.3, 0.5, 0.6], "label": "버스정류장"}, {"k": "cyl", "x": -16.5, "y": 6.3, "a": 0.2, "b": 0.0, "h": 3.0, "c": [0.2, 0.45, 0.2], "label": null}, {"k": "cyl", "x": 18.8, "y": 6.0, "a": 0.2, "b": 0.0, "h": 3.0, "c": [0.2, 0.45, 0.2], "label": null}, {"k": "cyl", "x": 3.0, "y": -2.6, "a": 0.2, "b": 0.0, "h": 3.0, "c": [0.2, 0.45, 0.2], "label": null}, {"k": "box", "x": -14.4, "y": -3.0, "a": 10.8, "b": 0.20000000000000018, "h": 0.8, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": 0.6000000000000001, "y": -3.0, "a": 9.2, "b": 0.20000000000000018, "h": 0.8, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": 5.199999999999999, "y": -8.950000000000001, "a": 0.20000000000000018, "b": 11.700000000000001, "h": 0.8, "c": [0.5, 0.5, 0.5], "label": null}, {"k": "box", "x": -14.0, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.2, 0.3, 0.55], "label": null}, {"k": "box", "x": -11.5, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.85, 0.85, 0.88], "label": null}, {"k": "box", "x": -6.5, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.6, 0.15, 0.15], "label": null}, {"k": "box", "x": -1.5, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.2, 0.3, 0.55], "label": null}, {"k": "box", "x": 1.0, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.85, 0.85, 0.88], "label": null}, {"k": "box", "x": 3.5, "y": -12.3, "a": 1.9, "b": 4.5, "h": 1.5, "c": [0.6, 0.15, 0.15], "label": null}], "marks": [{"x": -11.4, "y": 8.0, "sx": 16.8, "sy": 6, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": 7.5, "y": 8.0, "sx": 11, "sy": 6, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": 18.4, "y": 8.0, "sx": 2.8000000000000007, "sy": 6, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": -14.4, "y": -2.0, "sx": 10.8, "sy": 2, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": 7.9, "y": -2.0, "sx": 23.8, "sy": 2, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": 12.5, "y": -8.9, "sx": 14.600000000000001, "sy": 11.8, "c": [0.74, 0.72, 0.68], "layer": 1, "h": 0.06}, {"x": 0.0, "y": 2.0, "sx": 39.6, "sy": 6, "c": [0.22, 0.22, 0.24], "layer": 0, "h": 0}, {"x": -0.5, "y": 8.0, "sx": 5, "sy": 6, "c": [0.22, 0.22, 0.24], "layer": 0, "h": 0}, {"x": 15.0, "y": 8.0, "sx": 4, "sy": 6, "c": [0.22, 0.22, 0.24], "layer": 0, "h": 0}, {"x": 0.0, "y": 12.9, "sx": 39.6, "sy": 3.8000000000000007, "c": [0.22, 0.22, 0.24], "layer": 0, "h": 0}, {"x": -6.5, "y": -2.0, "sx": 5, "sy": 2, "c": [0.22, 0.22, 0.24], "layer": 0, "h": 0}, {"x": -7.300000000000001, "y": -8.9, "sx": 25.0, "sy": 11.8, "c": [0.36, 0.36, 0.38], "layer": 0, "h": 0}, {"x": 0.0, "y": 2.0, "sx": 39.6, "sy": 0.09999999999999987, "c": [0.95, 0.85, 0.2], "layer": 2, "h": 0}, {"x": -15.25, "y": -12.4, "sx": 0.10000000000000142, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -12.75, "y": -12.4, "sx": 0.10000000000000142, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -10.25, "y": -12.4, "sx": 0.10000000000000142, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -7.75, "y": -12.4, "sx": 0.09999999999999964, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -5.25, "y": -12.4, "sx": 0.09999999999999964, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -2.75, "y": -12.4, "sx": 0.09999999999999964, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -0.25, "y": -12.4, "sx": 0.09999999999999998, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": 2.25, "y": -12.4, "sx": 0.09999999999999964, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": 4.75, "y": -12.4, "sx": 0.09999999999999964, "sy": 4.800000000000001, "c": [0.95, 0.95, 0.95], "layer": 2, "h": 0}, {"x": -12.5, "y": 5.7, "sx": 3, "sy": 1.4000000000000004, "c": [0.2, 0.7, 0.3], "layer": 3, "h": 0}, {"x": 12.3, "y": 8.0, "sx": 1.4000000000000004, "sy": 3.0, "c": [0.2, 0.7, 0.3], "layer": 3, "h": 0}, {"x": 10.5, "y": -1.7, "sx": 3, "sy": 1.4, "c": [0.2, 0.7, 0.3], "layer": 3, "h": 0}], "drivable": [[-19.8, -1, 19.8, 5], [-3, 5, 2, 11], [13, 5, 17, 11], [-19.8, 11, 19.8, 14.8], [-9, -3, -4, -1], [-19.8, -14.8, 5.2, -3]], "keepout": [], "zones": [{"name": "N1", "r": [-14, 5, -11, 6.4]}, {"name": "E1", "r": [11.6, 6.5, 13, 9.5]}, {"name": "S1", "r": [9, -2.4, 12, -1]}], "gates": [], "labels": [[-11, 2.0, "간선도로"], [-0.5, 8.0, "샛길"], [15, 8.0, "연결로"], [8, 12.9, "뒷길"], [-6.5, -2.0, "진입로"], [-8, -6.0, "공영 주차장"], [-11.5, 6.0, "인도 (진입 금지)"]], "charger": {"x": -19.6, "y": -8.5, "yaw": 0.0, "dock": [-18.448, -8.5]}, "scooters": [[-8.0, 5.4, 180, 1, 0], [-3.4, 7.2, 90, 0, 1], [-3.4, 8.1, 90, 0, 1], [-3.4, 9.0, 90, 0, 1], [17.4, 9.0, 90, 1, 0]]}};
+const DESC = {
+  campus: '경북대학교 대구캠퍼스 안내도(KNU ON MAP)의 외곽선·문·건물 위치를 1/12 쯤으로 줄여 옮긴 90 × 90 m 맵입니다. 건물은 대표 29동만 골라 로봇이 다닐 수 있게 사이를 4 m 이상 띄웠습니다. 그래서 위치 관계는 실제와 같지만 축척, 건물 수, 도로 폭은 다릅니다. 충전소는 본관 남쪽 벽에 있습니다.',
+  street: '로봇이 차도와 주차장으로만 다니는 40 × 30 m 맵입니다. 어두운 면이 차도, 흰 테두리로 솟은 밝은 면이 인도(진입 금지)입니다. 간선도로에서 가운데 샛길과 동쪽 연결로로 들어가 뒷길로 이어지는 순환로가 있고, 주차장 진입로 안쪽에 충전소가 있습니다. 놓여 있는 킥보드 5대는 시나리오 S10 의 처음 배치입니다(빨강 = 넘어짐, 주황 = 세워짐, 보라 기둥 = 배터리 부족).'
+};
+(function(){
+  const box = document.getElementById('view');
+  if (!window.THREE || !THREE.OrbitControls) { const d=document.createElement('div'); d.id='err'; d.textContent='3D 라이브러리를 불러오지 못했습니다. 네트워크를 확인한 뒤 새로 고쳐 주세요.'; box.appendChild(d); return; }
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  box.insertBefore(renderer.domElement, box.firstChild);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.maxPolarAngle = Math.PI/2 - 0.03; controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x777777, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.65); sun.position.set(-40, 80, 30); scene.add(sun);
+  let group = null, labels = [], showLabels = true, span = 50, cur = 'street';
+  const rgb = c => new THREE.Color(c[0], c[1], c[2]);
+  const mat = (c, o) => new THREE.MeshLambertMaterial(Object.assign({color:c}, o||{}));
+  function slab(x, y, sx, sy, h, z, material){ const m = new THREE.Mesh(new THREE.BoxGeometry(sx, h, sy), material); m.position.set(x, z + h/2, -y); return m; }
+  function label(text, x, y, z, scale){
+    const c = document.createElement('canvas'), g = c.getContext('2d'), f = 44;
+    g.font = '600 '+f+'px "IBM Plex Sans KR","Malgun Gothic",sans-serif';
+    const w = Math.ceil(g.measureText(text).width) + 28; c.width = w; c.height = f + 22;
+    g.font = '600 '+f+'px "IBM Plex Sans KR","Malgun Gothic",sans-serif';
+    g.fillStyle = 'rgba(255,255,255,0.92)'; g.fillRect(0, 0, w, c.height);
+    g.strokeStyle = '#222'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, w-3, c.height-3);
+    g.fillStyle = '#111'; g.textBaseline = 'middle'; g.fillText(text, 14, c.height/2 + 2);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
+    const hgt = scale; s.scale.set(hgt * w / c.height, hgt, 1); s.position.set(x, z, -y); s.renderOrder = 10; s.visible = showLabels;
+    labels.push(s); return s;
+  }
+  function build(name){
+    cur = name; const d = MAPS[name];
+    if (group) scene.remove(group); group = new THREE.Group(); labels = [];
+    const [x0, y0, x1, y1] = d.bounds; span = Math.max(x1-x0, y1-y0);
+    const ls = span / 38;
+    const far = new THREE.Mesh(new THREE.PlaneGeometry(span*3, span*3), mat(0x6f8f62)); far.rotation.x = -Math.PI/2; far.position.y = -0.05; group.add(far);
+    if (d.outline) {
+      const sh = new THREE.Shape(d.outline.map(p => new THREE.Vector2(p[0], p[1])));
+      const g = new THREE.Mesh(new THREE.ShapeGeometry(sh), mat(0xbcb7ad)); g.rotation.x = -Math.PI/2; group.add(g);
+      const n = d.outline.length, wm = mat(0x808080);
+      for (let i=0;i<n;i++){ const a=d.outline[i], b=d.outline[(i+1)%n]; const len=Math.hypot(b[0]-a[0], b[1]-a[1]);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(len+0.2, 1.0, 0.2), wm); m.position.set((a[0]+b[0])/2, 0.5, -(a[1]+b[1])/2); m.rotation.y = Math.atan2(b[1]-a[1], b[0]-a[0]); group.add(m); }
+    } else { group.add(slab((x0+x1)/2, (y0+y1)/2, x1-x0, y1-y0, 0.02, -0.02, mat(0x9e9e99))); }
+    const up = d.drivable && d.drivable.length ? 0.15 : 0;   // 인도를 차도보다 높게 (실제 6 cm 를 잘 보이게 15 cm 로)
+    d.marks.forEach(m => group.add(m.h > 0 ? slab(m.x, m.y, m.sx, m.sy, up, 0, mat(rgb(m.c))) : slab(m.x, m.y, m.sx, m.sy, 0.02, 0.005 + 0.012*m.layer, mat(rgb(m.c)))));
+    if (up) d.marks.filter(m => m.h > 0).forEach(m => { const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.sx, up, m.sy)), new THREE.LineBasicMaterial({color:0xffffff})); e.position.set(m.x, up/2, -m.y); group.add(e); });
+    (d.scooters||[]).forEach(s => { const g = new THREE.Group(); const col = s[3] ? 0xe21a1a : 0xff8000, stem = s[4] ? 0x9933e6 : 0xbfbfc7;
+      if (s[3]) { g.add(slab(0, 0, 0.56, 0.16, 0.05, 0.08, mat(col))); g.add(slab(0.27, -0.45, 0.05, 0.9, 0.05, 0.08, mat(stem))); }
+      else { g.add(slab(0, 0, 0.56, 0.16, 0.05, 0.08, mat(col))); g.add(slab(0.27, 0, 0.05, 0.05, 0.85, 0.1, mat(stem))); g.add(slab(0.27, 0, 0.04, 0.42, 0.04, 0.93, mat(stem))); }
+      g.position.set(s[0], up, -s[1]); g.rotation.y = s[2]*Math.PI/180; group.add(g); });
+    d.keepout.forEach(k => group.add(slab(k.x, k.y, k.sx, k.sy, 0.06, 0.08, mat(0xdd3333, {transparent:true, opacity:0.32}))));
+    d.solids.forEach(s => {
+      let m;
+      if (s.k === 'box') m = slab(s.x, s.y, s.a, s.b, s.h, 0, mat(rgb(s.c)));
+      else { m = new THREE.Mesh(new THREE.CylinderGeometry(s.a, s.a, s.h, 20), mat(rgb(s.c))); m.position.set(s.x, s.h/2, -s.y); }
+      group.add(m);
+      if (s.label) group.add(label(s.label, s.x, s.y, s.h + ls*0.9, ls));
+    });
+    d.zones.forEach(z => { const r = z.r; group.add(slab((r[0]+r[2])/2, (r[1]+r[3])/2, r[2]-r[0], r[3]-r[1], 0.04, up ? up : 0.1, mat(0x33b34d)));
+      group.add(label('P ' + z.name, (r[0]+r[2])/2, (r[1]+r[3])/2, ls*1.1, ls*0.8)); });
+    (d.gates||[]).forEach(g => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2.4, 12), mat(0xffffff)); m.position.set(g[0], 1.2, -g[1]); group.add(m); group.add(label(g[2], g[0], g[1], 3.4 + ls*0.5, ls*0.85)); });
+    (d.labels||[]).forEach(l => group.add(label(l[2], l[0], l[1], ls*0.8, ls*0.75)));
+    const c = d.charger, st = slab(c.x, c.y, 0.3, 0.6, 0.5, 0, mat(0x1a4fd0)); st.rotation.y = c.yaw; group.add(st);
+    const rb = new THREE.Group();
+    rb.add(slab(-0.05, 0, 1.6, 0.74, 0.35, 0.1, mat(0xf5c400))); rb.add(slab(0.55, 0, 0.4, 0.74, 0.6, 0.3, mat(0xd9a800)));
+    rb.position.set(c.dock[0], 0, -c.dock[1]); rb.rotation.y = c.yaw + Math.PI; group.add(rb);
+    group.add(label('충전소·로봇', c.dock[0], c.dock[1], 2.2 + ls*0.5, ls*0.85));
+    scene.add(group);
+    document.getElementById('desc').textContent = DESC[name];
+    view(false);
+  }
+  function view(top){
+    const d = MAPS[cur], cx = (d.bounds[0]+d.bounds[2])/2, cy = (d.bounds[1]+d.bounds[3])/2;
+    controls.target.set(cx, 0, -cy);
+    if (top) camera.position.set(cx, span*1.25, -cy + 0.01); else camera.position.set(cx - span*0.15, span*0.75, -cy + span*0.95);
+    controls.update();
+  }
+  function size(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+  function sky(){ const v = getComputedStyle(document.documentElement).getPropertyValue('--sky').trim() || '#cfe3f1'; scene.background = new THREE.Color(v); }
+  document.getElementById('b-top').onclick = () => view(true);
+  document.getElementById('b-reset').onclick = () => view(false);
+  document.getElementById('b-labels').onclick = e => { showLabels = !showLabels; labels.forEach(l => l.visible = showLabels); e.currentTarget.setAttribute('aria-pressed', showLabels); };
+  window.addEventListener('resize', size);
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sky);
+  new MutationObserver(sky).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  size(); sky(); build('street');
+  (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+})();
+</script>
+
+</body>
+</html>
