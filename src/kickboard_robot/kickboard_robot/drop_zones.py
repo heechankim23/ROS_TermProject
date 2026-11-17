@@ -63,6 +63,20 @@ def choose_plan(plans, used, robot_xy, need=1):
     return None if best is None else (best[1], best[2])
 
 
+def nearby_drop(plans, used, robot_xy, need, max_dist):
+    """근처 주차구역 하역 판정: choose_plan 이 고를 하역 자리(로봇이 설 곳)가 max_dist(m) 안이면 그 거리, 아니면 None.
+    max_dist <= 0 이거나 내릴 킥보드가 없으면(need <= 0) 항상 None (기능 끔).
+    start_drop 과 같은 choose_plan 호출을 쓰므로, 여기서 고른 자리로 실제로 이동한다."""
+    if max_dist <= 0 or need <= 0:
+        return None
+    ch = choose_plan(plans, used, robot_xy, need=need)
+    if ch is None:
+        return None
+    rx, ry, _ = ch[0]['robot']
+    d = math.hypot(rx - robot_xy[0], ry - robot_xy[1])
+    return d if d <= max_dist else None
+
+
 # 충전소 충전 자리: 충전소 태그 면 앞, 도킹한 로봇의 양옆 (로봇팔이 닿는 곳)
 CHARGER_FRONT = 0.25            # 태그 면 -> 킥보드 중심 (태그 법선 방향)
 CHARGER_LATERAL = (0.8, -0.8, 1.25, -1.25)   # 좌우 (오른쪽부터 쓰려면 순서를 바꾼다)

@@ -12,6 +12,8 @@
   배터리 < scooter_battery_threshold_pct  -> 'charger' (충전소에 맡김. 넘어짐·구역 밖 사유여도)
   그 외 (넘어짐 · 구역 밖)                -> 'parking' (가까운 주차구역에 세워 둠 -> 다시 정상 킥보드)
 만재이거나 대기열이 비면: parking 킥보드가 있으면 DROPPING, 아니면 충전소로.
+근처 주차구역: 배터리 정상 + parking 킥보드가 있고, 가장 가까운 하역 자리가 opportunistic_drop_dist(m) 안이면
+  다음 대상을 고르기 전에 먼저 DROPPING (0 이면 끔).
 로봇 배터리가 부족하면 parking 킥보드를 실은 채 먼저 충전하고, 충전 후 DROPPING.
 주차구역에 빈 자리가 없으면 충전소에서 전부 하역한다.
 
@@ -32,7 +34,7 @@ from kickboard_interfaces.msg import AdminAlert, QueueStatus, RobotStatus, Scoot
 from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
-from .drop_zones import charger_spots, choose_plan, edge_plans
+from .drop_zones import charger_spots, choose_plan, edge_plans, nearby_drop
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 
@@ -69,6 +71,7 @@ class MissionManager(Node):
         self.declare_parameter('map_yaml', '')             # 로봇이 설 자리 빈 공간 판정
         self.declare_parameter('drop_clearance', 1.05)
         self.declare_parameter('unload_sim_sec', 1.5)      # 로봇팔이 없을 때(kinematic) 1대 하역 시간
+        self.declare_parameter('opportunistic_drop_dist', 2.0)   # 이 거리(m) 안에 하역 자리가 있으면 들러서 내림. 0 = 끔
 
         self.cb = MutuallyExclusiveCallbackGroup()   # 모든 콜백 직렬화 -> 상태 경합 없음
         self.pose = PoseTracker(self)
@@ -80,6 +83,8 @@ class MissionManager(Node):
         self.used_spots = []           # 주차구역에 이미 세운 자리 (x, y)
         self.dock_unload_all = False   # 주차구역 자리가 없을 때 충전소에서 전부 하역
         self.drop_plan = None
+        self.drop_nearby = False       # 지금 하역이 '근처 주차구역' 하역인가
+        self.nearby_ok = True          # 근처 하역 이동이 실패하면 다음 적재 전까지 다시 시도하지 않음
         self.charger_spots = []        # 충전소 충전 자리 [(x, y, yaw)]
         self.charger_occ = []          # 자리별로 맡긴 킥보드 id (None = 빈 자리)
         self.charger_fifo = []         # 맡긴 순서 (가득 차면 가장 오래된 것을 '충전 끝'으로 치움)
@@ -222,6 +227,12 @@ class MissionManager(Node):
         pose = self.pose.get()
         if pose is None:
             return
+        # 근처 주차구역: 대기열에 묻기 전에 주차구역행을 먼저 내림 (SELECTING 에서만 판단 -> 비선점 유지)
+        if self.nearby_ok:
+            d = nearby_drop(self.drop_plans, self.used_spots, pose[:2], len(self.cargo_for(PARKING)),
+                            self.p('opportunistic_drop_dist'))
+            if d is not None and self.start_drop(f'(근처 주차구역 {d:.1f} m)', nearby=True):
+                return
         self.pending = True
         fut = self.select_cli.call_async(SelectNextTarget.Request(robot_x=pose[0], robot_y=pose[1]))
         fut.add_done_callback(self.on_selected)
@@ -275,6 +286,7 @@ class MissionManager(Node):
             batt = self.scooter_batt.get(sid)
             dest = drop_destination(batt, self.p('scooter_battery_threshold_pct'))
             self.cargo.append((sid, dest))
+            self.nearby_ok = True
             self.report(sid, 'DONE', 'loaded', res.corrected_pose.pose)
             self.ev.emit('collected', id=sid, corrected_x=res.corrected_pose.pose.position.x,
                          corrected_y=res.corrected_pose.pose.position.y, load=self.load, dest=dest)
@@ -357,8 +369,9 @@ class MissionManager(Node):
             jobs.append((sid, self.charger_spots[idx], 'charger'))
         self.run_unloads(jobs, lambda n: then(n))
 
-    def start_drop(self, why):
-        """가장 가까운 주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)"""
+    def start_drop(self, why, nearby=False):
+        """가장 가까운 주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)
+        nearby=True: 근처 주차구역 하역. 이동에 실패해도 충전소로 돌아가지 않고 수거를 계속한다."""
         pose = self.pose.get()
         if pose is None:
             return False
@@ -369,6 +382,7 @@ class MissionManager(Node):
             self.dock_unload_all = True
             return False
         self.drop_plan = ch
+        self.drop_nearby = nearby
         plan, spots = ch
         self.at_dock = False
         self.set_state(DROPPING, f'{why} -> 주차구역 {plan["zone"]} ({len(parking)}대)')
@@ -403,6 +417,13 @@ class MissionManager(Node):
 
     def on_drop_nav_failed(self, why):
         self.pending = False
+        if self.drop_nearby:
+            # 들르는 하역이었으므로 실은 채로 수거를 계속한다. 같은 실패를 반복하지 않게 다음 적재 전까지 근처 하역 끔
+            self.drop_nearby = False
+            self.nearby_ok = False
+            self.get_logger().warn(f'근처 주차구역 이동 실패 ({why}) -> 실은 채로 수거 계속')
+            self.set_state(SELECTING, '(근처 주차구역 이동 실패)')
+            return
         self.alert('drop', 'nav_failed', f'주차구역 이동 실패: {why} -> 충전소에서 전부 하역')
         self.dock_unload_all = True
         self.start_dock('(주차구역 이동 실패)')
