@@ -1,5 +1,4 @@
 """간단한 평면 이동 제어기 (nav_bridge simple 백엔드, collector 정렬, dock_controller 공용)."""
-"test2"
 import math
 
 
