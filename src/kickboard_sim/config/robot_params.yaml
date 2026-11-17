@@ -1,7 +1,7 @@
 # 노드별 기본 파라미터. 시나리오 YAML 의 robot.* 값이 launch 에서 덮어쓴다.
 queue_manager:
   ros__parameters:
-    w_r: 10.0          # TODO(C): 가중치 실험 후 확정 (PRD 9장 미결)
+    w_r: 10.0          # 2026-11-15 s5 가중치 실험으로 10/1/5 유지 확정 (B, README 10장)
     w_t: 1.0
     w_d: 5.0
     d_max: 12.8        # 방 대각선 (10 x 8 m)
