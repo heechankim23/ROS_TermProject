@@ -45,7 +45,7 @@ class Costmap:
 
     # ---------------- 좌표 ----------------
     def cell(self, x, y):
-        return int((y - self.y0) / self.res), int((x - self.x0) / self.res)
+        return math.floor((y - self.y0) / self.res), math.floor((x - self.x0) / self.res)
 
     def center(self, j, i):
         return self.x0 + (i + 0.5) * self.res, self.y0 + (j + 0.5) * self.res
@@ -64,7 +64,8 @@ class Costmap:
             valid &= ~np.asarray(ignore, dtype=bool)
         hit = valid & (r < range_max * 0.98)
         rr = np.where(valid, np.minimum(r, range_max), range_max)
-        rr = np.where(np.isfinite(r), rr, range_max)            # inf = 끝까지 비어 있음
+        rr = np.where(np.isposinf(r), range_max, rr)    # +inf: no return within range
+        rr = np.where(np.isnan(r) | np.isneginf(r), 0.0, rr)    # Unknown beams must not clear obstacles
         rr = np.where(r <= range_min, 0.0, rr)                  # 너무 가까움 = 비우지도 않음
         if ignore is not None:
             rr = np.where(ignore, 0.0, rr)
@@ -126,7 +127,7 @@ class Costmap:
                         and dj * dj + di * di <= er * er:
                     cost[j, i] = 1.0 + self.weight
         nbrs = [(-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
-                (-1, -1, 1.4142), (-1, 1, 1.4142), (1, -1, 1.4142), (1, 1, 1.4142)]
+                (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)), (1, 1, math.sqrt(2))]
         g = {(sj, si): 0.0}
         parent = {}
         openq = [(0.0, sj, si)]
@@ -144,6 +145,8 @@ class Costmap:
                 c = cost[nj, ni]
                 if math.isinf(c):
                     continue
+                if dj and di and (math.isinf(cost[j, ni]) or math.isinf(cost[nj, i])):
+                    continue  # Do not cut diagonally between blocked cells.
                 ng = gc + step * c
                 if ng < g.get((nj, ni), float('inf')):
                     g[(nj, ni)] = ng
@@ -162,11 +165,17 @@ class Costmap:
 
     def segment_ok(self, a, b, cost, max_cost):
         n = max(2, int(math.hypot(b[0] - a[0], b[1] - a[1]) / (self.res * 0.5)))
+        previous = None
         for k in range(n + 1):
             x, y = a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n
             j, i = self.cell(x, y)
             if not self.inside(j, i) or cost[j, i] > max_cost:
                 return False
+            if previous is not None:
+                pj, pi = previous
+                if j != pj and i != pi and (cost[pj, i] > max_cost or cost[j, pi] > max_cost):
+                    return False
+            previous = (j, i)
         return True
 
     def shortcut(self, pts, cost):
