@@ -42,7 +42,10 @@ def score(item, now, robot_xy, w):
 
 
 def starvation_bound(w, d_max):
-    """대기 시간이 이 값을 넘으면 나중에 들어온 어떤 항목에도 밀리지 않는다 (PRD 4장)."""
+    """이 값(초)보다 더 늦게 들어온 항목에는 밀리지 않는다 (PRD 4장).
+
+    먼저 또는 이 시간 안에 들어온 항목에는 밀릴 수 있으므로 '대기 <= t_max 안에 선택' 을 보장하지는 않는다.
+    """
     dr_max = max(REASON_WEIGHT.values()) - min(REASON_WEIGHT.values())
     return (w.w_r * dr_max + w.w_d * d_max) / w.w_t if w.w_t > 0 else float('inf')
 

@@ -1,7 +1,7 @@
 # 노드별 기본 파라미터. 시나리오 YAML 의 robot.* 값이 launch 에서 덮어쓴다.
 queue_manager:
   ros__parameters:
-    w_r: 10.0          # TODO(C): 가중치 실험 후 확정 (PRD 9장 미결)
+    w_r: 10.0          # 2026-11-15 s5 가중치 실험으로 10/1/5 유지 확정 (B, README 10장)
     w_t: 1.0
     w_d: 5.0
     d_max: 12.8        # 방 대각선 (10 x 8 m)
@@ -18,6 +18,7 @@ mission_manager:
     admin_alerts: true
     drop_clearance: 1.05       # 주차구역 하역 때 로봇이 서는 자리의 벽 여유 (제자리 회전 반경 0.98)
     scooter_battery_threshold_pct: 15.0   # 실은 킥보드 배터리가 이보다 낮으면 충전소, 아니면 주차구역에 하역
+    opportunistic_drop_dist: 2.0  # 하역 자리가 이 거리(m) 안이면 다음 대상 전에 들러서 내림. 0 = 끔 (예전 동작)
 
 battery_manager:
   ros__parameters:
@@ -37,6 +38,9 @@ collector:
 
 nav_bridge:
   ros__parameters:
+    scan_timeout_sec: 1.0     # 센서 수신 중단 감지: 실제 시간 기준 (시뮬 정지 중에도 정지)
+    pose_timeout_sec: 1.0     # TF 타임스탬프 허용 나이: ROS 시간 기준
+    sensor_wait_timeout_sec: 5.0  # 센서 복구 대기 한도: 실제 시간 기준
     max_retries: 2
     goal_timeout_sec: 120.0
     goal_clearance: 1.1        # 목표 지점에서 장애물(벽 + 라이다)까지 최소 거리: 회전 반경 0.98 + 격자(0.1 m) 오차

@@ -12,6 +12,8 @@
   배터리 < scooter_battery_threshold_pct  -> 'charger' (충전소에 맡김. 넘어짐·구역 밖 사유여도)
   그 외 (넘어짐 · 구역 밖)                -> 'parking' (가까운 주차구역에 세워 둠 -> 다시 정상 킥보드)
 만재이거나 대기열이 비면: parking 킥보드가 있으면 DROPPING, 아니면 충전소로.
+근처 주차구역: 배터리 정상 + parking 킥보드가 있고, 고를 하역 위치(start_drop 과 같은 고르기)가 opportunistic_drop_dist(m) 안이면
+  다음 대상을 고르기 전에 먼저 DROPPING (0 이면 끔).
 로봇 배터리가 부족하면 parking 킥보드를 실은 채 먼저 충전하고, 충전 후 DROPPING.
 주차구역에 빈 자리가 없으면 충전소에서 전부 하역한다.
 
@@ -39,7 +41,7 @@ from kickboard_interfaces.msg import AdminAlert, QueueStatus, RobotStatus, Scoot
 from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
-from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans
+from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans, nearby_drop
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
                             LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
@@ -91,6 +93,8 @@ class MissionManager(Node):
         self.declare_parameter('energy_unload_sec', 25.0)
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
+        # 근처 주차구역: 대상을 고르기 전에 이 거리(m) 안에 하역 위치가 있으면 들러서 내림. 0 = 끔 (main 5c92abe)
+        self.declare_parameter('opportunistic_drop_dist', 2.0)
 
         self.cb = MutuallyExclusiveCallbackGroup()   # 모든 콜백 직렬화 -> 상태 경합 없음
         self.pose = PoseTracker(self)
@@ -104,6 +108,8 @@ class MissionManager(Node):
         self.dock_unload_all = False   # 주차구역 자리가 없을 때 충전소에서 전부 하역
         self.drop_plan = None
         self.charger = ChargerSlots([])   # 충전소 충전 자리 배정 (map_config 를 읽으면 채움)
+        self.drop_nearby = False       # 지금 하역이 '근처 주차구역' 하역인가
+        self.nearby_ok = True          # 근처 하역 이동이 실패하면 다음 적재 전까지 다시 시도하지 않음
         self.battery = 100.0
         self.target = None             # scooter id
         self.waiting_items = 0
@@ -389,6 +395,9 @@ class MissionManager(Node):
         elif d.action == 'RETURN':
             self.go_return(d)
         elif d.action == 'QUERY':
+            # 근처 주차구역: 대기열에 묻기 전에 주차구역행을 먼저 내림 (SELECTING 에서만 판단 -> 비선점 유지)
+            if self.nearby_ok and self.start_drop('', nearby=True):
+                return
             # collector 가 없으면 대상을 받지 않는다 (받으면 IN_PROGRESS -> 시간 초과 -> REQUEUE 를 끝없이 반복)
             if not self.server_up('collector', self.collect_ac.server_is_ready()):
                 return
@@ -454,6 +463,7 @@ class MissionManager(Node):
             batt = self.scooter_batt.get(sid)
             dest = drop_destination(batt, self.mp.scooter_battery_threshold_pct)
             self.cargo.add(sid, dest)
+            self.nearby_ok = True
             self.report(sid, 'DONE', 'loaded', res.corrected_pose.pose)
             self.ev.emit('collected', id=sid, corrected_x=res.corrected_pose.pose.position.x,
                          corrected_y=res.corrected_pose.pose.position.y, load=self.cargo.load, dest=dest)
@@ -531,10 +541,12 @@ class MissionManager(Node):
         self.dock_unload_all = False
         self.run_unloads(self.charger.plan_unload(ids), then)
 
-    def start_drop(self, why, queue_empty=False, attempt=1):
+    def start_drop(self, why, queue_empty=False, attempt=1, nearby=False):
         """주차구역 변으로 이동 -> 로봇팔로 내려 세움. 갈 곳이 없으면 False (충전소에서 전부 하역)
         자리는 '로봇 -> 하역 위치 + 하역 위치 -> 다음 갈 곳'이 가장 짧은 것 (다음 갈 곳: drop_next_points)
-        attempt: 몇 번째 하역 위치 시도인지 (이동 실패 시 on_drop_nav_failed 가 다음 위치로 다시 부른다)"""
+        attempt: 몇 번째 하역 위치 시도인지 (이동 실패 시 on_drop_nav_failed 가 다음 위치로 다시 부른다)
+        nearby=True: 근처 주차구역 하역 (do_select). 고른 위치가 opportunistic_drop_dist 밖이면 아무것도 안 하고 False.
+          이동에 실패해도 충전소로 돌아가지 않고 실은 채로 수거를 계속한다."""
         self.drop_why, self.drop_queue_empty, self.drop_attempt = why, queue_empty, attempt
         pose = self.pose.get()
         if pose is None:
@@ -543,6 +555,12 @@ class MissionManager(Node):
         next_xys = drop_next_points(queue_empty, self.waiting_xy, self.dock_xy)
         plans = clear_plans(self.drop_plans, self.lying_xy, self.p('drop_keepout_m'))
         plans = clear_plans(plans, self.blocked_xy(), 0.3)      # 방금 이동에 실패한 위치는 잠시 안 씀
+        if nearby:                                  # 고를 위치가 가까울 때만 (start_drop 과 같은 고르기)
+            d = nearby_drop(plans, self.used_spots, pose[:2], len(parking), self.p('opportunistic_drop_dist'),
+                            next_xys=next_xys, next_weight=self.mp.drop_next_weight)
+            if d is None:
+                return False
+            why = f'(근처 주차구역 {d:.1f} m)'
         if len(plans) < len(self.drop_plans):
             self.ev.emit('drop_keepout', excluded=len(self.drop_plans) - len(plans), left=len(plans))
         ch = choose_plan(plans, self.used_spots, pose[:2], need=len(parking), next_xys=next_xys,
@@ -562,9 +580,10 @@ class MissionManager(Node):
                              battery=round(self.battery, 1))
                 return False
         self.drop_plan = ch
+        self.drop_nearby = nearby
         self.ev.emit('drop_plan', zone=plan['zone'], robot_x=round(pose[0], 2), robot_y=round(pose[1], 2),
                      next=('waiting' if not queue_empty and self.waiting_xy else 'dock' if next_xys else 'none'),
-                     n_next=len(next_xys))
+                     n_next=len(next_xys), nearby=nearby)
         self.at_dock = False
         self.set_state(DROPPING, f'{why} -> 주차구역 {plan["zone"]} ({len(parking)}대)')
         rx, ry, ryaw = plan['robot']
@@ -626,6 +645,13 @@ class MissionManager(Node):
         if plan is not None:                       # 이 위치는 한동안 안 씀
             self.blocked_stands.append((plan['robot'][0], plan['robot'][1], now_sec(self) + self.p('drop_block_sec')))
         self.ev.emit('drop_failed', zone=plan['zone'] if plan else '', why=why, attempt=self.drop_attempt)
+        if self.drop_nearby:
+            # 들르는 하역이었으므로 실은 채로 수거를 계속한다. 같은 실패를 반복하지 않게 다음 적재 전까지 근처 하역 끔
+            self.drop_nearby = False
+            self.nearby_ok = False
+            self.get_logger().warn(f'근처 주차구역 이동 실패 ({why}) -> 실은 채로 수거 계속')
+            self.set_state(SELECTING, '(근처 주차구역 이동 실패)')
+            return
         if self.drop_attempt < self.p('max_drop_attempts'):
             self.get_logger().warn(f'주차구역 이동 실패 ({why}) -> 다른 하역 위치 시도 {self.drop_attempt + 1}')
             if self.start_drop(self.drop_why, self.drop_queue_empty, attempt=self.drop_attempt + 1):

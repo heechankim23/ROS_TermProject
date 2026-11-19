@@ -80,6 +80,24 @@ def test_drop_zone_spots():
     assert plan2 is not south
 
 
+def test_nearby_drop_opportunistic():
+    """근처 주차구역 하역 판정 (D 요청, 2026-11-17)"""
+    from kickboard_robot.drop_zones import choose_plan, edge_plans, nearby_drop
+    zone_b = [[2.0, -3.7], [4.0, -3.7], [4.0, -2.3], [2.0, -2.3]]
+    north = max(edge_plans('B', zone_b), key=lambda p: p['robot'][1])      # 실제 맵에서 쓰는 변 (3.0, -1.35)
+    plans = [north]
+    pick = (2.34, -2.31)                         # s5: 1번(3.5, -3.0)을 실으러 서는 자리
+    d = nearby_drop(plans, [], pick, need=2, max_dist=2.0)
+    assert d is not None and abs(d - math.hypot(3.0 - 2.34, -1.35 + 2.31)) < 1e-6
+    assert nearby_drop(plans, [], pick, need=2, max_dist=0.0) is None      # 0 = 끔 (예전 동작)
+    assert nearby_drop(plans, [], pick, need=0, max_dist=2.0) is None      # 내릴 킥보드 없음
+    assert nearby_drop(plans, [], (-3.548, 0.0), need=1, max_dist=2.0) is None   # 먼 곳 (도킹 자리)
+    used = [(s[0], s[1]) for s in north['spots']]
+    assert nearby_drop(plans, used, pick, need=1, max_dist=2.0) is None    # 빈 자리 없음 -> 기존 경로
+    # start_drop 이 실제로 고르는 자리와 같은 자리로 판정
+    assert choose_plan(plans, [], pick, need=2)[0] is north
+
+
 def test_charger_spots_reachable_from_dock():
     from kickboard_robot.drop_zones import charger_spots
     spots = charger_spots(-4.548, 0.0, 0.0)

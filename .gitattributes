@@ -1,0 +1,10 @@
+# 줄바꿈 통일: 저장소에는 항상 LF 로 저장한다 (Windows 에서 CRLF 로 바뀌어 전체 파일이 충돌하는 것을 막음)
+* text=auto eol=lf
+
+# 바이너리
+*.pgm binary
+*.png binary
+*.jpg binary
+*.stl binary
+*.dae binary
+*.tar.gz binary
