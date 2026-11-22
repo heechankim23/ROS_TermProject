@@ -13,7 +13,7 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction,
+from launch.actions import (DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, OpaqueFunction, TimerAction,
                             SetEnvironmentVariable)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration as LC
@@ -21,11 +21,16 @@ from launch_ros.actions import Node
 
 
 def _setup(context):
+    import sys
     share = get_package_share_directory('kickboard_sim')
+    sys.path.insert(0, os.path.join(share, 'launch'))
+    from map_utils import map_files
+    mf = map_files(LC('map_name').perform(context))
+    nav_map = LC('map').perform(context) or mf['nav_map']
     sim, nav = LC('sim').perform(context), LC('nav').perform(context)
     gui = LC('gui').perform(context) == 'true'
     use_sim_time = sim == 'gz'
-    with open(os.path.join(share, 'config', 'map_config.yaml')) as f:
+    with open(mf['config']) as f:
         spawn = yaml.safe_load(f)['robot_spawn']
     sx, sy, syaw = spawn['x'], spawn['y'], math.radians(spawn['yaw_deg'])
 
@@ -48,19 +53,37 @@ def _setup(context):
         models = os.path.join(share, 'models')
         acts.append(SetEnvironmentVariable(
             'GZ_SIM_RESOURCE_PATH', os.pathsep.join(filter(None, [os.environ.get('GZ_SIM_RESOURCE_PATH'), models]))))
-        world = os.path.join(share, 'worlds', 'kickboard_world.sdf')
-        if LC('sensors').perform(context) != 'true':
-            # 렌더링(라이다·카메라) 없이 물리만: X 디스플레이/GPU 가 없어도 동작
+        world = mf['world']
+        rtf = float(LC('rtf').perform(context) or 1.0)
+        if LC('sensors').perform(context) != 'true' or abs(rtf - 1.0) > 1e-6:
             import re
             import tempfile
             with open(world) as f:
-                txt = re.sub(r'<plugin filename="gz-sim-sensors-system".*?</plugin>', '', f.read(), flags=re.S)
-            tmp = tempfile.NamedTemporaryFile('w', suffix='_nosensors.sdf', delete=False)
+                txt = f.read()
+            if LC('sensors').perform(context) != 'true':
+                # 렌더링(라이다·카메라) 없이 물리만: X 디스플레이/GPU 가 없어도 동작
+                txt = re.sub(r'<plugin filename="gz-sim-sensors-system".*?</plugin>', '', txt, flags=re.S)
+            # 배속: 시뮬레이션 시간을 실제보다 rtf 배 빠르게 (노드는 모두 sim time 을 따른다). 0 = 가능한 한 빠르게
+            txt = re.sub(r'<real_time_factor>[^<]*</real_time_factor>', f'<real_time_factor>{rtf}</real_time_factor>', txt)
+            tmp = tempfile.NamedTemporaryFile('w', suffix=f'_{mf["name"]}.sdf', delete=False)
             tmp.write(txt)
             tmp.close()
             world = tmp.name
         # GUI: 기본 설정 + 'Kickboard status' 패널 (config/gz_gui.config)
-        gui_cfg = f"--gui-config {os.path.join(share, 'config', 'gz_gui.config')} " if gui else ''
+        gui_path = os.path.join(share, 'config', 'gz_gui.config')
+        if gui:
+            # 처음 화면: 로봇 뒤 위쪽에서 로봇을 바라봄 (캠퍼스 전체가 아니라 시나리오 현장부터 보이게)
+            import re
+            import tempfile
+            cx, cy = sx - 14 * math.cos(syaw), sy - 14 * math.sin(syaw)
+            with open(gui_path) as f:
+                gtxt = re.sub(r'<camera_pose>[^<]*</camera_pose>',
+                              f'<camera_pose>{cx:.1f} {cy:.1f} 10 0 0.55 {syaw:.3f}</camera_pose>', f.read())
+            gtmp = tempfile.NamedTemporaryFile('w', suffix='_gui.config', delete=False)
+            gtmp.write(gtxt)
+            gtmp.close()
+            gui_path = gtmp.name
+        gui_cfg = f"--gui-config {gui_path} " if gui else ''
         gz_args = f"-r {'' if gui else '-s '}{gui_cfg}--render-engine ogre {world}"
         acts.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(
@@ -77,10 +100,21 @@ def _setup(context):
             tmp.write(txt)
             tmp.close()
             robot_sdf = tmp.name
-        acts.append(Node(package='ros_gz_sim', executable='create', output='log',
-                         arguments=['-world', 'kickboard_world', '-name', 'kickboard_robot',
-                                    '-file', robot_sdf,
-                                    '-x', str(sx), '-y', str(sy), '-z', '0.01', '-Y', str(syaw)]))
+        # 로봇 생성: Gazebo 가 world(메시·텍스처)를 다 불러오기 전에 요청하면 응답 시간 초과로 로봇이 안 생긴다.
+        # 4초 뒤에 만들고, 12초 뒤에 한 번 더 요청한다 (이미 있으면 '이름 중복'으로 무시됨)
+        for k, delay in enumerate((4.0, 12.0)):
+            acts.append(TimerAction(period=delay, actions=[Node(
+                package='ros_gz_sim', executable='create', output='log', name=f'spawn_robot_{k}',
+                arguments=['-world', mf['name'], '-name', 'kickboard_robot', '-file', robot_sdf,
+                           '-x', str(sx), '-y', str(sy), '-z', '0.01', '-Y', str(syaw)])]))
+        if gui and LC('follow').perform(context) == 'true':
+            # 카메라가 로봇을 따라가게 (Gazebo 의 CameraTracking: /gui/follow). 로봇이 생긴 뒤에 두 번 요청
+            follow = ("gz service -s /gui/follow --reqtype gz.msgs.StringMsg --reptype gz.msgs.Boolean --timeout 3000 "
+                      "--req 'data: \"kickboard_robot\"'; "
+                      "gz service -s /gui/follow/offset --reqtype gz.msgs.Vector3d --reptype gz.msgs.Boolean "
+                      "--timeout 3000 --req 'x: -12 y: 0 z: 9'")
+            for delay in (10.0, 20.0):
+                acts.append(TimerAction(period=delay, actions=[ExecuteProcess(cmd=['bash', '-c', follow], output='log')]))
         acts.append(Node(package='ros_gz_bridge', executable='parameter_bridge', name='gz_bridge',
                          parameters=[{'config_file': os.path.join(share, 'config', 'gz_bridge.yaml'),
                                       'use_sim_time': True}], output='log'))
@@ -89,13 +123,14 @@ def _setup(context):
 
     # 라이다: Gazebo gpu_lidar 는 이 VM 에서 쓸 수 없어 sim_lidar 가 /scan 을 만든다 (gz·kinematic 공통)
     acts.append(Node(package='kickboard_robot', executable='sim_lidar', output='log',
-                     parameters=[{'use_sim_time': use_sim_time, 'map_yaml': LC('map').perform(context)}]))
+                     parameters=[{'use_sim_time': use_sim_time, 'map_yaml': mf['lidar_map']},
+                                 mf['params'].get('sim_lidar', {})]))
 
     if nav == 'nav2':
         acts.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(
                 get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
-            launch_arguments={'map': LC('map').perform(context),
+            launch_arguments={'map': nav_map,
                               'params_file': os.path.join(share, 'config', 'nav2_params.yaml'),
                               'use_sim_time': str(use_sim_time).lower(),
                               'autostart': 'true'}.items()))
@@ -123,8 +158,13 @@ def generate_launch_description():
         DeclareLaunchArgument('rviz', default_value='false'),
         DeclareLaunchArgument('camera', default_value='false',
                               description='true: 로봇 카메라 렌더링 (perception:=apriltag 에서 필요)'),
+        DeclareLaunchArgument('follow', default_value='true', description='Gazebo 카메라가 로봇을 따라감 (gui 일 때)'),
+        DeclareLaunchArgument('rtf', default_value='1.0',
+                              description='배속: Gazebo 시뮬레이션 시간 배율 (예: 4 = 4배속, 0 = 최대한 빠르게)'),
         DeclareLaunchArgument('sensors', default_value='true',
                               description='false: 라이다·카메라 렌더링 끔 (디스플레이 없는 환경, nav2 불가)'),
-        DeclareLaunchArgument('map', default_value=os.path.join(share, 'maps', 'kickboard_world.yaml')),
+        DeclareLaunchArgument('map_name', default_value='kickboard_world',
+                              description='맵 이름: kickboard_world | street | campus (launch/map_utils.py)'),
+        DeclareLaunchArgument('map', default_value='', description='Nav2 지도 yaml 경로 (비우면 맵 이름에서 정함)'),
         OpaqueFunction(function=_setup),
     ])

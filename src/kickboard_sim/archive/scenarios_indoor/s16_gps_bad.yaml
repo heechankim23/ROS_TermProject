@@ -1,0 +1,11 @@
+name: "16. GPS 오차 큼 (벽·모서리 근처)"
+description: >
+  GPS sigma 2.5 m (건물 옆 도심 수준). 킥보드가 벽·모서리 근처라 GPS 점이 벽 밖에 찍히기도 한다.
+  통과: 목표 주변에 빈 자리가 없으면 '가장 가까운 빈 자리'로 가서 회전 탐색으로 태그를 찾아 수거.
+  카메라 검출 거리(3 m)보다 GPS 가 더 어긋나면 verify_failed 가 날 수 있다 -> 그 비율을 기록 (PRD 수거 성공률 지표).
+robot: {initial_battery_pct: 100, capacity: 4}
+gps_noise_sigma: 2.5
+scooters:
+  - {id: 1, x: 4.3, y: 0.0, yaw_deg: 90}                               # 동쪽 벽 옆
+  - {id: 2, x: 3.5, y: -3.0, yaw_deg: 0, battery_pct: 9}               # 구역 B 모서리
+  - {id: 3, x: 0.0, y: -3.3, yaw_deg: 0, tilt_deg: 90}                 # 남쪽 벽 옆

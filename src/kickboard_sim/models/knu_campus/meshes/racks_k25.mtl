@@ -1,0 +1,80 @@
+newmtl rack_base
+Ka 0.160 0.160 0.180
+Kd 0.160 0.160 0.180
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl rack_purple
+Ka 0.550 0.420 0.850
+Kd 0.550 0.420 0.850
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl rack_kiosk
+Ka 0.250 0.260 0.290
+Kd 0.250 0.260 0.290
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl charge_teal
+Ka 0.180 0.660 0.600
+Kd 0.180 0.660 0.600
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl charge_dark
+Ka 0.100 0.120 0.130
+Kd 0.100 0.120 0.130
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl charge_sign
+Ka 0.150 0.350 0.800
+Kd 0.150 0.350 0.800
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl broken_red
+Ka 0.850 0.200 0.220
+Kd 0.850 0.200 0.220
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl gate_red
+Ka 0.800 0.180 0.220
+Kd 0.800 0.180 0.220
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl gate_white
+Ka 0.920 0.920 0.900
+Kd 0.920 0.920 0.900
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+
+newmtl dock_blue
+Ka 0.200 0.400 0.800
+Kd 0.200 0.400 0.800
+Ks 0.05 0.05 0.05
+Ns 10
+d 1.0
+illum 2
+

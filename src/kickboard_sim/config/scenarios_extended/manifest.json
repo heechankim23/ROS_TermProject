@@ -1,0 +1,25 @@
+{
+  "legacy": [
+    "s1_single",
+    "s2_new_request",
+    "s3_full_load",
+    "s4_low_battery",
+    "s5_aging",
+    "s6_verify_fail",
+    "s7_obstacle",
+    "s8_auto_cancel",
+    "s9_drop_sites"
+  ],
+  "extended": [
+    "s10_damaged_kickboard",
+    "s11_nighttime_collection",
+    "s12_clustered_blockage",
+    "s13_pedestrian_avoidance",
+    "s14_gps_denied_zone",
+    "s15_overload_weight",
+    "s16_docking_failure",
+    "s17_dynamic_car_parking",
+    "s18_weather_slippery",
+    "s19_cancel_during_transit"
+  ]
+}

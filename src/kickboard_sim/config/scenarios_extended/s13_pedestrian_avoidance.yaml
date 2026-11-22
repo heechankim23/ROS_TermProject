@@ -1,0 +1,38 @@
+name: 횡단 보행자 긴급 정지·재계획
+map: street_extended
+gps_noise_sigma: 0.15
+robot:
+  initial_battery_pct: 95
+  capacity: 4
+scooters:
+- id: 1
+  x: 4
+  y: 5.3
+  yaw_deg: 180
+  tilt_deg: 90
+  battery_pct: 80
+  weight_kg: 18
+extended:
+  weight_limit_kg: 75
+  speed_limit: 0.5
+  accel_limit: 0.4
+params:
+  mission_manager:
+    max_dock_retries: 3
+  nav_bridge:
+    goal_timeout_sec: 600.0
+  sim_tag_detector:
+    camera_offset_x: 0.76
+triggers:
+- state: NAVIGATING
+  id: 1
+  event:
+    type: pedestrian
+    name: crossing_person
+    path:
+    - - -6
+      - 5
+    - - -6
+      - -1
+    speed: 1.0
+    loop: true

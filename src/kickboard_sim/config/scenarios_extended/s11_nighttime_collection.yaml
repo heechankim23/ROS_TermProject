@@ -1,0 +1,37 @@
+name: 야간 전조등·저시인성 수거
+map: street_extended
+gps_noise_sigma: 0.15
+robot:
+  initial_battery_pct: 95
+  capacity: 4
+scooters:
+- id: 1
+  x: -8
+  y: 5.3
+  yaw_deg: 180
+  tilt_deg: 90
+  battery_pct: 80
+  weight_kg: 18
+- id: 2
+  x: 17.25
+  y: 8
+  yaw_deg: 90
+  tilt_deg: 0
+  battery_pct: 0
+  weight_kg: 18
+extended:
+  weight_limit_kg: 75
+  speed_limit: 0.5
+  accel_limit: 0.4
+  night: true
+params:
+  mission_manager:
+    max_dock_retries: 3
+  nav_bridge:
+    goal_timeout_sec: 600.0
+  sim_tag_detector:
+    camera_offset_x: 0.76
+    max_range: 2.2
+    noise_pos: 0.05
+  collector:
+    verify_timeout_sec: 25.0

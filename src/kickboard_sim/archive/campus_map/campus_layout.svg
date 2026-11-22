@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 990 990" font-family="sans-serif">
+<rect width="990" height="990" fill="rgb(91,91,96)"/>
+<polygon points="671.0,11.0 781.0,159.5 836.0,286.0 896.5,440.0 929.5,561.0 962.5,671.0 847.0,973.5 770.0,984.5 671.0,896.5 517.0,880.0 429.0,957.0 352.0,957.0 352.0,891.0 264.0,874.5 137.5,869.0 66.0,836.0 22.0,687.5 27.5,605.0 121.0,500.5 264.0,407.0 418.0,324.5 517.0,231.0 616.0,77.0" fill="rgb(188,183,173)" stroke="#222" stroke-width="3"/>
+<rect x="66.0" y="676.5" width="88.0" height="88.0" fill="rgb(89,153,76)"/>
+<rect x="181.5" y="671.0" width="77.0" height="99.0" fill="rgb(89,153,76)"/>
+<rect x="341.0" y="632.5" width="66.0" height="33.0" fill="rgb(89,153,76)"/>
+<rect x="610.5" y="643.5" width="44.0" height="44.0" fill="rgb(114,165,204)"/>
+<rect x="649.0" y="583.0" width="55.0" height="44.0" fill="rgb(89,153,76)"/>
+<rect x="792.0" y="775.5" width="55.0" height="55.0" fill="rgb(89,153,76)"/>
+<rect x="621.5" y="396.0" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="715.0" y="239.2" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="198.0" y="528.0" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="335.5" y="716.1" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="583.0" y="749.1" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="753.5" y="638.0" width="33.0" height="15.4" fill="rgb(51,178,76)"/>
+<rect x="66.0" y="676.5" width="88.0" height="88.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="181.5" y="671.0" width="77.0" height="99.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="341.0" y="632.5" width="66.0" height="33.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="610.5" y="643.5" width="44.0" height="44.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="649.0" y="583.0" width="55.0" height="44.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="792.0" y="775.5" width="55.0" height="55.0" fill="none" stroke="#d33" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="671.0" y="132.0" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="704.0" y="153.5" font-size="10" text-anchor="middle" fill="#111">농생대4호관</text>
+<rect x="704.0" y="200.8" width="55.0" height="38.5" fill="rgb(153,127,158)" stroke="#222" stroke-width="0.8"/>
+<text x="731.5" y="225.0" font-size="10" text-anchor="middle" fill="#111">누리관</text>
+<rect x="561.0" y="195.2" width="66.0" height="38.5" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="594.0" y="219.5" font-size="10" text-anchor="middle" fill="#111">예술대학</text>
+<rect x="770.0" y="269.5" width="44.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="792.0" y="291.0" font-size="10" text-anchor="middle" fill="#111">간호대학</text>
+<rect x="522.5" y="269.5" width="55.0" height="44.0" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="550.0" y="296.5" font-size="10" text-anchor="middle" fill="#111">대강당</text>
+<rect x="616.0" y="275.0" width="55.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="643.5" y="296.5" font-size="10" text-anchor="middle" fill="#111">약학대학</text>
+<rect x="541.2" y="335.5" width="66.0" height="44.0" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="574.2" y="362.5" font-size="10" text-anchor="middle" fill="#111">글로벌플라자</text>
+<rect x="607.2" y="330.0" width="66.0" height="66.0" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="640.2" y="368.0" font-size="10" text-anchor="middle" fill="#111">중앙도서관</text>
+<rect x="786.5" y="368.5" width="55.0" height="44.0" fill="rgb(153,127,158)" stroke="#222" stroke-width="0.8"/>
+<text x="814.0" y="395.5" font-size="10" text-anchor="middle" fill="#111">첨성관</text>
+<rect x="478.5" y="412.5" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="511.5" y="434.0" font-size="10" text-anchor="middle" fill="#111">인문대학</text>
+<rect x="401.5" y="420.8" width="55.0" height="38.5" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="429.0" y="445.0" font-size="10" text-anchor="middle" fill="#111">농생대1호관</text>
+<rect x="313.5" y="440.0" width="55.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="341.0" y="461.5" font-size="10" text-anchor="middle" fill="#111">농생대2호관</text>
+<rect x="726.0" y="464.8" width="66.0" height="38.5" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="759.0" y="489.0" font-size="10" text-anchor="middle" fill="#111">사범대학</text>
+<rect x="572.0" y="495.0" width="55.0" height="44.0" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="599.5" y="522.0" font-size="10" text-anchor="middle" fill="#111">본관</text>
+<rect x="181.5" y="495.0" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="214.5" y="516.5" font-size="10" text-anchor="middle" fill="#111">자연과학대학</text>
+<rect x="264.0" y="539.0" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="297.0" y="560.5" font-size="10" text-anchor="middle" fill="#111">제1과학관</text>
+<rect x="467.5" y="561.0" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="500.5" y="582.5" font-size="10" text-anchor="middle" fill="#111">대학원동</text>
+<rect x="104.5" y="566.5" width="55.0" height="44.0" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="132.0" y="593.5" font-size="10" text-anchor="middle" fill="#111">제2체육관</text>
+<rect x="830.5" y="544.5" width="55.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="858.0" y="566.0" font-size="10" text-anchor="middle" fill="#111">생활과학대학</text>
+<rect x="742.5" y="594.0" width="55.0" height="44.0" fill="rgb(183,132,102)" stroke="#222" stroke-width="0.8"/>
+<text x="770.0" y="621.0" font-size="10" text-anchor="middle" fill="#111">복지관</text>
+<rect x="869.0" y="616.0" width="44.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="891.0" y="637.5" font-size="10" text-anchor="middle" fill="#111">경상대학</text>
+<rect x="825.0" y="709.5" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="858.0" y="731.0" font-size="10" text-anchor="middle" fill="#111">법학전문대학원</text>
+<rect x="489.5" y="704.0" width="55.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="517.0" y="725.5" font-size="10" text-anchor="middle" fill="#111">IT대학3호관</text>
+<rect x="319.0" y="731.5" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="352.0" y="753.0" font-size="10" text-anchor="middle" fill="#111">공대1호관</text>
+<rect x="566.5" y="764.5" width="66.0" height="44.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="599.5" y="791.5" font-size="10" text-anchor="middle" fill="#111">IT대학2호관</text>
+<rect x="396.0" y="792.0" width="55.0" height="33.0" fill="rgb(183,132,102)" stroke="#222" stroke-width="0.8"/>
+<text x="423.5" y="813.5" font-size="10" text-anchor="middle" fill="#111">진리관</text>
+<rect x="275.0" y="814.0" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="308.0" y="835.5" font-size="10" text-anchor="middle" fill="#111">화학관</text>
+<rect x="148.5" y="808.5" width="55.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="176.0" y="830.0" font-size="10" text-anchor="middle" fill="#111">생물학관</text>
+<rect x="687.5" y="819.5" width="66.0" height="33.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="720.5" y="841.0" font-size="10" text-anchor="middle" fill="#111">수의과대학</text>
+<circle cx="451.0" cy="517.0" r="11.0" fill="rgb(114,102,76)" stroke="#222" stroke-width="0.8"/>
+<circle cx="704.0" cy="429.0" r="11.0" fill="rgb(114,102,76)" stroke="#222" stroke-width="0.8"/>
+<circle cx="253.0" cy="627.0" r="11.0" fill="rgb(114,102,76)" stroke="#222" stroke-width="0.8"/>
+<rect x="693.5" y="712.2" width="20.9" height="49.5" fill="rgb(51,76,140)" stroke="#222" stroke-width="0.8"/>
+<rect x="721.0" y="712.2" width="20.9" height="49.5" fill="rgb(216,216,224)" stroke="#222" stroke-width="0.8"/>
+<rect x="748.5" y="712.2" width="20.9" height="49.5" fill="rgb(153,38,38)" stroke="#222" stroke-width="0.8"/>
+<circle cx="451.0" cy="374.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="682.0" cy="462.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="561.0" cy="627.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="385.0" cy="583.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="275.0" cy="792.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="660.0" cy="737.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="825.0" cy="671.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="660.0" cy="198.0" r="2.8" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<rect x="621.5" y="396.0" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="638.0" y="407.7" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">LIB</text>
+<rect x="715.0" y="239.2" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="731.5" y="250.9" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">NURI</text>
+<rect x="198.0" y="528.0" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="214.5" y="539.7" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">SCI</text>
+<rect x="335.5" y="716.1" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="352.0" y="727.8" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">ENG</text>
+<rect x="583.0" y="749.1" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="599.5" y="760.8" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">IT</text>
+<rect x="753.5" y="638.0" width="33.0" height="15.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="770.0" y="649.7" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">WEL</text>
+<text x="110.0" y="724.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">야구장</text>
+<text x="220.0" y="724.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">축구장</text>
+<text x="374.0" y="653.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">족구장·테니스장</text>
+<text x="632.5" y="669.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">일청담</text>
+<text x="676.5" y="609.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">월파원</text>
+<text x="819.5" y="807.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">센트럴파크</text>
+<text x="731.5" y="703.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">학생주차장</text>
+<text x="599.5" y="571.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">충전소 (본관 남쪽)</text>
+<circle cx="643.5" cy="44.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="643.5" y="35.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">농장문</text>
+<circle cx="781.0" cy="159.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="781.0" y="150.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">누리문</text>
+<circle cx="836.0" cy="286.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="836.0" y="277.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">테크노문</text>
+<circle cx="896.5" cy="440.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="896.5" y="431.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">향토문</text>
+<circle cx="929.5" cy="561.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="929.5" y="552.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">나리문</text>
+<circle cx="962.5" cy="671.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="962.5" y="662.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">동문</text>
+<circle cx="847.0" cy="973.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="847.0" y="964.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">정문</text>
+<circle cx="671.0" cy="896.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="671.0" y="887.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">수의대문</text>
+<circle cx="517.0" cy="880.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="517.0" y="871.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">쪽문</text>
+<circle cx="264.0" cy="874.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="264.0" y="865.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">조은문</text>
+<circle cx="137.5" cy="869.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="137.5" y="860.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">솔로문</text>
+<circle cx="22.0" cy="687.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="22.0" y="678.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">서문</text>
+<circle cx="121.0" cy="500.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="121.0" y="491.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">수영장문</text>
+<circle cx="264.0" cy="407.0" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="264.0" y="398.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">어린이집문</text>
+<circle cx="418.0" cy="324.5" r="5" fill="#fff" stroke="#222" stroke-width="1.5"/>
+<text x="418.0" y="315.5" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">북문</text>
+<circle cx="599.5" cy="540.6" r="7" fill="#1a4fd0" stroke="#fff" stroke-width="1.5"/>
+<rect x="585.9" y="546.1" width="27.2" height="14.4" fill="#f5c400" stroke="#222" stroke-width="1"/>
+<text x="599.5" y="541.3" font-size="12" text-anchor="middle" font-weight="bold" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">충전소·로봇</text>
+<text x="2" y="986" font-size="10" fill="#fff">-45</text>
+<text x="112" y="986" font-size="10" fill="#fff">-35</text>
+<text x="222" y="986" font-size="10" fill="#fff">-25</text>
+<text x="332" y="986" font-size="10" fill="#fff">-15</text>
+<text x="442" y="986" font-size="10" fill="#fff">-5</text>
+<text x="552" y="986" font-size="10" fill="#fff">5</text>
+<text x="662" y="986" font-size="10" fill="#fff">15</text>
+<text x="772" y="986" font-size="10" fill="#fff">25</text>
+<text x="882" y="986" font-size="10" fill="#fff">35</text>
+<text x="992" y="986" font-size="10" fill="#fff">45</text>
+<text x="2" y="988" font-size="10" fill="#fff">-45</text>
+<text x="2" y="878" font-size="10" fill="#fff">-35</text>
+<text x="2" y="768" font-size="10" fill="#fff">-25</text>
+<text x="2" y="658" font-size="10" fill="#fff">-15</text>
+<text x="2" y="548" font-size="10" fill="#fff">-5</text>
+<text x="2" y="438" font-size="10" fill="#fff">5</text>
+<text x="2" y="328" font-size="10" fill="#fff">15</text>
+<text x="2" y="218" font-size="10" fill="#fff">25</text>
+<text x="2" y="108" font-size="10" fill="#fff">35</text>
+<text x="2" y="-2" font-size="10" fill="#fff">45</text>
+</svg>

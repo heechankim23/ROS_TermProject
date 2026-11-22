@@ -1,0 +1,70 @@
+# 시나리오 k05 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
+# 구역은 이 시나리오에 필요한 2곳만, 로봇 도크는 시나리오 근처 길가.
+mission_variant: campus
+map_json: knu_campus.json
+gps_origin: {lat: 35.8904, lon: 128.6103}
+terrain: {flat: true}
+robot_spawn: {x: 307.118, y: -145.119, yaw_deg: 242.8}
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: 306.661, y: -146.009, yaw_deg: 62.8}
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+parking_zones:
+- name: P18
+  site: 305 복지관 인근
+  origin: image
+  polygon:
+  - [300.3, -91.6]
+  - [281.0, -138.1]
+  - [322.7, -161.6]
+  - [329.2, -161.6]
+  - [351.1, -112.4]
+  - [308.1, -91.5]
+  rack: {x: 312.3, y: -139.41, yaw_deg: -27.2, length: 7.0, road: service}
+  robot_access: {x: 311.5, y: -140.96, yaw_deg: -27.2}
+  slots:
+  - {id: P18-01, x: 309.5, y: -137.97, z: -5.22, yaw_deg: 62.8, role: normal}
+  - {id: P18-02, x: 310.12, y: -138.29, z: -5.19, yaw_deg: 62.8, role: normal}
+  - {id: P18-03, x: 310.74, y: -138.61, z: -5.16, yaw_deg: 62.8, role: normal}
+  - {id: P18-04, x: 311.37, y: -138.93, z: -5.13, yaw_deg: 62.8, role: normal}
+  - {id: P18-05, x: 311.99, y: -139.25, z: -5.1, yaw_deg: 62.8, role: normal}
+  - {id: P18-06, x: 312.61, y: -139.57, z: -5.07, yaw_deg: 62.8, role: normal}
+  - {id: P18-07, x: 313.23, y: -139.89, z: -5.04, yaw_deg: 62.8, role: normal}
+  - {id: P18-08, x: 313.86, y: -140.21, z: -5.0, yaw_deg: 62.8, role: normal}
+  - {id: P18-09, x: 314.48, y: -140.53, z: -4.97, yaw_deg: -117.2, role: broken}
+  - {id: P18-10, x: 315.1, y: -140.85, z: -4.93, yaw_deg: -117.2, role: broken}
+- name: P26
+  site: 417 반도체연구동 인근
+  origin: image
+  polygon:
+  - [168.3, -272.9]
+  - [173.8, -331.1]
+  - [276.6, -332.9]
+  - [277.8, -314.4]
+  - [228.2, -273.7]
+  rack: {x: 231.4, y: -286.94, yaw_deg: -36.6, length: 7.0, road: service}
+  robot_access: {x: 232.44, y: -285.54, yaw_deg: -36.6}
+  slots:
+  - {id: P26-01, x: 228.87, y: -285.06, z: -6.67, yaw_deg: -126.6, role: normal}
+  - {id: P26-02, x: 229.43, y: -285.48, z: -6.65, yaw_deg: -126.6, role: normal}
+  - {id: P26-03, x: 229.99, y: -285.9, z: -6.62, yaw_deg: -126.6, role: normal}
+  - {id: P26-04, x: 230.56, y: -286.32, z: -6.59, yaw_deg: -126.6, role: normal}
+  - {id: P26-05, x: 231.12, y: -286.73, z: -6.57, yaw_deg: -126.6, role: normal}
+  - {id: P26-06, x: 231.68, y: -287.15, z: -6.54, yaw_deg: -126.6, role: normal}
+  - {id: P26-07, x: 232.24, y: -287.57, z: -6.52, yaw_deg: -126.6, role: normal}
+  - {id: P26-08, x: 232.8, y: -287.99, z: -6.49, yaw_deg: -126.6, role: normal}
+  - {id: P26-09, x: 233.37, y: -288.4, z: -6.47, yaw_deg: 53.4, role: broken}
+  - {id: P26-10, x: 233.93, y: -288.82, z: -6.45, yaw_deg: 53.4, role: broken}
+charging_zones: []
+params:
+  request_gateway:
+    max_range_m: 1200.0      # 캠퍼스 전체 (원점에서 서쪽 끝까지 약 600 m)
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
+  queue_manager: {d_max: 1200.0, w_d: 1.0}
+  sim_lidar: {range_max: 12.0}
+  collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
+  mission_manager: {return_battery_pct: 20.0}
+  scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

@@ -1,0 +1,10 @@
+name: "7. 장애물 회피"
+description: >
+  5초에 충전소 -> 킥보드 직선 경로 위에 장애물(0.6 x 1.2 m) 투입.
+  통과: 라이다(/scan)에 장애물이 잡히고 A* 가 돌아가는 경로를 다시 계획해 충돌 없이 도착.
+  nav:=simple 과 nav:=nav2 둘 다 가능 (장애물은 /sim/obstacles -> sim_lidar 로 전달된다).
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 3.0, y: 0.0, yaw_deg: 90}
+events:
+  - {t: 5, type: obstacle, name: obstacle_1, x: -0.5, y: 0.0, size: [0.6, 1.2, 0.6]}

@@ -1,0 +1,22 @@
+# K06. 배터리 부족 킥보드를 충전 주차구역으로   [A 상태별 기본]   발전시킨 기존 시나리오: s9_drop_sites, s17_night_battery
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K06. 배터리 부족 킥보드를 충전 주차구역으로"
+id: k06
+category: "A 상태별 기본"
+map: knu_campus_flat
+based_on: [s9_drop_sites, s17_night_battery]
+situation: "공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 15 % 아래다."
+mission: "3대 모두 충전 주차구역(가까운 C6 공식당 쪽 또는 C7 테니스장 쪽) 충전 스탠드에 꽂는다. 정렬 상태여도 배터리 부족이면 옮긴다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 3, dest: charging, zone: C7, reasons: ["배터리 부족"], hint: "C7 테니스장 쪽 (100 m)"}
+  - {id: 2, order: 2, dest: charging, zone: C7, reasons: ["배터리 부족"], hint: "C7 테니스장 쪽 (100 m)"}
+  - {id: 3, order: 1, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (186 m)"}
+pass_criteria:
+  - "충전 주차구역: #1,2,3 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: -61.188, y: -270.089, yaw_deg: 87.0, battery_pct: 9, slot: P23-02, place: slot, where: "P23 409 공대3호관 인근 02번 칸"}
+  - {id: 2, x: -60.489, y: -270.126, yaw_deg: 87.0, battery_pct: 12, slot: P23-03, place: slot, where: "P23 409 공대3호관 인근 03번 칸"}
+  - {id: 3, x: 82.43, y: -319.0, yaw_deg: 96.4, battery_pct: 6, place: walkway, where: "IT대학2호관 앞 보행로"}

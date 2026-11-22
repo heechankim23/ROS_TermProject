@@ -22,6 +22,18 @@ setup(
                 'scooter_fleet_sim', 'request_gateway', 'queue_manager', 'mission_manager',
                 'collector', 'dock_controller', 'battery_manager', 'nav_bridge',
                 'sim_tag_detector', 'apriltag_adapter', 'fake_base', 'analyze', 'arm_loader', 'status_panel', 'sim_localizer', 'sim_lidar')
+        ] + [
+            'extended_mission = kickboard_robot.extended_runtime:mission_main',
+            'extended_queue = kickboard_robot.extended_runtime:queue_main',
+            'extended_fleet = kickboard_robot.extended_runtime:fleet_main',
+            'extended_dock = kickboard_robot.extended_runtime:dock_main',
+            'extended_collector = kickboard_robot.extended_collector:main',
+            'extended_guard = kickboard_robot.extended_guard:main',
+            'extended_lidar = kickboard_robot.extended_lidar:main',
+            'extended_nav = kickboard_robot.extended_nav:main',
+            'mission_manager_station = kickboard_robot.mission_manager_station:main',
+            'mission_manager_campus = kickboard_robot.mission_manager_campus:main',
+            'ops_monitor = kickboard_robot.ops_monitor:main',
         ],
     },
 )

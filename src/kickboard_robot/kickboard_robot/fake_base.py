@@ -8,7 +8,7 @@ from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 
-from .common import now_sec
+from .common import now_sec, spin_single
 
 
 class FakeBase(Node):
@@ -54,12 +54,4 @@ class FakeBase(Node):
 
 def main():
     rclpy.init()
-    node = FakeBase()
-    try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        pass
-    finally:
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+    spin_single(FakeBase())

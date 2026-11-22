@@ -1,0 +1,9 @@
+name: "CP3. 공대 건물 사이 좁은 통로"
+map: campus
+description: >
+  공대1호관–화학관 사이(폭 4.5 m)와 공대1호관–진리관 사이에 킥보드 2대.
+  통과: 건물 사이로 들어가 2대 수거 -> 공대1호관 앞 주차구역(ENG)에 하역 -> 복귀
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: -14.5, y: -26.8, yaw_deg: 0, tilt_deg: 90}
+  - {id: 2, x: -8.5, y: -25.5, yaw_deg: 60}

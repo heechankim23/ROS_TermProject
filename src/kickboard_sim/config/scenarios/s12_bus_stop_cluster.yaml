@@ -1,0 +1,14 @@
+name: "12. 버스정류장 주변에 몰린 킥보드"
+map: street
+description: >
+  출근 시간 뒤: 버스정류장 옆 남쪽 인도에 세워진 2대 + 넘어진 1대, 건너편 북쪽 인도에 세워진 2대.
+  통과: 5대 수거 (4대 싣고 하역 후 1대 더), 배터리 부족은 충전소로, 나머지는 주차구역으로 -> 충전
+# 도로 맵 배치 규칙: 킥보드는 연석에서 0.4 m 안쪽 인도에, 연석과 나란히 둔다.
+# yaw 는 넘어질 때 기둥이 인도 안쪽으로 눕는 방향 (북쪽 인도 180, 남쪽 인도 0, 샛길 서쪽 -90, 동쪽 연석 90).
+robot: {initial_battery_pct: 70, capacity: 4}
+scooters:
+  - {id: 1, x: 12.7, y: -1.4, yaw_deg: 0, battery_pct: 60}
+  - {id: 2, x: 13.6, y: -1.4, yaw_deg: 0, battery_pct: 9}
+  - {id: 3, x: 5.0, y: -1.4, yaw_deg: 0, tilt_deg: 90, battery_pct: 50}
+  - {id: 4, x: 6.0, y: 5.4, yaw_deg: 180, battery_pct: 72}
+  - {id: 5, x: 6.9, y: 5.4, yaw_deg: 180, battery_pct: 11}

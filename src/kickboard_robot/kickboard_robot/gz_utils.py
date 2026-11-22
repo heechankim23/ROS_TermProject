@@ -15,24 +15,32 @@ DECK_COLORS = {
     'FALLEN': '0.9 0.1 0.1',         # 빨강: 넘어짐
     'OUT_OF_ZONE': '1.0 0.5 0.0',    # 주황: 주차구역 밖
     'LOW_BATTERY': '0.6 0.2 0.9',    # 보라: 배터리 부족 (서 있고 구역 안)
+    'BROKEN': '0.18 0.18 0.2',       # 검정: 고장 (캠퍼스 맵)
+    'MISALIGNED': '0.95 0.8 0.1',    # 노랑: 주차구역 안이지만 슬롯 밖·비뚤게 (캠퍼스 맵)
 }
 STEM_NORMAL, STEM_LOW_BATTERY = '0.75 0.75 0.78', '0.6 0.2 0.9'   # 회색 / 보라 (배터리 부족이면 사유와 무관하게)
+STEM_BROKEN, STEM_CHARGING = '0.85 0.15 0.15', '0.1 0.75 0.65'    # 빨강: 고장 / 청록: 충전 스탠드에 꽂혀 충전 중
 
 
-def scooter_state(tilt_deg, in_zone, battery_pct, tilt_th=45.0, batt_th=15.0):
-    """요청 사유와 같은 우선순위: 넘어짐 > 구역 밖 > 배터리 부족 > 정상"""
+def scooter_state(tilt_deg, in_zone, battery_pct, tilt_th=45.0, batt_th=15.0, fault='', misaligned=False,
+                  charging=False):
+    """요청 사유와 같은 우선순위: 넘어짐 > 고장 > 구역 밖 > 정렬 불량 > 배터리 부족 > 정상.
+    fault·misaligned·charging 은 캠퍼스 맵에서만 쓴다 (기본값이면 기존 맵과 같다)"""
     if tilt_deg > tilt_th:
         return 'FALLEN'
+    if fault:
+        return 'BROKEN'
     if not in_zone:
-        return 'OUT_OF_ZONE'
-    if battery_pct < batt_th:
+        return 'MISALIGNED' if misaligned else 'OUT_OF_ZONE'
+    if battery_pct < batt_th and not charging:
         return 'LOW_BATTERY'
     return 'OK'
 
 
-def scooter_colors(state, low_battery):
-    """-> (발판 색, 기둥·핸들 색)"""
-    return DECK_COLORS[state], (STEM_LOW_BATTERY if low_battery else STEM_NORMAL)
+def scooter_colors(state, low_battery, broken=False, charging=False):
+    """-> (발판 색, 기둥·핸들 색). 기둥: 고장 빨강 > 충전 중 청록 > 배터리 부족 보라 > 회색"""
+    stem = STEM_BROKEN if broken else STEM_CHARGING if charging else STEM_LOW_BATTERY if low_battery else STEM_NORMAL
+    return DECK_COLORS[state], stem
 
 
 def _box(name, x, y, z, sx, sy, sz, rgb, collide=False, roll=0.0, yaw=0.0):
@@ -64,8 +72,21 @@ def body_link(name):
     return f'{name}_body'
 
 
-def scooter_sdf(name, collide=True, deck=DECK_COLORS['OK'], stem=STEM_NORMAL):
-    """collide=False: 충돌체 없는 복사본 (로봇팔이 들고 다니거나 적재함에 실린 킥보드)"""
+def _beacon(rgb, roll=0.0, h=2.3):
+    """신호등: 킥보드 위 h m 에 상태 색 공 + 가는 기둥 (충돌체 없음). 넘어진 킥보드(roll)여도 세상 기준 위쪽에 선다"""
+    sr, cr = math.sin(roll), math.cos(roll)
+    pole_h = h - 1.1
+    pz = 1.1 + pole_h / 2
+    mat = f"<material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse><emissive>{rgb} 1</emissive></material>"
+    return (f"<visual name='beacon_pole'><pose>0 {pz * sr:.3f} {pz * cr:.3f} {-roll:.4f} 0 0</pose>"
+            f"<geometry><cylinder><radius>0.025</radius><length>{pole_h:.2f}</length></cylinder></geometry>{mat}</visual>"
+            f"<visual name='beacon'><pose>0 {h * sr:.3f} {h * cr:.3f} 0 0 0</pose>"
+            f"<geometry><sphere><radius>0.32</radius></sphere></geometry>{mat}</visual>")
+
+
+def scooter_sdf(name, collide=True, deck=DECK_COLORS['OK'], stem=STEM_NORMAL, beacon=False, roll=0.0):
+    """collide=False: 충돌체 없는 복사본 (로봇팔이 들고 다니거나 적재함에 실린 킥보드)
+    beacon=True: 처리가 필요한 킥보드(발판 색이 정상 초록이 아님)면 위에 상태 색 신호등을 단다 (캠퍼스 맵)"""
     c = collide
     L, W = SCOOTER_L, SCOOTER_W
     dark = '0.12 0.12 0.12'
@@ -82,12 +103,15 @@ def scooter_sdf(name, collide=True, deck=DECK_COLORS['OK'], stem=STEM_NORMAL):
             + _tag(1, -L / 2, 0, 0.2, math.pi)                   # 뒤: 흙받이
             + _tag(2, 0, W / 2, 0.22, math.pi / 2)               # 왼쪽
             + _tag(3, 0, -W / 2, 0.22, -math.pi / 2))            # 오른쪽
+    if beacon and deck != DECK_COLORS['OK']:
+        body += _beacon(deck, roll)
     return (f"<?xml version='1.0'?><sdf version='1.9'><model name='{name}'><static>true</static>"
             f"<link name='{body_link(name)}'>{body}{tags}</link></model></sdf>")
 
 
 class GzWorld:
     def __init__(self, world, logger, enabled=True):
+        self.beacons = False       # 캠퍼스 맵: 처리가 필요한 킥보드 위에 신호등
         self.world = world
         self.log = logger
         self.enabled = enabled and shutil.which('gz') is not None
@@ -105,24 +129,31 @@ class GzWorld:
         if self.enabled:
             threading.Thread(target=job, daemon=True).start()
 
-    def spawn(self, name, x, y, yaw, roll=0.0, colors=None):
-        z = FALLEN_Z if abs(roll) > 0.1 else 0.0
+    def spawn(self, name, x, y, yaw, roll=0.0, colors=None, z0=0.0):
+        """gz 서비스로 바로 만든다 (킥보드마다 ros2 run 프로세스를 띄우면 수십 대일 때 수십 초 걸림). z0 = 지형 높이"""
+        if not self.enabled:
+            return
+        z = (FALLEN_Z if abs(roll) > 0.1 else 0.0) + z0
         deck, stem = colors or (DECK_COLORS['OK'], STEM_NORMAL)
-        self._run(['ros2', 'run', 'ros_gz_sim', 'create', '-world', self.world,
-                   '-name', name, '-string', scooter_sdf(name, deck=deck, stem=stem),
-                   '-x', str(x), '-y', str(y), '-z', str(z), '-R', str(roll), '-Y', str(yaw)],
-                  f'spawn {name}')
+        sdf = scooter_sdf(name, deck=deck, stem=stem, beacon=self.beacons, roll=roll)
+        cr, sr = math.cos(roll / 2), math.sin(roll / 2)
+        cy, sy = math.cos(yaw / 2), math.sin(yaw / 2)
+        qw, qx, qy, qz = cr * cy, sr * cy, sr * sy, cr * sy        # yaw * roll
+        self._run(['gz', 'service', '-s', f'/world/{self.world}/create', '--reqtype', 'gz.msgs.EntityFactory',
+                   '--reptype', 'gz.msgs.Boolean', '--timeout', '5000', '--req',
+                   f'sdf: "{sdf}" name: "{name}" pose {{position {{x: {x} y: {y} z: {z}}} '
+                   f'orientation {{x: {qx} y: {qy} z: {qz} w: {qw}}}}}'], f'spawn {name}')
 
-    def spawn_box(self, name, x, y, size=(0.5, 0.5, 0.5)):
+    def spawn_box(self, name, x, y, size=(0.5, 0.5, 0.5), yaw=0.0, rgb='0.8 0.1 0.1'):
         sx, sy, sz = size
         sdf = (f"<?xml version='1.0'?><sdf version='1.9'><model name='{name}'><static>true</static>"
                f"<link name='l'><collision name='c'><pose>0 0 {sz / 2} 0 0 0</pose><geometry><box>"
                f"<size>{sx} {sy} {sz}</size></box></geometry></collision><visual name='v'>"
                f"<pose>0 0 {sz / 2} 0 0 0</pose><geometry><box><size>{sx} {sy} {sz}</size></box>"
-               f"</geometry><material><ambient>0.8 0.1 0.1 1</ambient><diffuse>0.8 0.1 0.1 1</diffuse>"
+               f"</geometry><material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse>"
                f"</material></visual></link></model></sdf>")
         self._run(['ros2', 'run', 'ros_gz_sim', 'create', '-world', self.world, '-name', name,
-                   '-string', sdf, '-x', str(x), '-y', str(y), '-z', '0'], f'spawn {name}')
+                   '-string', sdf, '-x', str(x), '-y', str(y), '-z', '0', '-Y', str(yaw)], f'spawn {name}')
 
     def set_pose(self, name, x, y, yaw, roll=0.0):
         cr, sr = math.cos(roll / 2), math.sin(roll / 2)
@@ -135,17 +166,17 @@ class GzWorld:
                    '--reqtype', 'gz.msgs.Pose', '--reptype', 'gz.msgs.Boolean',
                    '--timeout', '3000', '--req', req], f'set_pose {name}')
 
-    def respawn(self, name, x, y, yaw, roll, colors):
+    def respawn(self, name, x, y, yaw, roll, colors, z0=0.0):
         """색을 바꾸려고 모델을 지웠다가 같은 자리에 새 색으로 다시 만든다.
         (gz sim 8 의 visual_config / material_color 는 이 VM(ogre1)에서 화면에 반영되지 않았다)"""
         if not self.enabled:
             return
-        z = FALLEN_Z if abs(roll) > 0.1 else 0.0
+        z = (FALLEN_Z if abs(roll) > 0.1 else 0.0) + z0
         cr, sr = math.cos(roll / 2), math.sin(roll / 2)
         cy, sy = math.cos(yaw / 2), math.sin(yaw / 2)
         qw, qx, qy, qz = cr * cy, sr * cy, sr * sy, cr * sy        # yaw * roll
         deck, stem = colors
-        sdf = scooter_sdf(name, deck=deck, stem=stem)       # 작은따옴표만 씀 -> 요청 문자열에 그대로 넣을 수 있음
+        sdf = scooter_sdf(name, deck=deck, stem=stem, beacon=self.beacons, roll=roll)       # 작은따옴표만 씀 -> 요청 문자열에 그대로 넣을 수 있음
         assert '"' not in sdf and '\\' not in sdf
         srv = f'/world/{self.world}'
 

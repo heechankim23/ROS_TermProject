@@ -1,0 +1,26 @@
+name: 도킹 정렬 확인 2회 실패 후 재시도
+map: street_extended
+gps_noise_sigma: 0.15
+robot:
+  initial_battery_pct: 95
+  capacity: 4
+scooters:
+- id: 1
+  x: -8
+  y: 5.3
+  yaw_deg: 180
+  tilt_deg: 90
+  battery_pct: 0
+  weight_kg: 18
+extended:
+  weight_limit_kg: 75
+  speed_limit: 0.5
+  accel_limit: 0.4
+  dock_failures: 2
+params:
+  mission_manager:
+    max_dock_retries: 3
+  nav_bridge:
+    goal_timeout_sec: 600.0
+  sim_tag_detector:
+    camera_offset_x: 0.76

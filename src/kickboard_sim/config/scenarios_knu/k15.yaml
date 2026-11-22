@@ -1,0 +1,30 @@
+# K15. 로봇 적재량 초과 (한 곳에 7대)   [C 수용량·적재량]   발전시킨 기존 시나리오: s3_full_load
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K15. 로봇 적재량 초과 (한 곳에 7대)"
+id: k15
+category: "C 수용량·적재량"
+map: knu_campus_flat
+based_on: [s3_full_load]
+situation: "축제 뒤 대운동장 쪽 C8 근처 도로가와 잔디에 넘어지거나 흩어진 킥보드 7대. 로봇 적재함은 4칸이다."
+mission: "4대를 싣고 하역한 뒤 다시 와서 나머지 3대를 처리한다. 적재함이 차면 새 수거를 시작하지 않는다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 6, dest: general, zone: P28, reasons: ["불법 주차"], hint: "P28 214 청룡관 인근 (128 m)"}
+  - {id: 2, order: 2, dest: general, zone: P28, reasons: ["넘어짐", "불법 주차"], hint: "P28 214 청룡관 인근 (117 m)"}
+  - {id: 3, order: 7, dest: general, zone: P28, reasons: ["불법 주차"], hint: "P28 214 청룡관 인근 (113 m)"}
+  - {id: 4, order: 1, dest: general, zone: P28, reasons: ["넘어짐", "불법 주차"], hint: "P28 214 청룡관 인근 (127 m)"}
+  - {id: 5, order: 5, dest: general, zone: P24, reasons: ["불법 주차"], hint: "P24 401 공대2호관 인근 (123 m)"}
+  - {id: 6, order: 3, dest: general, zone: P24, reasons: ["불법 주차"], hint: "P24 401 공대2호관 인근 (118 m)"}
+  - {id: 7, order: 4, dest: general, zone: P24, reasons: ["불법 주차"], hint: "P24 401 공대2호관 인근 (123 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #1,2,3,4,5,6,7 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: -264.08, y: -356.0, yaw_deg: -4.9, battery_pct: 50, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 2, x: -274.62, y: -352.93, yaw_deg: 164.0, tilt_deg: 90, battery_pct: 54, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 3, x: -278.91, y: -359.3, yaw_deg: -156.7, battery_pct: 58, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 4, x: -264.88, y: -350.62, yaw_deg: 178.2, tilt_deg: 90, battery_pct: 62, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 5, x: -265.56, y: -263.85, yaw_deg: -83.0, battery_pct: 60, place: roadside, where: "대운동장 옆 도로가"}
+  - {id: 6, x: -261.52, y: -257.31, yaw_deg: -83.0, battery_pct: 65, place: roadside, where: "대운동장 옆 도로가"}
+  - {id: 7, x: -266.29, y: -257.9, yaw_deg: -83.0, battery_pct: 70, place: roadside, where: "대운동장 옆 도로가"}

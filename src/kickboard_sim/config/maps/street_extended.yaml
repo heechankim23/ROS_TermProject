@@ -1,0 +1,48 @@
+# 40 x 30 m 도로 맵 설정. scripts/build_env.py 가 만든 파일 — 배치를 바꾸려면 스크립트를 고쳐 다시 생성.
+gps_origin:            # map (0,0) 의 위경도. +x = 동, +y = 북
+  lat: 37.5665
+  lon: 126.978
+
+robot_spawn:           # = 도킹 pose
+  x: -18.448
+  y: -8.500
+  yaw_deg: 180.0
+
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: -19.448, y: -8.500, yaw_deg: 0.0}   # 태그 면 중심, yaw = 바깥쪽 법선
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+
+parking_zones:         # 폴리곤 (map 좌표, 반시계)
+  - name: N1
+    polygon: [[-14, 5], [-11, 5], [-11, 6.4], [-14, 6.4]]
+  - name: E1
+    polygon: [[11.6, 6.5], [13, 6.5], [13, 9.5], [11.6, 9.5]]
+  - name: S1
+    polygon: [[9, -2.4], [12, -2.4], [12, -1], [9, -1]]
+
+params:                # 이 맵에서 덮어쓸 노드 파라미터 (launch/system.launch.py 가 적용)
+  nav_bridge:
+    v_max: 0.8
+    w_max: 1.0
+    lookahead: 0.8
+    goal_timeout_sec: 300.0
+    replan_sec: 2.0
+    costmap_res: 0.1
+    goal_clearance: 1.1
+    inflation_radius: 1.1
+    keepout_goal_clearance: 0.8
+  battery_manager:
+    k1_pct_per_m: 0.12
+    k2_pct_per_s: 0.02
+  queue_manager:
+    d_max: 50.0
+    w_d: 1.0
+  sim_lidar:
+    range_max: 8.0
+  collector:
+    align_timeout_sec: 120.0
+  mission_manager:
+    drop_clearance: 0.85

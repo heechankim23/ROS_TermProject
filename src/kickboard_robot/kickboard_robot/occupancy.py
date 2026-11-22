@@ -14,26 +14,31 @@ class OccupancyMap:
         self.ox, self.oy = float(m['origin'][0]), float(m['origin'][1])
         occ_th = float(m.get('occupied_thresh', 0.65))
         negate = int(m.get('negate', 0))
-        with open(img, 'rb') as f:
-            data = f.read()
-        # P5 헤더 파싱 (주석 없음 가정)
-        parts, idx = [], 0
-        while len(parts) < 4:
-            while data[idx:idx + 1].isspace():
-                idx += 1
-            j = idx
-            while not data[j:j + 1].isspace():
-                j += 1
-            parts.append(data[idx:j])
-            idx = j
-        assert parts[0] == b'P5', 'P5 PGM 만 지원'
-        self.w, self.h = int(parts[1]), int(parts[2])
-        px = data[idx + 1: idx + 1 + self.w * self.h]
-        # 행 0 = 이미지 맨 위 = y 최대
-        self.occ = bytearray(self.w * self.h)
-        for k, v in enumerate(px):
-            p = v / 255.0 if negate else (255 - v) / 255.0
-            self.occ[k] = 1 if p > occ_th else 0
+        import numpy as np
+        if img.lower().endswith('.pgm'):
+            with open(img, 'rb') as f:
+                data = f.read()
+            # P5 헤더 파싱 (주석 없음 가정)
+            parts, idx = [], 0
+            while len(parts) < 4:
+                while data[idx:idx + 1].isspace():
+                    idx += 1
+                j = idx
+                while not data[j:j + 1].isspace():
+                    j += 1
+                parts.append(data[idx:j])
+                idx = j
+            assert parts[0] == b'P5', 'P5 PGM 만 지원'
+            self.w, self.h = int(parts[1]), int(parts[2])
+            px = np.frombuffer(data[idx + 1: idx + 1 + self.w * self.h], dtype=np.uint8).reshape(self.h, self.w)
+        else:                                   # PNG 등 (캠퍼스 맵처럼 큰 지도) — Pillow
+            from PIL import Image
+            px = np.array(Image.open(img).convert('L'), dtype=np.uint8)
+            self.h, self.w = px.shape
+        # 행 0 = 이미지 맨 위 = y 최대. numpy 로 한 번에 판정 (큰 지도에서 픽셀별 파이썬 루프는 수십 초 걸림)
+        p = px / 255.0 if negate else (255 - px.astype(np.int16)) / 255.0
+        self.grid = (p > occ_th)                # [행(위 = y 최대), 열]
+        self.occ = bytearray(self.grid.astype(np.uint8).tobytes())
 
     def _cell(self, x, y):
         i = int((x - self.ox) / self.res)

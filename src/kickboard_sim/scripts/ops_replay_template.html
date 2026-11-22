@@ -1,0 +1,358 @@
+<title>KNU 킥보드 운영 리플레이</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* 레이아웃: 상단 시나리오 선택 / 왼쪽 캠퍼스 지도(재생) + 아래 재생 막대 / 오른쪽 '지금' 카드 · 정리 결과 · 이벤트 흐름 */
+:root {
+  --bg: #f2f4f0; --surface: #ffffff; --surface-2: #f6f7f4; --line: #dce1d9; --fg: #1b2430; --muted: #5d6877; --dim: #8b95a3;
+  --brand: #c8324a; --robot: #2b59d9; --dest: #ef6a1a; --general: #1d4ed8; --charge: #0a9c80; --ok: #2a9d55;
+  --st-ok: #27a35a; --st-fallen: #e5383b; --st-out: #f28c18; --st-mis: #e9c21a; --st-low: #8f45e6; --st-broken: #2b2d33; --st-chg: #11b39c; --st-bay: #2b59d9;
+  --map-bg: #e6e9e3; --map-campus: #f4f1e8; --map-green: #d3e6c3; --map-bld: #cdd0cc; --map-road: #9aa1a8; --map-foot: #e2cf9a; --map-water: #9cc8ec;
+  --f-display: "DM Sans", "Noto Sans KR", system-ui, sans-serif; --f-body: "Noto Sans KR", "DM Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d141c; --surface: #131d28; --surface-2: #182432; --line: #263446; --fg: #e8edf6; --muted: #9aa6b8; --dim: #6c7a8e;
+  --brand: #ff6b80; --robot: #6f9dff; --dest: #ff9a52; --general: #6f9dff; --charge: #3fd6b5; --ok: #4fd18a;
+  --st-broken: #c9ced8; --map-bg: #0e1a25; --map-campus: #1f3329; --map-green: #2b5139; --map-bld: #384453; --map-road: #6d7b73; --map-foot: #857b5b; --map-water: #2b679a;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d141c; --surface: #131d28; --surface-2: #182432; --line: #263446; --fg: #e8edf6; --muted: #9aa6b8; --dim: #6c7a8e;
+  --brand: #ff6b80; --robot: #6f9dff; --dest: #ff9a52; --general: #6f9dff; --charge: #3fd6b5; --ok: #4fd18a;
+  --st-broken: #c9ced8; --map-bg: #0e1a25; --map-campus: #1f3329; --map-green: #2b5139; --map-bld: #384453; --map-road: #6d7b73; --map-foot: #857b5b; --map-water: #2b679a;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); }
+button, select, input { font: inherit; color: inherit; }
+.wrap { max-width: 1480px; margin: 0 auto; padding-block: 18px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+header.top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mark { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: #fff; font: 800 18px var(--f-display); background: linear-gradient(140deg, #e7495b, #a62c4e); flex: none; }
+h1 { margin: 0; font: 800 21px var(--f-body); }
+.sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+select#run { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); max-width: 100%; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 14px; align-items: start; }
+.mapcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; }
+canvas#map { display: block; width: 100%; height: 600px; background: var(--map-bg); cursor: grab; touch-action: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.player button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 9px; padding: 6px 12px; cursor: pointer; font-weight: 700; }
+.player button:focus-visible, .speed button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.speed { display: flex; gap: 4px; }
+.speed button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.scrub { position: relative; height: 26px; }
+.scrub input { width: 100%; position: absolute; inset: 6px 0 auto; accent-color: var(--brand); }
+.ticks { position: absolute; inset: 0; pointer-events: none; }
+.ticks span { position: absolute; top: 0; width: 2px; height: 6px; border-radius: 1px; }
+.clock { font: 700 13px var(--f-display); font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: right; }
+aside { display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+.eyebrow { font: 800 10px var(--f-display); letter-spacing: 1.4px; color: var(--muted); text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--dest); box-shadow: 0 0 0 4px color-mix(in srgb, var(--dest) 25%, transparent); }
+.phase { font: 800 20px var(--f-body); margin: 6px 0 2px; }
+.kv { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 7px 10px; margin-top: 10px; font-size: 13px; line-height: 1.45; }
+.kv dt { color: var(--muted); font-size: 12px; padding-top: 1px; } .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff; margin-right: 4px; white-space: nowrap; }
+.bay { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.bay div { border: 1px dashed var(--line); border-radius: 9px; padding: 6px; min-height: 48px; font-size: 11px; color: var(--muted); }
+.bay div.full { border-style: solid; color: var(--fg); background: var(--surface-2); }
+.bay b { display: block; font: 800 13px var(--f-display); }
+.prog { height: 10px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; margin-top: 10px; }
+.prog i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .2s; }
+.big { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+.big b { font: 800 28px var(--f-display); font-variant-numeric: tabular-nums; }
+.big span { color: var(--muted); font-size: 12.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); }
+.chip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.feed { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; max-height: 300px; overflow: auto; font-size: 12.5px; }
+.feed li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; padding: 5px 6px; border-radius: 7px; color: var(--muted); }
+.feed li.now { background: var(--surface-2); color: var(--fg); }
+.feed li.future { opacity: .35; }
+.feed b { font: 700 11.5px var(--f-display); font-variant-numeric: tabular-nums; }
+.results { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 11px; color: var(--muted); }
+td.n { font: 800 12px var(--f-display); }
+.note { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+@media (max-width: 1060px) { .main { grid-template-columns: minmax(0, 1fr); } canvas#map { height: 440px; } }
+@media (max-width: 520px) { .player { grid-template-columns: auto minmax(0, 1fr) auto; } .speed { grid-column: 1 / -1; order: 5; } canvas#map { height: 360px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="mark">K</span><div><h1>킥보드 수거 로봇 운영 리플레이</h1>
+      <div class="sub" id="sub">경북대 캠퍼스 시뮬레이션 기록을 지도 위에서 다시 봅니다</div></div></div>
+    <label><span class="sub">시나리오 기록 </span><select id="run" aria-label="시나리오 기록"></select></label>
+  </header>
+  <div class="main">
+    <section class="mapcard">
+      <canvas id="map" aria-label="캠퍼스 지도 재생"></canvas>
+      <div class="player">
+        <button id="play" aria-label="재생">▶ 재생</button>
+        <div class="speed" role="group" aria-label="재생 속도"></div>
+        <div class="scrub"><input id="pos" type="range" min="0" max="1000" value="0" aria-label="재생 위치"><div class="ticks" id="ticks"></div></div>
+        <span class="clock" id="clock">0:00 / 0:00</span>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+    <aside>
+      <section class="card">
+        <div class="eyebrow"><span class="pulse"></span>지금 로봇은</div>
+        <div class="phase" id="phase">–</div>
+        <dl class="kv">
+          <dt>어디로</dt><dd id="where">–</dd>
+          <dt>왜</dt><dd id="why">–</dd>
+          <dt>대상</dt><dd id="target">–</dd>
+          <dt>목적지</dt><dd id="dest">–</dd>
+          <dt>배터리</dt><dd id="batt">–</dd>
+        </dl>
+        <div class="bay" id="bay"></div>
+      </section>
+      <section class="card">
+        <div class="eyebrow">정리 결과</div>
+        <div class="big"><b id="aligned">0</b><span id="alignedOf">대 정렬 완료</span></div>
+        <div class="prog"><i id="progbar"></i></div>
+        <div class="chips" id="chips"></div>
+      </section>
+      <section class="card">
+        <div class="eyebrow">이벤트 흐름</div>
+        <ul class="feed" id="feed"></ul>
+      </section>
+    </aside>
+  </div>
+  <section class="card">
+    <div class="eyebrow">킥보드별 결과 (이 시점까지)</div>
+    <div class="results"><table><thead><tr><th>#</th><th>처음 상태</th><th>요청 사유</th><th>적재 시각</th><th>보낸 곳</th><th>정렬 칸</th><th>완료 시각</th><th>예상 대비</th></tr></thead><tbody id="res"></tbody></table></div>
+    <p class="note" id="foot"></p>
+  </section>
+</div>
+
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const M = D.map;
+const $ = (id) => document.getElementById(id);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ST = { OK: ['--st-ok', '정상 주차'], FALLEN: ['--st-fallen', '넘어짐'], OUT_OF_ZONE: ['--st-out', '불법 주차·방치'], MISALIGNED: ['--st-mis', '정렬 불량'],
+  LOW_BATTERY: ['--st-low', '배터리 부족'], BROKEN: ['--st-broken', '고장'], CHARGING: ['--st-chg', '충전 중'], IN_BAY: ['--st-bay', '적재함'] };
+const KIND = { normal: ['--general', '일반 주차구역'], charge: ['--charge', '충전 주차구역'], broken: ['--st-broken', '고장 분류 칸'], charge_wait: ['--st-mis', '일반 슬롯 (충전 대기)'] };
+const REASON = { 1: '넘어짐', 2: '불법 주차·방치', 3: '배터리 부족', 4: '고장', 5: '통행 방해 신고', 6: '방치 신고', 7: '정렬 불량' };
+const PHASE = { IDLE: '대기', SELECTING: '다음 할 일 고르는 중', NAVIGATING: '킥보드로 이동', VERIFYING: '카메라로 킥보드 확인', LOADING: '로봇팔로 적재',
+  FAILED: '실패 처리', RETURNING: '도크로 복귀', DOCKING: '도킹', CHARGING: '충전', DROPPING: '주차구역으로 옮겨 정렬' };
+let R = null, t = 0, playing = false, speed = 10, view = null, follow = false;
+
+// ---------- 기록 준비 ----------
+D.runs.forEach((r, i) => {
+  r.snaps = r.records.filter(x => x.type === 'snap');
+  r.events = r.records.filter(x => x.type === 'event');
+  r.t0 = r.snaps.length ? r.snaps[0].t : 0;
+  r.t1 = Math.max(r.snaps.length ? r.snaps[r.snaps.length - 1].t : 0, r.events.length ? r.events[r.events.length - 1].t : 0);
+  r.items = r.events.map(x => ({ t: x.t, ...sentence(x.e) })).filter(x => x.text);
+  const ck = r.check ? (r.check.pass ? ` ✓ ${r.check.ok}/${r.check.n}` : ` △ ${r.check.ok}/${r.check.n}`) : '';
+  $('run').insertAdjacentHTML('beforeend', `<option value="${i}">${r.meta.scenario || r.meta.id}${ck}</option>`);
+});
+function fmt(s) { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+function sentence(e) {
+  const id = e.id ? `#${e.id}` : '';
+  switch (e.ev) {
+    case 'state': return e.to === 'SELECTING' && !e.why ? {} : { text: `${PHASE[e.to] || e.to}${e.why ? ' ' + e.why : ''}`, kind: 'state' };
+    case 'request_received': return { text: `${id} 수거 요청 접수 (${REASON[e.reason] || e.reason})`, kind: 'req' };
+    case 'report': return { text: `${id} 사용자 신고${e.note ? ` "${e.note}"` : ''} (GPS 오차 ${e.gps_error_m} m)`, kind: 'req' };
+    case 'collected': return { text: `${id} 적재 → ${(KIND[e.dest] || ['', e.dest])[1]}로 보낼 예정`, kind: 'load' };
+    case 'drop_plan': return { text: `하역 배정: ${Object.entries(e.assignments || {}).map(([k, v]) => `#${k}→${v[0]}`).join(', ')}`, kind: 'plan' };
+    case 'slot_filled': return { text: `${id} ${e.slot} 정렬 완료 (${(KIND[e.kind] || ['', e.kind])[1]})`, kind: 'done' };
+    case 'item_status': return e.status === 'CANCELLED' ? { text: `${id} 요청 취소 (${e.note || ''})`, kind: 'cancel' }
+      : e.status === 'FAILED' || e.status === 'NEEDS_HUMAN' ? { text: `${id} 처리 실패 (${e.note || e.status})`, kind: 'fail' } : {};
+    case 'collect_failed': return { text: `${id} 수거 실패: ${e.reason}`, kind: 'fail' };
+    case 'no_action': return { text: `${id} 조치 불필요: ${e.why}`, kind: 'cancel' };
+    case 'fault_revealed': return { text: `${id} 카메라 확인 결과 고장 (${e.fault})`, kind: 'req' };
+    case 'campus_event': return { text: `돌발: ${e.type}${e.slot ? ' ' + e.slot : ''}${e.zone ? ' ' + e.zone : ''}${e.part ? ' ' + e.part : ''}`, kind: 'fail' };
+    case 'alert': return { text: `관리자 알림 ${e.id}: ${e.message}`, kind: 'fail' };
+    case 'docked': return { text: `도킹 완료 (위치 오차 ${(e.position_error_m * 100).toFixed(1)} cm)`, kind: 'state' };
+    case 'scooter_event': return { text: `${id} ${({ fall: '넘어짐', stand: '세워짐', rent: '대여됨', park: '사용자가 슬롯에 세움', fault: '고장 발생' })[e.type] || e.type}`, kind: 'req' };
+    default: return {};
+  }
+}
+const KCOL = { state: '--muted', req: '--st-out', load: '--robot', plan: '--dest', done: '--ok', cancel: '--dim', fail: '--st-fallen' };
+
+// ---------- 재생 상태 계산 ----------
+function snapAt(tt) {
+  const s = R.snaps; let lo = 0, hi = s.length - 1;
+  if (!s.length) return [null, null, 0];
+  if (tt <= s[0].t) return [s[0], s[0], 0];
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (s[m].t <= tt) lo = m; else hi = m; }
+  const a = s[lo], b = s[Math.min(hi, s.length - 1)];
+  return [a, b, b.t > a.t ? Math.min(1, (tt - a.t) / (b.t - a.t)) : 0];
+}
+function robotAt(tt) {
+  const [a, b, k] = snapAt(tt);
+  if (!a || !a.robot) return null;
+  if (!b.robot) return a.robot;
+  const dy = Math.atan2(Math.sin(b.robot[2] - a.robot[2]), Math.cos(b.robot[2] - a.robot[2]));
+  return [a.robot[0] + (b.robot[0] - a.robot[0]) * k, a.robot[1] + (b.robot[1] - a.robot[1]) * k, a.robot[2] + dy * k];
+}
+function results(tt) {
+  const rows = {};
+  const get = (id) => rows[id] || (rows[id] = { id, first: null, reason: '', loaded: null, kind: '', slot: '', done: null, fail: '' });
+  const first = R.snaps.length ? R.snaps[0].scooters : [];
+  first.forEach(s => { get(s[0]).first = s[3]; });
+  for (const x of R.events) {
+    if (x.t > tt) break;
+    const e = x.e, id = String(e.id || '');
+    if (e.ev === 'request_received') get(id).reason = REASON[e.reason] || e.reason;
+    if (e.ev === 'collected') { get(id).loaded = x.t; get(id).kind = e.dest; }
+    if (e.ev === 'slot_filled') { get(id).slot = e.slot; get(id).done = x.t; get(id).kind = e.kind || get(id).kind; }
+    if (e.ev === 'collect_failed') get(id).fail = e.reason;
+    if (e.ev === 'item_status' && e.status === 'CANCELLED') get(id).fail = '취소: ' + (e.note || '');
+  }
+  return Object.values(rows).sort((a, b) => (+a.id) - (+b.id));
+}
+
+// ---------- 지도 ----------
+const cv = $('map'), g = cv.getContext('2d');
+function bbox(pts) { let a = [1e9, 1e9, -1e9, -1e9]; pts.forEach(([x, y]) => { if (x == null) return; a = [Math.min(a[0], x), Math.min(a[1], y), Math.max(a[2], x), Math.max(a[3], y)]; }); return a; }
+function fitView() {
+  const pts = [];
+  R.snaps.forEach(s => { if (s.robot) pts.push(s.robot); s.scooters.forEach(q => { if (q[1] != null) pts.push([q[1], q[2]]); }); });
+  const b = pts.length ? bbox(pts) : bbox(M.boundary);
+  const pad = Math.max(25, 0.08 * Math.max(b[2] - b[0], b[3] - b[1]));
+  view = { cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2, span: Math.max(b[2] - b[0], b[3] - b[1]) + 2 * pad };
+}
+function T(x, y) { const W = cv.clientWidth, H = cv.clientHeight, s = Math.min(W, H) / view.span; return [W / 2 + (x - view.cx) * s, H / 2 - (y - view.cy) * s]; }
+function scale() { return Math.min(cv.clientWidth, cv.clientHeight) / view.span; }
+function draw() {
+  const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = W * dpr; cv.height = H * dpr; }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const s = scale();
+  g.fillStyle = css('--map-bg'); g.fillRect(0, 0, W, H);
+  const poly = (p, fill, stroke, lw) => { g.beginPath(); p.forEach((q, i) => { const [u, v] = T(q[0], q[1]); i ? g.lineTo(u, v) : g.moveTo(u, v); }); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } };
+  const line = (p, color, w, dash) => { g.beginPath(); p.forEach((q, i) => { const [u, v] = T(q[0], q[1]); i ? g.lineTo(u, v) : g.moveTo(u, v); }); g.strokeStyle = color; g.lineWidth = w; g.setLineDash(dash || []); g.lineCap = 'round'; g.lineJoin = 'round'; g.stroke(); g.setLineDash([]); };
+  poly(M.boundary, css('--map-campus'), css('--brand'), 1.5);
+  M.green.forEach(p => poly(p, css('--map-green')));
+  M.water.forEach(p => poly(p, css('--map-water')));
+  M.roads.forEach(r => line(r.p, r.k === 's' ? css('--map-road') : css('--map-foot'), Math.max(1, (r.k === 's' ? 6 : 2.5) * s)));
+  const [a, b, k] = snapAt(t);
+  const occ = a ? a.occ || {} : {};
+  Object.entries(M.zones).forEach(([zid, z]) => {
+    const ch = z.type === 'charging';
+    poly(z.poly, ch ? hexA(css('--charge'), .14) : hexA(css('--general'), .12), ch ? css('--charge') : css('--general'), ch ? 2 : 1.4);
+  });
+  M.buildings.forEach(bd => poly(bd.p, css('--map-bld')));
+  if (s > 1.2) M.buildings.forEach(bd => { if (!bd.n) return; const [u, v] = T(bd.c[0], bd.c[1]); g.font = `700 ${Math.min(13, 4 + s * 1.6)}px DM Sans, sans-serif`; g.fillStyle = css('--muted'); g.textAlign = 'center'; g.fillText(bd.n, u, v + 4); });
+  // 구역 이름 + 점유
+  Object.entries(M.zones).forEach(([zid, z]) => {
+    const n = Object.keys(occ).filter(sl => sl.startsWith(zid + '-')).length;
+    const [u, v] = T(z.c[0], z.c[1]); const ch = z.type === 'charging';
+    g.font = '800 11px DM Sans, sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = css('--surface');
+    const label = s > 0.8 ? `${zid} ${n}/${z.n}` : zid;
+    g.strokeText(label, u, v - 8); g.fillStyle = ch ? css('--charge') : css('--general'); g.fillText(label, u, v - 8);
+  });
+  // 정렬 완료 칸
+  results(t).forEach(rw => { if (!rw.slot || !M.slots[rw.slot]) return; const [u, v] = T(M.slots[rw.slot][0], M.slots[rw.slot][1]);
+    g.strokeStyle = css('--ok'); g.lineWidth = 3; g.beginPath(); g.arc(u, v, Math.max(8, 1.2 * s), 0, 7); g.stroke(); });
+  // 로봇 지나온 길
+  const trail = R.snaps.filter(q => q.t <= t && q.robot).map(q => q.robot);
+  if (trail.length > 1) line(trail, hexA(css('--robot'), .55), 2.5);
+  // 목적지 화살표
+  const rob = robotAt(t);
+  const mis = a ? a.mission : null;
+  if (rob && mis && mis.dest_xy) {
+    line([rob, mis.dest_xy], css('--dest'), 2, [7, 6]);
+    const [u, v] = T(mis.dest_xy[0], mis.dest_xy[1]);
+    g.strokeStyle = css('--dest'); g.lineWidth = 2.5; g.beginPath(); g.arc(u, v, 14, 0, 7); g.stroke();
+  }
+  // 킥보드
+  const sc = a ? a.scooters : [];
+  const bmap = b ? Object.fromEntries(b.scooters.map(q => [q[0], q])) : {};
+  sc.forEach(q => { if (q[1] == null) return; let x = q[1], y = q[2]; const nb = bmap[q[0]];
+    if (nb && nb[1] != null && Math.hypot(nb[1] - x, nb[2] - y) < 30) { x += (nb[1] - x) * k; y += (nb[2] - y) * k; }
+    const [u, v] = T(x, y); const col = css(ST[q[3]] ? ST[q[3]][0] : '--st-ok'); const r = Math.max(4.5, Math.min(9, 0.9 * s + 3));
+    g.beginPath(); g.arc(u, v, r, 0, 7); g.fillStyle = col; g.fill(); g.lineWidth = 1.6; g.strokeStyle = css('--surface'); g.stroke();
+    if (s > 1.4) { g.fillStyle = css('--fg'); g.font = '700 10px DM Sans, sans-serif'; g.textAlign = 'left'; g.fillText(q[0], u + r + 2, v + 3); } });
+  // 로봇
+  if (rob) { const [u, v] = T(rob[0], rob[1]); g.save(); g.translate(u, v); g.rotate(-rob[2]); const L = Math.max(10, 1.7 * s), Wd = Math.max(7, 0.9 * s);
+    g.fillStyle = css('--robot'); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(L * .7, 0); g.lineTo(-L * .5, Wd * .6); g.lineTo(-L * .5, -Wd * .6); g.closePath(); g.fill(); g.stroke(); g.restore(); }
+}
+function hexA(c, al) { const h = c.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(x => x + x).join('') : h, 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${al})`; }
+
+// ---------- 패널 ----------
+function panel() {
+  const [a] = snapAt(t);
+  const m = a ? a.mission : null;
+  $('phase').textContent = m ? m.phase_ko : '–';
+  $('where').textContent = m && m.dest ? m.dest : '–';
+  $('why').textContent = m && m.why ? m.why : '–';
+  $('target').innerHTML = m && m.target ? `#${m.target.id} <span class="pill" style="background:var(${(ST[m.target.state] || ST.OK)[0]})">${m.target.reason}</span>` : '–';
+  const dk = m && m.dest_type ? (m.dest_type === 'charging' ? 'charge' : 'normal') : null;
+  $('dest').innerHTML = m && m.dest_zone ? `<span class="pill" style="background:var(${KIND[dk][0]})">${m.dest_type === 'charging' ? '충전 주차구역' : '일반 주차구역'}</span>${m.dest_zone}`
+    : m && (m.phase === 'RETURNING' || m.phase === 'DOCKING' || m.phase === 'CHARGING') ? '로봇 도크' : '–';
+  $('batt').textContent = m && m.battery != null ? `${m.battery.toFixed(0)} % · 적재 ${m.load}/${m.capacity}` : '–';
+  const cap = m ? (m.capacity || 4) : 4, cargo = m ? m.cargo : [];
+  $('bay').innerHTML = Array.from({ length: cap }, (_, i) => { const c = cargo[i]; return c ? `<div class="full"><b>#${c.id}</b><span class="pill" style="background:var(${(KIND[c.kind] || KIND.normal)[0]})">${(KIND[c.kind] || ['', c.kind])[1]}</span>${c.slot ? ' ' + c.slot : ''}</div>` : `<div>빈 칸</div>`; }).join('');
+  const rs = results(t), total = rs.filter(r => r.reason || r.loaded).length || 1, done = rs.filter(r => r.done != null).length;
+  $('aligned').textContent = done; $('alignedOf').textContent = `대 정렬 완료 / 처리 대상 ${total}대`;
+  $('progbar').style.width = `${Math.round(100 * done / total)}%`;
+  const counts = a ? a.summary.counts : {};
+  $('chips').innerHTML = Object.entries(ST).filter(([k]) => counts[k]).map(([k, v]) => `<span class="chip"><i style="background:var(${v[0]})"></i>${v[1]} ${counts[k]}</span>`).join('')
+    + (a ? `<span class="chip">대기 요청 ${a.summary.waiting}</span>` : '');
+  // 이벤트 흐름
+  let last = -1; R.items.forEach((it, i) => { if (it.t <= t) last = i; });
+  const lo = Math.max(0, last - 14), hi = Math.min(R.items.length, last + 4);
+  $('feed').innerHTML = R.items.slice(lo, hi).map((it, j) => `<li class="${lo + j === last ? 'now' : lo + j > last ? 'future' : ''}"><b style="color:var(${KCOL[it.kind]})">${fmt(it.t - R.t0)}</b><span>${it.text}</span></li>`).join('');
+  $('res').innerHTML = rs.filter(r => r.reason || r.loaded || r.fail || (R.check && R.check.rows.some(x => x.id === String(r.id) && x.dest !== 'none'))).map(r => `<tr><td class="n">${r.id}</td><td>${r.first ? `<span class="pill" style="background:var(${(ST[r.first] || ST.OK)[0]})">${ST[r.first] ? ST[r.first][1] : r.first}</span>` : '–'}</td>
+    <td>${r.reason || '–'}</td><td>${r.loaded != null ? fmt(r.loaded - R.t0) : '–'}</td>
+    <td>${r.kind ? `<span class="pill" style="background:var(${(KIND[r.kind] || KIND.normal)[0]})">${(KIND[r.kind] || ['', r.kind])[1]}</span>` : r.fail ? r.fail : '–'}</td>
+    <td>${r.slot || '–'}</td><td>${r.done != null ? '✓ ' + fmt(r.done - R.t0) : '–'}</td><td>${verdict(r.id)}</td></tr>`).join('');
+  $('clock').textContent = `${fmt(t - R.t0)} / ${fmt(R.t1 - R.t0)}`;
+  $('pos').value = Math.round(1000 * (t - R.t0) / Math.max(1, R.t1 - R.t0));
+}
+const DEST_KO = { general: '일반 슬롯', charging: '충전 스탠드', broken: '고장 칸', charge_wait: '충전 대기', none: '조치 없음', cancelled: '취소', held: '보류', unreachable: '수거 불가' };
+function verdict(id) {
+  if (!R.check) return '–';
+  const row = R.check.rows.find(x => x.id === String(id));
+  if (!row) return '–';
+  return `${row.ok ? '✓' : '✗'} 예상 ${DEST_KO[row.dest] || row.dest}`;
+}
+function render() { if (follow) { const r = robotAt(t); if (r) { view.cx = r[0]; view.cy = r[1]; } } draw(); panel(); }
+
+// ---------- 컨트롤 ----------
+[1, 5, 10, 30, 60].forEach(v => $('play').nextElementSibling.insertAdjacentHTML('beforeend', `<button data-v="${v}" aria-pressed="${v === speed}">×${v}</button>`));
+document.querySelectorAll('.speed button').forEach(b => b.onclick = () => { speed = +b.dataset.v; document.querySelectorAll('.speed button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+$('play').onclick = () => { playing = !playing; if (playing && t >= R.t1) t = R.t0; $('play').textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; };
+$('pos').oninput = (e) => { t = R.t0 + (R.t1 - R.t0) * e.target.value / 1000; render(); };
+$('legend').innerHTML = Object.values(ST).map(v => `<span><i style="background:var(${v[0]})"></i>${v[1]}</span>`).join('')
+  + `<span><i style="background:var(--robot)"></i>로봇·지나온 길</span><span><i style="background:var(--dest)"></i>지금 목적지</span><span><i style="border:2px solid var(--ok);background:transparent"></i>정렬 완료 칸</span>`
+  + `<span><label><input type="checkbox" id="follow"> 로봇 따라가기</label></span>`;
+$('follow').onchange = (e) => { follow = e.target.checked; if (!follow) fitView(); render(); };
+let drag = null;
+cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, view.cx, view.cy]; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => { if (!drag) return; const s = scale(); view.cx = drag[2] - (e.clientX - drag[0]) / s; view.cy = drag[3] + (e.clientY - drag[1]) / s; render(); });
+cv.addEventListener('pointerup', () => { drag = null; });
+cv.addEventListener('wheel', e => { e.preventDefault(); view.span *= e.deltaY > 0 ? 1.15 : 1 / 1.15; view.span = Math.min(2500, Math.max(20, view.span)); render(); }, { passive: false });
+function load(i) {
+  R = D.runs[i]; t = R.t1; fitView();          // 처음엔 마지막 결과를 보여 주고, 재생하면 처음부터
+  $('sub').textContent = `${R.meta.scenario} · 기록 ${fmt(R.t1 - R.t0)} · 이벤트 ${R.items.length}개`
+    + (R.check ? ` · 예상 대비 ${R.check.ok}/${R.check.n}${R.check.pass ? ' 통과' : ''}` : '') + (R.note ? ` · ${R.note}` : '');
+  $('ticks').innerHTML = R.items.filter(it => it.kind === 'done' || it.kind === 'load' || it.kind === 'fail').map(it =>
+    `<span style="left:${(100 * (it.t - R.t0) / Math.max(1, R.t1 - R.t0)).toFixed(2)}%;background:var(${KCOL[it.kind]})"></span>`).join('');
+  $('foot').textContent = R.note || '';
+  render();
+}
+$('run').onchange = (e) => { try { history.replaceState(null, '', '#' + D.runs[+e.target.value].meta.id); } catch (er) {} load(+e.target.value); };
+let lastFrame = performance.now();
+function loop(now) {
+  const dt = (now - lastFrame) / 1000; lastFrame = now;
+  if (playing && R) { t = Math.min(R.t1, t + dt * speed); if (t >= R.t1) { playing = false; $('play').textContent = '▶ 재생'; } render(); }
+  requestAnimationFrame(loop);
+}
+new ResizeObserver(() => R && render()).observe(cv);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => R && render());
+const hi = D.runs.findIndex(r => r.meta.id === location.hash.slice(1));
+$('run').value = String(Math.max(0, hi)); load(Math.max(0, hi));
+requestAnimationFrame(loop);
+</script>

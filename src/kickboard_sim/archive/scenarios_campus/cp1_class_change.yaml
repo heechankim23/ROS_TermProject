@@ -1,0 +1,16 @@
+name: "CP1. 수업 끝난 직후 (중앙도서관·글로벌플라자 앞)"
+map: campus
+description: >
+  수업이 끝나 중앙도서관·글로벌플라자·인문대학 주변에 킥보드 5대가 흩어지고, 학생(보행자) 3명이 지나다닌다.
+  통과: 5대 수거 (4대 -> 주차구역 하역 -> 1대), 배터리 부족 1대는 본관 남쪽 충전소에 하역.
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 9.0, y: 8.0, yaw_deg: 0}
+  - {id: 2, x: 3.0, y: 9.5, yaw_deg: 40, tilt_deg: 90}
+  - {id: 3, x: 17.5, y: 10.0, yaw_deg: 0}
+  - {id: 4, x: 18.5, y: 16.0, yaw_deg: 90, tilt_deg: 90}
+  - {id: 5, x: 13.0, y: 8.4, yaw_deg: 90, battery_pct: 10}
+events:
+  - {t: 0, type: pedestrian, name: student_1, path: [[-3, 2.5], [18, 2.5]], speed: 1.0}
+  - {t: 0, type: pedestrian, name: student_2, path: [[17, -4], [17, 14]], speed: 0.8}
+  - {t: 0, type: pedestrian, name: student_3, path: [[-2, -4], [-2, 12]], speed: 0.7}

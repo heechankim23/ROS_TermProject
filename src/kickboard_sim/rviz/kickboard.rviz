@@ -39,6 +39,17 @@ Visualization Manager:
       Enabled: true
       Topic:
         Value: /queue_markers
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Operations
+      Enabled: true
+      Topic:
+        Value: /ops_markers
+    - Class: rviz_default_plugins/MarkerArray
+      Name: CampusZones
+      Enabled: true
+      Topic:
+        Durability Policy: Transient Local
+        Value: /ops_map_markers
     - Class: rviz_default_plugins/Image
       Name: Camera
       Enabled: false

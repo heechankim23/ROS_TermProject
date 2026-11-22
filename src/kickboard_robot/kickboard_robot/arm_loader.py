@@ -258,8 +258,8 @@ class ArmLoader(Node):
             return {}
         bt = self.get_parameter('battery_threshold_pct').value
         st = scooter_state(s.tilt_deg, s.in_parking_zone, s.battery_pct,
-                           self.get_parameter('tilt_threshold_deg').value, bt)
-        deck, stem = scooter_colors(st, s.battery_pct < bt)
+                           self.get_parameter('tilt_threshold_deg').value, bt, fault=s.fault, misaligned=s.in_slot_area)
+        deck, stem = scooter_colors(st, s.battery_pct < bt, broken=bool(s.fault))
         return {'deck': deck, 'stem': stem}
 
     def create_visual_copy(self, name, p, rm, collide=False, colors=None):

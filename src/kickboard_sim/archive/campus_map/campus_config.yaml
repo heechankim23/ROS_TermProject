@@ -1,0 +1,51 @@
+# 대학교 캠퍼스 (KNU 배치 축소·단순화) 맵 설정. scripts/build_env.py 가 만든 파일 — 배치를 바꾸려면 스크립트를 고쳐 다시 생성.
+gps_origin:            # map (0,0) 의 위경도. +x = 동, +y = 북
+  lat: 35.89
+  lon: 128.6115
+
+robot_spawn:           # = 도킹 pose
+  x: 9.500
+  y: -5.302
+  yaw_deg: 90.0
+
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: 9.500, y: -4.302, yaw_deg: -90.0}   # 태그 면 중심, yaw = 바깥쪽 법선
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+
+parking_zones:         # 폴리곤 (map 좌표, 반시계)
+  - name: LIB
+    polygon: [[11.5, 7.6], [14.5, 7.6], [14.5, 9.0], [11.5, 9.0]]
+  - name: NURI
+    polygon: [[20.0, 21.85], [23.0, 21.85], [23.0, 23.25], [20.0, 23.25]]
+  - name: SCI
+    polygon: [[-27.0, -4.4], [-24.0, -4.4], [-24.0, -3.0], [-27.0, -3.0]]
+  - name: ENG
+    polygon: [[-14.5, -21.5], [-11.5, -21.5], [-11.5, -20.1], [-14.5, -20.1]]
+  - name: IT
+    polygon: [[8.0, -24.5], [11.0, -24.5], [11.0, -23.1], [8.0, -23.1]]
+  - name: WEL
+    polygon: [[23.5, -14.4], [26.5, -14.4], [26.5, -13.0], [23.5, -13.0]]
+
+params:                # 이 맵에서 덮어쓸 노드 파라미터 (launch/system.launch.py 가 적용)
+  nav_bridge:
+    v_max: 0.8
+    w_max: 1.0
+    lookahead: 0.8
+    goal_timeout_sec: 300.0
+    replan_sec: 2.0
+    costmap_res: 0.2
+    goal_clearance: 1.2
+    inflation_radius: 1.2
+  battery_manager:
+    k1_pct_per_m: 0.12
+    k2_pct_per_s: 0.02
+  queue_manager:
+    d_max: 120.0
+    w_d: 1.0
+  sim_lidar:
+    range_max: 8.0
+  collector:
+    align_timeout_sec: 120.0

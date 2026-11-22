@@ -1,0 +1,45 @@
+# K32. 하루 운영 종합 (발표 데모용)   [D 돌발상황]   발전시킨 기존 시나리오: s2_new_request, s19_peak_stream
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K32. 하루 운영 종합 (발표 데모용)"
+id: k32
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s2_new_request, s19_peak_stream]
+situation: "12분 동안: 넘어짐·불법 주차·배터리 부족·고장·신고가 섞여 10건이 순서대로 생기고, 초반에 1건이 사용자에 의해 정렬되며 충전 스탠드 1개가 고장 난다."
+mission: "우선순위·목적지 분류·적재량·자동 취소·스탠드 고장 대응을 한 번에 보여 준다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
+  - {id: 2, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 3, order: 2, dest: general, zone: P08, reasons: ["넘어짐", "불법 주차"], hint: "P08 110 정보화본부 인근 (60 m)"}
+  - {id: 4, order: 5, dest: cancelled, zone: null, reasons: ["불법 주차"], hint: "펌웨어 보고(대여 중·슬롯 주차)로 대기열에서 제거, 그 킥보드로 가지 않음"}
+  - {id: 5, order: 6, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (112 m)"}
+  - {id: 6, order: 4, dest: broken, zone: P18, reasons: ["고장", "불법 주차"], hint: "P18 305 복지관 인근 (71 m)"}
+  - {id: 7, order: 1, dest: general, zone: P25, reasons: ["통행 방해 신고", "불법 주차"], hint: "P25 412 미래창직관 인근 (94 m)"}
+  - {id: 8, order: 7, dest: charging, zone: C6, reasons: ["불법 주차", "배터리 부족"], hint: "C6 공식당 쪽 (공대9호관) (100 m)"}
+  - {id: 9, order: 8, dest: general, zone: P17, reasons: ["불법 주차"], hint: "P17 304 제4합동강의동 인근 (35 m)"}
+  - {id: 10, order: 3, dest: charging, zone: C8, reasons: ["넘어짐", "불법 주차", "배터리 부족"], hint: "C8 대운동장 쪽 (101 m)"}
+pass_criteria:
+  - "고장 분류 칸 (반대 방향): #6 → 고장 분류 칸에 반대 방향으로 섬"
+  - "충전 주차구역: #5,8,10 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
+  - "일반 주차구역 슬롯: #3,7,9 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "요청 자동 취소 (대여·사용자 정렬): #4 → 취소 사유가 기록되고 로봇이 그 킥보드에서 수거 동작을 하지 않음"
+  - "조치 없음: #1,2 → 수거하지 않음 (위치 변화 0.2 m 이하)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+overrides: {charging_capacity: 5}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 200.512, y: 131.745, yaw_deg: 176.5, battery_pct: 35, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
+  - {id: 2, x: 204.85, y: 212.816, yaw_deg: -93.1, battery_pct: 70, slot: P06-02, place: slot, where: "P06 111 중앙도서관 인근 02번 칸"}
+  - {id: 3, x: 203.22, y: 136.63, yaw_deg: -54.4, tilt_deg: 90, battery_pct: 66, place: walkway, where: "도서관 앞 보행로"}
+  - {id: 4, x: 64.57, y: 209.67, yaw_deg: 19.0, battery_pct: 74, place: entrance, where: "103 글로벌플라자 출입구 앞"}
+  - {id: 5, x: -32.48, y: -0.81, yaw_deg: 116.9, battery_pct: 9, place: lawn, where: "인문대 앞 잔디"}
+  - {id: 6, x: 382.02, y: -123.89, yaw_deg: 10.8, battery_pct: 48, fault: brake, place: walkway, where: "복지관 앞 보행로"}
+  - {id: 7, x: 82.65, y: -287.0, yaw_deg: 107.1, battery_pct: 58, silent: true, place: walkway, where: "IT5호관 앞 보행로"}
+  - {id: 8, x: -111.8, y: -315.09, yaw_deg: 76.6, battery_pct: 6, spawn_at: 240, place: walkway, where: "공대1호관 앞 보행로"}
+  - {id: 9, x: 462.77, y: -100.82, yaw_deg: 86.7, battery_pct: 69, spawn_at: 420, place: entrance, where: "308 경상대학 출입구 앞"}
+  - {id: 10, x: -263.18, y: -357.32, yaw_deg: 3.4, tilt_deg: 90, battery_pct: 12, spawn_at: 600, place: lawn, where: "대운동장 옆 잔디"}
+events:
+  - {t: 30, id: 7, type: "report", reason: "obstruction", gps_error_m: 5.0, note: "통로 막음"}
+  - {t: 20, id: 4, type: "park", slot: "P06-05"}
+  - {t: 360, type: "stand_fault", slot: "C1-02"}

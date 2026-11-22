@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<!-- 경북대학교 대구캠퍼스 (지형 포함). scripts/build_knu_campus.py 가 만든 파일 — 직접 고치지 말고 스크립트를 고칠 것.
+     world 프레임 = map 프레임 (+x 동, +y 북, 원점 위도 35.8904 경도 128.6103). 맵 설정: config/maps/knu_campus.yaml
+     지형 z 는 로봇 도크(차고 옆) = 0. 주차구역 32곳, 충전 주차구역 8곳.
+     킥보드는 scooter_fleet_sim 이 시나리오대로 만든다. -->
+<sdf version="1.9">
+  <world name="knu_campus">
+    <physics name="default" type="ignored">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>35.8904</latitude_deg>
+      <longitude_deg>128.6103</longitude_deg>
+      <elevation>58.6</elevation>
+    </spherical_coordinates>
+    <scene>
+      <ambient>0.65 0.65 0.65 1</ambient>
+      <background>0.70 0.80 0.92 1</background>
+      <grid>false</grid>
+    </scene>
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 300 0 0 0</pose>
+      <diffuse>0.9 0.9 0.88 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.3 -0.85</direction>
+    </light>
+    <!-- 지형: SRTM 고도 평활화 + 바닥 그림(도로·보행로·잔디·운동장·일청담·등고선·주차/충전 칸) -->
+    <model name="terrain">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><mesh><uri>model://knu_campus/meshes/terrain.obj</uri></mesh></geometry></collision>
+        <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/terrain.obj</uri></mesh></geometry></visual>
+      </link>
+    </model>
+    <!-- 건물 94동 (OSM 외곽선 + 높이, 안내도 5개 구역 색) -->
+    <model name="buildings">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><mesh><uri>model://knu_campus/meshes/buildings.obj</uri></mesh></geometry></collision>
+        <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/buildings.obj</uri></mesh></geometry></visual>
+      </link>
+    </model>
+    <!-- 킥보드 거치대: 일반(보라 레일 + 고장 칸 빨강) / 충전(청록 스탠드 + 파란 P 표지), 출입문 기둥 -->
+    <model name="kickboard_racks">
+      <static>true</static>
+      <link name="link">
+        <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks.obj</uri></mesh></geometry></visual>
+        <collision name="C1_rack"><pose>200.695 134.714 2.638 0 0 1.5095</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C2_rack"><pose>372.286 -176.041 -1.833 0 0 -0.9674</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C3_rack"><pose>238.996 -115.277 -6.255 0 0 -3.0508</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C4_rack"><pose>95.508 218.293 -5.100 0 0 -0.0191</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C5_rack"><pose>-10.352 109.027 -5.133 0 0 -2.7986</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C6_rack"><pose>-163.884 -400.465 -11.597 0 0 3.1187</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C7_rack"><pose>-33.437 -173.756 -11.355 0 0 -0.1313</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="C8_rack"><pose>-268.283 -256.271 -10.922 0 0 1.6936</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
+        <collision name="P01_rack"><pose>246.462 312.663 -11.210 0 0 -1.4886</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P02_rack"><pose>115.967 303.376 -8.685 0 0 -0.0326</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P03_rack"><pose>167.600 281.016 -6.842 0 0 3.0901</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P04_rack"><pose>248.914 273.194 -9.535 0 0 -1.5857</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P05_rack"><pose>-81.450 192.094 -9.706 0 0 -2.8691</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P06_rack"><pose>207.297 212.685 -3.696 0 0 -0.0535</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P07_rack"><pose>-101.049 161.934 -9.039 0 0 -1.8339</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P08_rack"><pose>262.508 127.872 0.492 0 0 -1.5623</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P09_rack"><pose>-136.725 97.547 -7.666 0 0 2.8962</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P10_rack"><pose>460.838 96.834 -10.501 0 0 -1.1477</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P11_rack"><pose>326.677 57.348 -0.540 0 0 2.6915</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P12_rack"><pose>428.481 12.042 -5.367 0 0 2.6738</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P13_rack"><pose>-68.094 -10.548 -5.626 0 0 -0.2554</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P14_rack"><pose>-411.900 -59.312 -9.025 0 0 -1.5457</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P15_rack"><pose>56.525 -61.553 -4.386 0 0 -0.1103</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P16_rack"><pose>-297.616 -64.201 -9.961 0 0 1.5574</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P17_rack"><pose>468.847 -66.162 -4.582 0 0 2.6140</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P18_rack"><pose>312.299 -139.407 -4.687 0 0 -0.4744</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P19_rack"><pose>-226.817 -126.886 -13.259 0 0 0.2226</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P20_rack"><pose>-504.646 -149.688 -9.653 0 0 -3.1049</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P21_rack"><pose>131.999 -202.964 -9.070 0 0 -0.6664</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P22_rack"><pose>-406.261 -195.135 -13.688 0 0 -0.7706</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P23_rack"><pose>-58.741 -270.218 -7.347 0 0 -0.0526</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P24_rack"><pose>-144.245 -240.731 -10.154 0 0 3.1190</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P25_rack"><pose>-9.940 -302.885 -4.619 0 0 -1.6093</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P26_rack"><pose>231.399 -286.942 -6.155 0 0 -0.6390</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P27_rack"><pose>-453.251 -349.529 -10.916 0 0 -0.0210</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P28_rack"><pose>-392.001 -354.255 -9.289 0 0 -0.1338</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P29_rack"><pose>135.089 -380.739 -2.983 0 0 2.8859</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P30_rack"><pose>57.378 -418.487 -4.825 0 0 3.1051</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P31_rack"><pose>-131.093 -457.962 -9.553 0 0 -0.0221</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+        <collision name="P32_rack"><pose>329.308 -532.615 -1.455 0 0 2.9250</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
+      </link>
+    </model>
+    <!-- 로봇 충전 도크 (100 본관 옆) -->
+    <include>
+      <uri>model://charging_station</uri>
+      <name>charging_station</name>
+      <pose>180.126 44.794 0.055 0 0 -2.0722</pose>
+    </include>
+  </world>
+</sdf>

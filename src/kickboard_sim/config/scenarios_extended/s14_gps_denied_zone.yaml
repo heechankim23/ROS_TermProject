@@ -1,0 +1,32 @@
+name: 건물 사이 킥보드 GPS 오차·태그 보정
+map: street_extended
+gps_noise_sigma: 0.8
+robot:
+  initial_battery_pct: 95
+  capacity: 4
+scooters:
+- id: 1
+  x: 2.25
+  y: 9
+  yaw_deg: 90
+  tilt_deg: 90
+  battery_pct: 80
+  weight_kg: 18
+extended:
+  weight_limit_kg: 75
+  speed_limit: 0.5
+  accel_limit: 0.4
+params:
+  mission_manager:
+    max_dock_retries: 3
+  nav_bridge:
+    goal_timeout_sec: 600.0
+  sim_tag_detector:
+    camera_offset_x: 0.76
+  collector:
+    verify_timeout_sec: 30.0
+    approach_standoff: 2.0
+events:
+- t: 40
+  type: gps_noise
+  sigma: 0.15
