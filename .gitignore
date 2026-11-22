@@ -3,5 +3,6 @@ build/
 install/
 log/
 results/
+bags/
 __pycache__/
 *.pyc
