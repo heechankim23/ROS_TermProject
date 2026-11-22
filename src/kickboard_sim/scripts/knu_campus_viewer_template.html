@@ -192,14 +192,11 @@ aside.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; max
   </main>
 </div>
 
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
-</script>
 <script id="campus-data" type="application/json">/*DATA*/</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script>
+(async () => {
+const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm');
+const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm');
 
 const D = JSON.parse(document.getElementById('campus-data').textContent);
 const $ = (id) => document.getElementById(id);
@@ -615,4 +612,5 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 relayout(); resize(); requestAnimationFrame(tick);
+})().catch(e => { console.error(e); document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;left:16px;bottom:16px;background:#fff;color:#b91c1c;padding:8px 12px;border-radius:8px;font:14px sans-serif">지도를 불러오지 못했습니다: ' + String(e.message || e).replace(/</g,'&lt;') + '</div>'); });
 </script>
