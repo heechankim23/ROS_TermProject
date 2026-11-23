@@ -51,3 +51,9 @@
 
 - `kickboard_robot/test/test_extended.py::test_legacy_manifest_hashes` 는 이번 작업 전부터 실패한다 (`build_env.py`, `planner.py`, `street_layout.json` 등이 manifest 를 만든 뒤 이미 바뀜). 이번 작업으로 고정 파일이 더 바뀌었다. manifest 를 갱신할지는 그 프로필 담당이 정한다.
 - 캠퍼스 맵 nav_bridge 는 시작할 때 큰 경로 격자를 만드느라 약 3~4 초, 메모리 최대 약 600 MB 를 쓴다.
+
+## 2026-11-23 추가: 정렬 맴돌기 수정 (collector.py)
+
+- 로봇이 이미 팔이 닿는 거리(정렬 거리 -0.25 ~ +0.15 m)에 있으면 정렬 주행을 생략하고 바로 적재한다.
+- 정렬 주행이 시간 초과·실패해도 팔이 닿는 거리(정렬 거리 + arm_reach_margin 이내)면 그대로 적재한다. 아니면 기존처럼 실패·관리자 알림.
+- 원인: k16 #21 — 킥보드를 정면에 둔 채 반대편 자리로 가려다 앞 장애물 정지에 걸려 90초 동안 맴돌아 align_timeout.

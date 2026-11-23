@@ -191,27 +191,50 @@ class Collector(Node):
         target.pose.position.x = sum(c[0] for c in centers) / len(centers)
         target.pose.position.y = sum(c[1] for c in centers) / len(centers)
         target.pose.orientation.w = 1.0
-        nh = future_wait(self, self.nav.send_goal_async(GoToPose.Goal(target_pose=target, standoff=float(dist))), 5.0)
-        if nh is None or not nh.accepted:
-            return self.finish(gh, False, 'align_failed: nav goal rejected')
-        rf = nh.get_result_async()
-        t0 = now_sec(self)
-        while rclpy.ok() and not rf.done():
-            if gh.is_cancel_requested:
-                nh.cancel_goal_async()
-                return self.finish(gh, False)
-            if now_sec(self) - t0 > self.get_parameter('align_timeout_sec').value:
-                nh.cancel_goal_async()
-                return self.finish(gh, False, 'align_timeout')
-            collect()
+        margin = self.get_parameter('arm_reach_margin').value
+
+        def in_reach(tol=None):
+            # 로봇팔은 손목을 돌려 맞추므로 방향과 무관하게 거리만 맞으면 실을 수 있다
             pose = self.pose.get()
-            if pose is not None:
-                self.fb(gh, 'ALIGNING', math.hypot(target.pose.position.x - pose[0],
-                                                   target.pose.position.y - pose[1]) - dist)
-            sleep_sim(self, 0.1)
-        if rf.result() is None or not rf.result().result.success:
-            msg = rf.result().result.message if rf.result() is not None else 'no result'
-            return self.finish(gh, False, f'align_failed: {msg}')
+            if pose is None:
+                return False
+            r = math.hypot(target.pose.position.x - pose[0], target.pose.position.y - pose[1])
+            return dist - 0.25 <= r <= dist + (margin if tol is None else tol)
+
+        if in_reach(0.15):
+            # 이미 팔이 닿는 거리 -> 정렬 주행 생략. (킥보드를 정면에 둔 채 반대편 자리로 돌아가려다
+            # 앞 장애물 정지에 걸려 맴도는 경우가 있었음: k16 #21 align_timeout)
+            self.get_logger().info(f'킥보드 {sid}: 이미 팔이 닿는 거리 -> 정렬 주행 생략')
+        else:
+            nh = future_wait(self, self.nav.send_goal_async(GoToPose.Goal(target_pose=target, standoff=float(dist))), 5.0)
+            if nh is None or not nh.accepted:
+                return self.finish(gh, False, 'align_failed: nav goal rejected')
+            rf = nh.get_result_async()
+            t0 = now_sec(self)
+            timed_out = False
+            while rclpy.ok() and not rf.done():
+                if gh.is_cancel_requested:
+                    nh.cancel_goal_async()
+                    return self.finish(gh, False)
+                if now_sec(self) - t0 > self.get_parameter('align_timeout_sec').value:
+                    nh.cancel_goal_async()
+                    timed_out = True
+                    break
+                collect()
+                pose = self.pose.get()
+                if pose is not None:
+                    self.fb(gh, 'ALIGNING', math.hypot(target.pose.position.x - pose[0],
+                                                       target.pose.position.y - pose[1]) - dist)
+                sleep_sim(self, 0.1)
+            if timed_out:
+                if not in_reach():
+                    self.twist()
+                    return self.finish(gh, False, 'align_timeout')
+                self.get_logger().warn(f'킥보드 {sid}: 정렬 자리까지는 못 갔지만 팔이 닿는 거리 -> 그대로 적재')
+            elif rf.result() is None or not rf.result().result.success:
+                if not in_reach():
+                    msg = rf.result().result.message if rf.result() is not None else 'no result'
+                    return self.finish(gh, False, f'align_failed: {msg}')
         self.twist()
         # 좁은 곳(주차 차량 사이, 진입 금지 구역 안)이라 nav_bridge 가 먼 자리를 골랐으면 팔이 닿지 않는다 -> 사람 호출
         pose = self.pose.get()

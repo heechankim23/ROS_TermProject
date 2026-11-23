@@ -55,4 +55,4 @@
 - 시나리오 전용 작은 world 생성물 (약 80 MB, `python3 src/kickboard_sim/scripts/build_scenario_worlds.py` 로 50초면 다시 만듦):
   `models/knu_campus/meshes/*_k00`~`*_k32`, `worlds/knu_k*.sdf`, `config/maps/knu_k*.yaml`, `maps/knu_k*.yaml`
 - `results/`, `build/`, `install/`, `log/`, `~/.ros/kickboard_ops/`
-- 검증 결과와 최종 리플레이는 `docs/knu_results/` 에 복사해 둠 (33개 중 32개 통과, k16 은 25건 중 23건)
+- 검증 결과와 최종 리플레이는 `docs/knu_results/` 에 복사해 둠 (33개 모두 통과)
