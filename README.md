@@ -474,14 +474,26 @@ t_max 가 보장하는 것은 "1번보다 t_max 이상 늦게 들어온 요청�
 | 4 | (공통) | 줄바꿈 renormalize (확장 프로필 CRLF 26개 → LF). `mission_logic` 기본값 20%, `lidar_logic.add_noise` 에 C 의 range_max 제한 반영 | 병합 커밋에 포함 |
 
 검증 (ROS 없는 환경): 전체 `.py` 문법·pyflakes 통과, ROS 무관 pytest **54/56 통과**
-(실패 2 = `test_sim_localizer_map_odom` rclpy 없음, `test_legacy_manifest_hashes` 확장 프로필 해시 — 둘 다 병합 전부터 실패),
+(실패 2 = `test_sim_localizer_map_odom` rclpy 없음, `test_legacy_manifest_hashes` 확장 프로필 해시 — 둘 다 병합 전부터 실패. 해시는 아래에서 갱신),
 `build_env.py` 재생성 결과가 저장소 파일과 동일. **Ubuntu 에서 `colcon build` · kinematic/Gazebo 회귀는 아직 안 함.**
 
+추가 병합·수정 (11-23 저녁, role_E 에 반영):
+- role_D `43cb2b1`(정렬 실패 시 기다렸다 같은 자리로) · `role_D_align_wait_knu`(같은 코드의 KNU 적용판) 병합
+- **D 의 `MissionManager` 구조 변경에 상속 클래스 3개를 맞춤** — 맞추지 않으면 경북대 시나리오가 시작하자마자 죽었음
+  - `mission_manager_campus.py`(경북대) · `mission_manager_station.py`(충전소 별도 도로맵): 상태 이름(`IDLE` 등)을
+    `mission_logic` 에서 가져오도록, 적재함을 `Cargo` 객체 방식(`cargo.load`, `cargo.add`, `cargo.items`, `cargo.for_dest`)으로
+  - station: 충전 자리를 `ChargerSlots` 로 (예전 `charger_spots/occ/fifo` 는 base 에서 없어짐)
+  - `extended_runtime.py` 와 그 테스트도 같은 방식으로
+  - 가짜 ROS 환경에서 경북대 하역 한 바퀴(일반·고장·충전 칸 3대), 충전소 하역·도크 비우기 동작 확인
+- CI: `package.xml` 에 `python3-scipy` 추가, `test_navigation` 의 가짜 `free_spot` 을 A 의 인자에 맞춤
+- 확장 프로필 해시 목록: 기본 파일을 일부러 고쳤으면 `python3 tools/update_legacy_hashes.py` 로 갱신하고 같이 커밋
+
 확인 요청:
+- **A**: `mission_manager_campus.py` 를 D 구조에 맞춘 것 (동작은 그대로, 적재함 다루는 방식만 바뀜). KNU 시나리오 회귀 한 번
 - **C**: `nav_bridge.py` 병합 결과 (A 의 nearest_free 대체 목표가 C 의 재시도 흐름 안에서 도는지)
 - **D · A**: `collector.py` 를 D 버전으로 정리한 것, `motion.py` 의 A 쪽 `_at` 방식을 D 히스테리시스로 대체한 것
 - **D**: 새 `nav_logic.py` · `lidar_logic.py` 등 제안 파일은 아직 노드가 쓰지 않음. `nav_logic.choose_goal` 에는 A·C 의 최신 목표 선택(가장 가까운 빈 자리, 실패 사유)이 없음
-- **전체**: D 의 CI(`.github/workflows/ci.yml`)는 모든 push 에서 돌고, 위 해시 테스트 때문에 지금은 실패로 나옴 → 확장 프로필 유지·삭제 결정 필요
+- **전체**: D 의 CI(`.github/workflows/ci.yml`)는 모든 push 에서 돈다. scipy·해시 문제를 고쳐 통과함. 확장 프로필 유지·삭제는 아직 결정 필요
 
 ### 12-1. 이번에 main 에 합친 것
 

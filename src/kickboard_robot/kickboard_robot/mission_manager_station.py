@@ -23,7 +23,8 @@ from kickboard_interfaces.srv import SelectNextTarget
 
 from .common import spin_single
 from .drop_zones import edge_plans
-from .mission_manager import CHARGER, CHARGING, DROPPING, IDLE, PARKING, SELECTING, MissionManager
+from .mission_logic import CHARGER, CHARGING, DROPPING, IDLE, PARKING, SELECTING, ChargerSlots
+from .mission_manager import MissionManager
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 
@@ -45,23 +46,21 @@ class StationMissionManager(MissionManager):
             self.get_logger().warn('킥보드 충전소 앞에 로봇이 설 자리가 없음 -> 기본판처럼 도크에서 하역')
             return plans
         self.station = cand[0]
-        self.charger_spots = list(self.station['spots'])      # 충전 자리 = 충전소 안
-        self.charger_occ = [None] * len(self.charger_spots)
-        self.charger_fifo = []
+        self.charger = ChargerSlots(self.station['spots'])     # 충전 자리 = 충전소 안
         rx, ry, _ = self.station['robot']
         self.get_logger().info(f'킥보드 충전소 {self.station["zone"]}: 로봇 위치 ({rx:.2f}, {ry:.2f}), '
-                               f'충전 자리 {len(self.charger_spots)}개 (로봇 도크와 별도 장소)')
+                               f'충전 자리 {len(self.charger.spots)}개 (로봇 도크와 별도 장소)')
         return plans
 
     # ---------------- 판단 ----------------
     def do_select(self):
         if self.station is None:
             return super().do_select()
-        if self.at_dock and self.dock_unload_all and self.cargo:       # 충전소·주차구역에 못 간 경우만 도크에서 비움
+        if self.at_dock and self.dock_unload_all and self.cargo.load:       # 충전소·주차구역에 못 간 경우만 도크에서 비움
             self.unload_at_dock(lambda n: self.set_state(SELECTING, f'(도크에서 적재함 비움 {n}대)'))
             return
         low = self.battery <= self.p('return_battery_pct')
-        if low or self.load >= self.p('capacity'):
+        if low or self.cargo.load >= self.p('capacity'):
             why = f'(배터리 {self.battery:.0f}%)' if low else '(만재)'
             if not low and self.start_any_drop(why):
                 return
@@ -89,7 +88,7 @@ class StationMissionManager(MissionManager):
             return
         if self.start_any_drop('(대기열 빈)'):
             return
-        if self.at_dock and not self.cargo:
+        if self.at_dock and not self.cargo.load:
             self.set_state(IDLE, '(대기열 빈)')
         elif self.at_dock:
             self.set_state(SELECTING)             # dock_unload_all 로 다음 tick 에 도크에서 비운다
@@ -100,17 +99,17 @@ class StationMissionManager(MissionManager):
         """주차구역행이 있으면 주차구역, 그다음 충전소행이 있으면 킥보드 충전소. 갈 곳을 정했으면 True"""
         if self.dock_unload_all:
             return False
-        if self.cargo_for(PARKING) and self.start_drop(why):
+        if self.cargo.for_dest(PARKING) and self.start_drop(why):
             return True
         if self.dock_unload_all:                  # 주차구역에 자리가 없었다 -> 도크에서 전부 하역
             return False
-        if self.cargo_for(CHARGER) and self.start_station_drop(why):
+        if self.cargo.for_dest(CHARGER) and self.start_station_drop(why):
             return True
         return False
 
     # ---------------- 킥보드 충전소 하역 ----------------
     def start_station_drop(self, why):
-        ids = self.cargo_for(CHARGER)
+        ids = self.cargo.for_dest(CHARGER)
         rx, ry, ryaw = self.station['robot']
         self.at_dock = False
         self.set_state(DROPPING, f'{why} -> 킥보드 충전소 {self.station["zone"]} ({len(ids)}대)')
@@ -137,7 +136,7 @@ class StationMissionManager(MissionManager):
             self.on_station_nav_failed(r.result.message if r is not None else 'no result')
             return
         name = self.station['zone']
-        self.ev.emit('arrived_at_station', station=name, count=len(self.cargo_for(CHARGER)))
+        self.ev.emit('arrived_at_station', station=name, count=len(self.cargo.for_dest(CHARGER)))
         # 충전 자리 배정·오래된 킥보드 치우기는 기본판의 도크 하역 절차를 그대로 쓴다 (자리만 충전소 것)
         MissionManager.unload_at_dock(
             self, lambda n: self.set_state(SELECTING, f'(킥보드 충전소 {name} 하역 {n}대)'))
@@ -153,10 +152,10 @@ class StationMissionManager(MissionManager):
         """도킹 뒤 호출된다. 이 판에서는 도크에 킥보드를 내려놓지 않는다 (충전소·주차구역에 못 간 경우만 적재함을 비움)."""
         if self.station is None:
             return super().unload_at_dock(then)
-        if self.dock_unload_all and self.cargo:
-            spots, self.charger_spots = self.charger_spots, []       # 자리 없음 -> 기본판이 '적재함에서 바로 치움'으로 처리
+        if self.dock_unload_all and self.cargo.load:
+            slots, self.charger = self.charger, ChargerSlots([])     # 자리 없음 -> 기본판이 '적재함에서 바로 치움'으로 처리
             super().unload_at_dock(then)
-            self.charger_spots = spots
+            self.charger = slots
             return
         self.dock_unload_all = False
         self.run_unloads([], then)

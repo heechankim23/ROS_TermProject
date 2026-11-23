@@ -31,7 +31,8 @@ from kickboard_interfaces.msg import ScooterState
 from kickboard_interfaces.srv import SelectNextTarget
 
 from .common import now_sec, spin_single
-from .mission_manager import CHARGING, DROPPING, IDLE, LOADING, SELECTING, MissionManager
+from .mission_logic import CHARGING, DROPPING, IDLE, SELECTING   # 상태 이름은 D 의 mission_logic 에 있음
+from .mission_manager import MissionManager
 from .motion import quat_from_yaw
 
 STOP_DIST = 1.6          # 슬롯 중심 -> 로봇 중심 (거치대를 마주 봄)
@@ -154,11 +155,11 @@ class CampusMissionManager(MissionManager):
         low = self.battery <= self.p('return_battery_pct')
         if low:
             if self.at_dock:
-                self.set_state(CHARGING, f'(배터리 {self.battery:.0f}%, 실은 {self.load}대는 충전 뒤 하역)')
+                self.set_state(CHARGING, f'(배터리 {self.battery:.0f}%, 실은 {self.cargo.load}대는 충전 뒤 하역)')
             else:
                 self.start_dock(f'(배터리 {self.battery:.0f}%)')
             return
-        if self.load >= self.p('capacity'):
+        if self.cargo.load >= self.p('capacity'):
             if not self.start_campus_drop('(만재)'):
                 self.start_dock('(하역할 칸 없음)')
             return
@@ -186,7 +187,7 @@ class CampusMissionManager(MissionManager):
                 return
             self.start_collect(r.scooter_id, r.target_pose)
             return
-        if self.cargo and self.start_campus_drop('(대기열 빈)'):
+        if self.cargo.load and self.start_campus_drop('(대기열 빈)'):
             return
         if self.at_dock:
             self.set_state(IDLE, '(대기열 빈)')
@@ -196,7 +197,7 @@ class CampusMissionManager(MissionManager):
     # ---------------- 수거 ----------------
     def on_collect_fb(self, m):
         super().on_collect_fb(m)
-        if self.arm_fail == 'second_load' and m.feedback.phase == 'LOADING' and self.load >= 1 and not self.halted:
+        if self.arm_fail == 'second_load' and m.feedback.phase == 'LOADING' and self.cargo.load >= 1 and not self.halted:
             self.robot_broken('2번째 적재 중 로봇팔 관절 이상')
             if self.collect_handle is not None:
                 self.collect_handle.cancel_goal_async()
@@ -205,7 +206,7 @@ class CampusMissionManager(MissionManager):
         self.halted = True
         self.arm_fail = None
         self.alert('robot', 'robot_fault', f'{why} -> 수거 중지, 정비 대기 (남은 요청 보류)')
-        self.ev.emit('robot_fault', why=why, load=self.load)
+        self.ev.emit('robot_fault', why=why, load=self.cargo.load)
 
     def on_collect_done(self, f):
         res = f.result().result
@@ -213,7 +214,7 @@ class CampusMissionManager(MissionManager):
         if self.halted:
             self.collect_handle, self.target = None, None
             if res.success:
-                self.cargo.append((sid, 'normal'))
+                self.cargo.add(sid, 'normal')
             else:
                 self.report(sid, 'REQUEUE', 'robot fault')
             self.start_dock('(로봇 고장)')
@@ -229,24 +230,24 @@ class CampusMissionManager(MissionManager):
             kind = 'normal'
         self.collect_handle = None
         self.kind[sid] = kind
-        self.cargo.append((sid, kind))
+        self.cargo.add(sid, kind)
         self.report(sid, 'DONE', 'loaded', res.corrected_pose.pose)
         self.ev.emit('collected', id=sid, corrected_x=res.corrected_pose.pose.position.x,
-                     corrected_y=res.corrected_pose.pose.position.y, load=self.load, dest=kind,
+                     corrected_y=res.corrected_pose.pose.position.y, load=self.cargo.load, dest=kind,
                      fault=st.fault if st else '', battery=round(st.battery_pct, 1) if st else None)
         self.target = None
         info = f'고장 {st.fault}' if kind == 'broken' else f'배터리 {st.battery_pct:.0f}%' if st else '상태 모름'
-        self.set_state(SELECTING, f'(적재 {self.load}/{self.p("capacity")}, 킥보드 {sid} {info} -> {KIND_NAME[kind]})')
+        self.set_state(SELECTING, f'(적재 {self.cargo.load}/{self.p("capacity")}, 킥보드 {sid} {info} -> {KIND_NAME[kind]})')
 
     # ---------------- 하역 ----------------
     def start_campus_drop(self, why):
         """실은 킥보드마다 칸을 배정하고, 구역을 가까운 순서로 돌며 내린다. 배정할 칸이 하나도 없으면 False"""
         pose = self.pose.get()
-        if pose is None or not self.cargo:
+        if pose is None or not self.cargo.load:
             return False
         here = pose[:2]
         plan = {}
-        for sid, _ in self.cargo:
+        for sid, _ in self.cargo.items:
             kind = self.kind.get(sid, 'normal')
             pick = self.pick_slot(kind, here)
             if pick is None and kind == 'charge':          # 충전 칸이 모두 참 -> 일반 슬롯에 충전 대기
@@ -334,12 +335,12 @@ class CampusMissionManager(MissionManager):
         def then(n):
             for sid, s in grp:
                 self.reserved.pop(s['id'], None)
-                if not any(c[0] == sid for c in self.cargo):      # 하역 성공
+                if not any(c[0] == sid for c in self.cargo.items):      # 하역 성공
                     self.occ[s['id']] = sid
                     self.ev.emit('slot_filled', id=sid, zone=zid, slot=s['id'], kind=self.kind.pop(sid, ''))
                 else:                                              # 실패: 그 칸은 쓰지 않고 다음 하역 때 다시 배정
                     self.dead.add(s['id'])
-                    self.cargo = [(c, self.kind.get(c, 'normal')) if c == sid else (c, d) for c, d in self.cargo]
+                    self.cargo.items = [(c, self.kind.get(c, 'normal')) if c == sid else (c, d) for c, d in self.cargo.items]
             self.get_logger().info(f'{zid} 하역 {n}대')
             self.next_stop()
         self.run_unloads(jobs, then)

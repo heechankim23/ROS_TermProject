@@ -4,6 +4,15 @@ from pathlib import Path
 from types import SimpleNamespace as NS
 from unittest.mock import Mock
 from kickboard_robot.extended_policy import admission
+from kickboard_robot.mission_logic import Cargo
+
+
+def cargo(*items):
+    """미션 관리자의 적재함 (D 의 mission_logic.Cargo)"""
+    c = Cargo()
+    for sid, dest in items:
+        c.add(sid, dest)
+    return c
 
 
 def method(cls,name,**env):
@@ -34,15 +43,15 @@ def test_dock_retries_before_exhaustion():
 
 
 def test_damage_short_circuits_collection():
-    m=NS(specs={'1':{'damaged':True}},cargo=[],weights={},weight_limit=75,
+    m=NS(specs={'1':{'damaged':True}},cargo=cargo(),weights={},weight_limit=75,
          report=Mock(),alert=Mock(),ev=NS(emit=Mock()),set_state=Mock())
     method('ExtendedMission','start_collect')(m,'1',None)
     assert m.report.call_args.args[1]=='NEEDS_HUMAN'
 
 
 def test_overweight_requeues_before_unload():
-    m=NS(specs={'2':{'weight_kg':32}},cargo=[('1','parking')],weights={'1':32},weight_limit=50,
-         report=Mock(),ev=NS(emit=Mock()),cargo_for=lambda _:['1'],start_drop=Mock(return_value=True),start_dock=Mock())
+    m=NS(specs={'2':{'weight_kg':32}},cargo=cargo(('1','parking')),weights={'1':32},weight_limit=50,
+         report=Mock(),ev=NS(emit=Mock()),start_drop=Mock(return_value=True),start_dock=Mock())
     method('ExtendedMission','start_collect')(m,'2',None)
     assert m.report.call_args.args[1]=='REQUEUE'
     m.start_drop.assert_called_once()
