@@ -49,6 +49,37 @@ def test_collector_center_and_mean():
     assert collector_logic.arrived_by_tag(1.7, 1.6, 0.2) and not collector_logic.arrived_by_tag(1.9, 1.6, 0.2)
 
 
+def test_collector_align_retry_same_radius():
+    """정렬 재시도: 반경은 그대로, 각도만 바꾼 자리. 이미 시도한 각도 근처는 다시 고르지 않는다."""
+    deg = math.degrees
+    base = math.radians(30)
+    c = collector_logic.retry_angles(base, [90, -90, 180], [base], 45)
+    assert [round(deg(a)) for a in c] == [120, -60, -150]
+    # 두 번째 자리(120°)도 실패 -> 120° 는 빼고 남은 순서대로
+    c2 = collector_logic.retry_angles(base, [90, -90, 180], [base, c[0]], 45)
+    assert [round(deg(a)) for a in c2] == [-60, -150]
+    # 후보끼리도 겹치지 않음 (+170° 와 180° 는 10° 차이)
+    c3 = collector_logic.retry_angles(0.0, [170, 180], [0.0], 45)
+    assert [round(deg(a)) for a in c3] == [170]
+    assert collector_logic.retry_angles(0.0, [10, -20], [0.0], 45) == []
+    # 자리는 중심에서 반경 r, 방향은 중심을 바라봄
+    for a in (0.0, 1.0, -2.5, math.pi):
+        x, y, yaw = collector_logic.align_pose(2.0, -1.0, 1.35, a)
+        assert abs(math.hypot(x - 2.0, y + 1.0) - 1.35) < 1e-9
+        assert abs(collector_logic.wrap_angle(math.atan2(-1.0 - y, 2.0 - x) - yaw)) < 1e-9
+
+
+def test_collector_arm_reach_window():
+    """팔이 닿는 거리: [dist - 0.25, dist + far]. 정렬 생략(far 0.15)은 적재 허용(far 0.45)보다 좁다."""
+    near, skip, margin = collector_logic.ARM_REACH_NEAR, collector_logic.ARM_REACH_SKIP_FAR, 0.45
+    assert collector_logic.within_reach(1.35, 1.35, near, skip)
+    assert collector_logic.within_reach(1.10, 1.35, near, skip)
+    assert not collector_logic.within_reach(1.09, 1.35, near, margin)      # 너무 가까움
+    assert collector_logic.within_reach(1.70, 1.35, near, margin)          # 실패해도 적재
+    assert not collector_logic.within_reach(1.70, 1.35, near, skip)        # 하지만 정렬 생략은 안 함
+    assert not collector_logic.within_reach(1.81, 1.35, near, margin)      # 팔이 안 닿음 -> 재시도/실패
+
+
 # ---------------- dock ----------------
 CHARGER = {'tag_pose': {'x': -4.548, 'y': 0.0, 'yaw_deg': 0.0}, 'dock_distance': 1.0, 'pre_dock_distance': 2.0}
 
