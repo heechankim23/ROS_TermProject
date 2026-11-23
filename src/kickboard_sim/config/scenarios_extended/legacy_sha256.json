@@ -10,7 +10,7 @@
   "kickboard_sim/config/gz_gui.config": "ed5406c5bca45eac3025edda9e50fcf211581fc4a7a3dceb9fc35c5f26151e02",
   "kickboard_sim/config/map_config.yaml": "2e381323d73cde047ab445721a8826ec27f818cbd7047af44766dd1aed240553",
   "kickboard_sim/config/nav2_params.yaml": "7762fb79c9a69315ac60bccabc76c669323c9de54e9de343ec54f6f5144ae69c",
-  "kickboard_sim/config/robot_params.yaml": "134af7e59974ea574bbc44d8c95c3e2de4f56bab2870d570ad8546fb1ce7b69a",
+  "kickboard_sim/config/robot_params.yaml": "51234e5dc676531a456a691aaf0b2e3003c32941f3f95dfac034f8a5ab20e022",
   "kickboard_sim/launch/bringup.launch.py": "871cada2da9a3398bbd8fbce309dc1b77fc3f2393de066f22ad2158aca496ef1",
   "kickboard_sim/launch/map_utils.py": "5ea9a98b752169a7268f106a7b3594b83dc7b7a71a7bfef5a061303d8111896a",
   "kickboard_sim/launch/sim.launch.py": "785b067f135e1ecea6da35696e3d69ce46f30a9ffc3b9252a8b3e2e941fb5a94",
