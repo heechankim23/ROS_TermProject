@@ -165,6 +165,7 @@ class ScooterFleetSim(Node):
         self.create_subscription(ScooterTruthArray, '/scooter_dropped', self.on_dropped, 10)
 
         self.t0 = None
+        self.gateway_wait_since = None   # request_gateway 를 기다리기 시작한 시각
         self.create_timer(1.0, self.tick)          # 펌웨어 보고 주기 1 Hz
         self.create_timer(0.2, self.publish_truth)
         self.get_logger().info(f'시나리오 "{sc.get("name", "?")}": 킥보드 {len(self.scooters)}대, '
@@ -176,6 +177,14 @@ class ScooterFleetSim(Node):
         if now <= 0.0:          # use_sim_time 인데 /clock 이 아직 안 옴
             return
         if self.t0 is None:
+            # 시나리오 시각 0 은 신고를 받을 request_gateway 가 뜬 뒤부터 센다. 먼저 세면 느린 PC·CI 에서
+            # 첫 신고가 빠진 채 다음 이벤트(예: s1 의 10초 넘어짐)가 먼저 지나간다. 30초 넘게 없으면 그냥 시작.
+            if not self.cli.service_is_ready():
+                if self.gateway_wait_since is None:
+                    self.gateway_wait_since = now
+                if now - self.gateway_wait_since < 30.0:
+                    return
+                self.get_logger().warn('request_gateway 가 30초째 없음 -> 시나리오 시작 (요청은 생기면 보냄)')
             hold = self.get_parameter('initial_hold_sec').value
             if hold < 0:
                 hold = 10.0 if self.gz.enabled else 0.0

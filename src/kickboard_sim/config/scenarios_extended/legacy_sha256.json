@@ -106,7 +106,7 @@
   "kickboard_robot/kickboard_robot/queue_logic.py": "435009a5fc7d32652e1491f26eb049981cf4bb1db7f9126a6f682ed773a1de2d",
   "kickboard_robot/kickboard_robot/queue_manager.py": "64b896f3ed944a1544e60c1016af56d737666f477c590076afcd061123dfca32",
   "kickboard_robot/kickboard_robot/request_gateway.py": "3100fa4032e500cb4c3fba68f8d37961da64dbddc71dec6301f6ea6deac094fc",
-  "kickboard_robot/kickboard_robot/scooter_fleet_sim.py": "b3c9b5c648b3de6e64ab8e3b8eadadcdb146e7f45a6af608250665b7179d53c5",
+  "kickboard_robot/kickboard_robot/scooter_fleet_sim.py": "12609866eeaebd0ff0e130870834a23802a10493195c158be4194cf1bd625789",
   "kickboard_robot/kickboard_robot/sim_lidar.py": "1cea3ba40ebeaf86dcc08b4ed15df6ce16f143b606b956b7ee29a06d4d40e14f",
   "kickboard_robot/kickboard_robot/sim_localizer.py": "f237038b578cf9fcbe3845fc0e810abadb8e5e179c4019a446488421f456fd74",
   "kickboard_robot/kickboard_robot/sim_tag_detector.py": "fd92b149a34ad4aba3d60735eb09afc65212c9867d40c3f9dbbacd1528d13b3c",
