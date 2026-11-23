@@ -11,13 +11,22 @@ ALIGNING   : 검출한 태그로 킥보드 중심을 추정하고, nav_bridge(Go
              고정 장애물(나무·구조물)로 보고 반경(align_distance)은 그대로 두고 각도만 바꾼 자리로 다시 간다 (align_retries 번까지,
              처음 실패한 자리 기준 align_retry_offsets_deg 순서. 0 이면 바로 실패). 실패·시간 초과여도
              팔이 닿는 거리(align_distance + arm_reach_margin 이내)면 그대로 적재한다.
+             align_spot_mode: scan (기본) 이면 자리를 collector 가 직접 고른다 — 정적 지도(nav_bridge 의 map_yaml)
+             + 진입 금지 구역 + 최근 라이다 점으로 팔이 닿는 띠(align_spot_radii) 위 후보를 검사(몸체·팔 경로·갈 수 있음)·
+             채점해 가장 좋은 자리로 보내고, 실패하면 기다렸다 다시 채점 -> 실패한 자리에서 떨어진 다음 후보. 후보가 없으면
+             align_blocked_wait_sec 동안 1초마다 다시 채점하고, 그래도 없으면 실패 (collector_logic.plan_align_spots).
 LOADING    : 로봇팔(arm_loader, sim:=gz) 이 발판을 집어 적재함 칸에 싣는다 -> 적재 +1, /scooter_loaded 발행
              arm_loader 가 없으면(kinematic 모드 등) load_time_sec 정지로 대신한다
 """
 import math
+from collections import deque
 
+import numpy as np
 import rclpy
 from geometry_msgs.msg import PoseStamped, Twist
+from rcl_interfaces.srv import GetParameters
+from rclpy.parameter import parameter_value_to_python
+from sensor_msgs.msg import LaserScan
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
@@ -26,8 +35,8 @@ from std_msgs.msg import String
 from kickboard_interfaces.action import CollectScooter, GoToPose, LoadScooter
 from kickboard_interfaces.msg import RobotStatus, TagDetectionArray
 
-from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, align_next_step, align_pose, retry_angles,
-                              within_reach)
+from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, SpotGrid, align_next_step, align_pose, fill_static,
+                              next_spot, plan_align_spots, retry_angles, within_reach)
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
 from .motion import quat_from_yaw, yaw_from_quat
 
@@ -55,6 +64,15 @@ class Collector(Node):
         self.declare_parameter('align_retries', 2)
         self.declare_parameter('align_retry_offsets_deg', [90.0, -90.0, 180.0])   # 처음 실패한 자리 각도 기준 후보 순서
         self.declare_parameter('align_retry_min_sep_deg', 45.0)   # 이미 시도한 각도와 이보다 가까운 후보는 건너뜀
+        # 정렬 자리 고르기: 'scan' = collector 가 정적 지도 + 진입 금지 구역 + 라이다로 팔이 닿는 띠 위 후보를 검사·채점해
+        # 정확한 자리로 보냄 (재시도도 다음 후보, 후보가 없으면 바로 실패). 'nav_bridge' = 예전 방식 (standoff 원, 고정 각도 재시도)
+        self.declare_parameter('align_spot_mode', 'scan')
+        # 후보 반경: 팔이 닿는 1.10 ~ 1.80 안, 바깥은 도착 오차·중심 추정 오차 몫으로 0.2 m 남김 (1.75 는 도착 뒤 'out of arm reach' 가 났음)
+        self.declare_parameter('align_spot_radii', [1.15, 1.30, 1.45, 1.60])
+        self.declare_parameter('align_spot_step_deg', 10.0)   # 후보 각도 간격
+        self.declare_parameter('align_spot_scan_sec', 1.5)    # 이 시간 동안의 라이다 점을 모아 쓴다
+        self.declare_parameter('align_spot_retry_min_dist', 0.6)   # 다음 후보는 실패한 자리에서 이만큼(m) 이상 떨어진 곳
+        self.declare_parameter('align_blocked_wait_sec', 20.0)   # 후보가 없을 때 1초마다 다시 채점하며 기다리는 최대 시간
         self.declare_parameter('load_time_sec', 3.0)
         self.declare_parameter('scooter_half_depth', 0.2)    # 태그 면 -> 킥보드 중심 (근사)
         self.declare_parameter('detection_max_age_sec', 0.6)
@@ -70,6 +88,11 @@ class Collector(Node):
         self.dets = {}            # tag id -> (t, TagDetection)
         self.load_count = 0
         self.create_subscription(TagDetectionArray, '/tag_detections', self.on_dets, 10, callback_group=self.cb)
+        self.scans = deque(maxlen=30)      # (수신 시각, LaserScan)
+        self.create_subscription(LaserScan, '/scan', lambda m: self.scans.append((now_sec(self), m)), 10,
+                                 callback_group=self.cb)
+        self.nav_params_cli = self.create_client(GetParameters, '/nav_bridge/get_parameters', callback_group=self.cb)
+        self.static_maps = None            # 자리 채점용 지도 (처음 쓸 때 nav_bridge 파라미터로 불러옴)
         self.create_subscription(RobotStatus, '/robot_status',
                                  lambda m: setattr(self, 'load_count', m.load_count), 10, callback_group=self.cb)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -229,56 +252,11 @@ class Collector(Node):
             # 앞 장애물 정지에 걸려 맴도는 경우가 있었음: k16 #21 align_timeout)
             self.get_logger().info(f'킥보드 {sid}: 이미 팔이 닿는 거리 -> 정렬 주행 생략')
         else:
-            # 첫 시도: 자리는 nav_bridge 가 코스트맵(정적 지도 + 라이다)으로 고른다 (standoff)
-            first = GoToPose.Goal(target_pose=target, standoff=float(dist))
-            status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
-            # 1단계 — 실패했고 팔도 안 닿으면: 멈춰 기다렸다 같은 자리로 다시. 되면 지나가는 장애물(사람·수레),
-            # 또 막히면 고정 장애물(나무·구조물)로 보고 2단계(각도 변경)로 간다.
-            wait_sec = self.get_parameter('align_wait_sec').value
-            waited = ''
-            if align_next_step(False, status, msg, wait_sec) == 'wait_same' and not in_reach():
-                self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> {wait_sec:.0f}초 멈춰 기다렸다 같은 자리로 다시 '
-                                       f'(지나가는 장애물인지 확인)')
-                seen = self.wait_still(gh, tag, wait_sec, collect)
-                if seen is None:
-                    return self.finish(gh, False)
-                status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
-                if status == 'ok':
-                    self.get_logger().info(f'킥보드 {sid}: 기다린 뒤 같은 자리 성공 -> 지나가는 장애물이었음')
-                elif status == 'failed':
-                    waited = ', 기다린 뒤 같은 자리도 실패'
-                    self.get_logger().warn(f'킥보드 {sid}: 기다린 뒤에도 같은 자리 실패 ({msg}) -> 고정 장애물로 보고 '
-                                           f'각도 변경 (기다리는 동안 태그 보임 {seen:.0%})')
-            # 2단계 — 반경 dist 는 그대로, 킥보드 중심에서 본 각도만 바꾼 자리로 직접 지정해 다시 간다.
-            # 바라보는 방향이 바뀌므로 앞을 막던 물체(라이다 앞 구간)나 그 자리의 장애물을 벗어난다.
-            # 시간 초과는 다시 시도하지 않는다 (시도마다 align_timeout_sec 이 더 걸림).
-            retries = int(self.get_parameter('align_retries').value)
-            offsets = list(self.get_parameter('align_retry_offsets_deg').value)
-            min_sep = self.get_parameter('align_retry_min_sep_deg').value
-            tried, base = [], None
-            while status == 'failed' and not in_reach() and len(tried) - (base is not None) < retries:
-                if base is None:                              # 처음 실패한 자리의 각도 (로봇이 멈춘 곳 기준)
-                    pose = self.pose.get()
-                    if pose is None:
-                        break
-                    base = math.atan2(pose[1] - cy, pose[0] - cx)
-                    tried.append(base)
-                cands = retry_angles(base, offsets, tried, min_sep)
-                if not cands:
-                    break
-                a = cands[0]
-                tried.append(a)
-                n = len(tried) - 1
-                self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> 반경 {dist:.2f} m 유지, 각도 {math.degrees(a):.0f}° '
-                                       f'자리로 다시 시도 {n}/{retries}')
-                x, y, yaw = align_pose(cx, cy, dist, a)
-                goal = PoseStamped()
-                goal.header.frame_id = 'map'
-                goal.pose.position.x, goal.pose.position.y = x, y
-                q = quat_from_yaw(yaw)
-                goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w = q
-                status, msg = too_far(*self.align_drive(
-                    gh, GoToPose.Goal(target_pose=goal, standoff=0.0), cx, cy, dist, collect))
+            if self.get_parameter('align_spot_mode').value == 'scan':
+                status, msg, more = self.align_by_scan(gh, sid, tag, cx, cy, dist, collect, in_reach, too_far)
+            else:
+                status, msg, more = self.align_by_nav_bridge(gh, sid, tag, target, cx, cy, dist, collect, in_reach,
+                                                             too_far)
             if status == 'canceled':
                 return self.finish(gh, False)
             if status == 'rejected':
@@ -290,8 +268,6 @@ class Collector(Node):
                     self.twist()
                     return self.finish(gh, False, 'align_timeout')
                 else:
-                    more = f'같은 반경 {len(tried)}곳 시도' if len(tried) > 1 else ''
-                    more = f' ({more}{waited})' if more else (f' ({waited[2:]})' if waited else '')
                     return self.finish(gh, False, f'align_failed: {msg}{more}')
         self.twist()
 
@@ -327,6 +303,238 @@ class Collector(Node):
         self.fb(gh, 'LOADING', 0.0, self.load_count + 1)
         self.get_logger().info(f'킥보드 {sid} 적재 완료')
         return self.finish(gh, True, '', corrected)
+
+    # ---------------- 정렬 자리 채점 (align_spot_mode: scan) ----------------
+    def load_static_maps(self):
+        """nav_bridge 가 쓰는 지도 경로·로봇 치수를 받아 지도를 한 번 불러 둔다. 실패하면 라이다만 쓴다."""
+        if self.static_maps is not None:
+            return self.static_maps
+        names = ['map_yaml', 'physical_map_yaml', 'keepout_goal_clearance', 'inscribed_radius', 'scan_offset_x',
+                 'footprint']
+        info = {'nav': None, 'phys': None, 'keep_clear': None, 'inscribed': 0.47, 'scan_off': 0.80,
+                'footprint': [-0.92, 0.89, 0.50]}
+        vals = {}
+        if self.nav_params_cli.wait_for_service(timeout_sec=2.0):
+            res = future_wait(self, self.nav_params_cli.call_async(GetParameters.Request(names=names)), 3.0)
+            if res is not None:
+                vals = {n: parameter_value_to_python(v) for n, v in zip(names, res.values)}
+        from .occupancy import OccupancyMap
+
+        def load(path):
+            if not path:
+                return None
+            m = OccupancyMap(path)
+            return m.grid, m.ox, m.oy, m.res
+        try:
+            info['nav'] = load(vals.get('map_yaml'))
+            info['phys'] = load(vals.get('physical_map_yaml'))
+        except Exception as exc:  # noqa: BLE001
+            self.get_logger().warn(f'자리 채점용 지도 불러오기 실패 ({exc}) -> 라이다만 사용')
+        kc = vals.get('keepout_goal_clearance')
+        info['keep_clear'] = kc if isinstance(kc, float) and kc >= 0 else None
+        for k, n in (('inscribed', 'inscribed_radius'), ('scan_off', 'scan_offset_x'), ('footprint', 'footprint')):
+            if vals.get(n) is not None:
+                info[k] = vals[n]
+        self.static_maps = info
+        self.get_logger().info(f'자리 채점 지도: 주행 {"있음" if info["nav"] else "없음"}, '
+                               f'물리 {"있음" if info["phys"] else "없음"}, 진입 금지 여유 {info["keep_clear"]}')
+        return info
+
+    def recent_scan_points(self, info):
+        """최근 align_spot_scan_sec 동안의 라이다 점 (지도 좌표). 차체에 찍힌 점·최대 거리(맞은 것 없음)는 뺀다."""
+        horizon = self.get_parameter('align_spot_scan_sec').value
+        now = now_sec(self)
+        fx0, fx1, fy = info['footprint']
+        xs, ys = [], []
+        for t, m in list(self.scans):
+            if now - t > horizon or not m.ranges:
+                continue
+            pose = self.pose.get_at(m.header.stamp) or self.pose.get()
+            if pose is None:
+                continue
+            r = np.asarray(m.ranges, dtype=float)
+            a = m.angle_min + m.angle_increment * np.arange(len(r))
+            hit = np.isfinite(r) & (r >= m.range_min) & (r < m.range_max - 0.05)
+            px, py = info['scan_off'] + r[hit] * np.cos(a[hit]), r[hit] * np.sin(a[hit])
+            own = (px > fx0) & (px < fx1) & (np.abs(py) < fy)
+            px, py = px[~own], py[~own]
+            c, s_ = math.cos(pose[2]), math.sin(pose[2])
+            xs.append(pose[0] + px * c - py * s_)
+            ys.append(pose[1] + px * s_ + py * c)
+        if not xs:
+            return np.zeros(0), np.zeros(0)
+        return np.concatenate(xs), np.concatenate(ys)
+
+    def plan_spots(self, cx, cy, dist):
+        """-> (후보 목록, 탈락 사유별 개수). 후보가 없으면 빈 목록."""
+        info = self.load_static_maps()
+        pose = self.pose.get()
+        if pose is None:
+            return [], {'no_pose': 1}
+        grid = SpotGrid(cx, cy, half=6.0, res=0.1)
+        fill_static(grid, info['nav'], info['phys'])
+        grid.add_points(*self.recent_scan_points(info))
+        return plan_align_spots(grid, cx, cy, pose[:2], dist, list(self.get_parameter('align_spot_radii').value),
+                                step_deg=self.get_parameter('align_spot_step_deg').value,
+                                inscribed=float(info['inscribed']), keep_clear=info['keep_clear'])
+
+    def spot_goal(self, spot):
+        goal = PoseStamped()
+        goal.header.frame_id = 'map'
+        goal.pose.position.x, goal.pose.position.y = spot['x'], spot['y']
+        q = quat_from_yaw(spot['yaw'])
+        goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w = q
+        return GoToPose.Goal(target_pose=goal, standoff=0.0)
+
+    def align_by_scan(self, gh, sid, tag, cx, cy, dist, collect, in_reach, too_far):
+        """채점한 자리로 정렬. -> (상태, 메시지, 최종 실패 시 덧붙일 설명).
+        1) 가장 좋은 자리로 간다.
+        2) 실패하면 기다렸다(align_wait_sec) 다시 채점해 가장 좋은 자리로 (지나간 장애물이면 보통 같은 자리가 다시 1등).
+        3) 그래도 실패하면 실패한 자리에서 align_spot_retry_min_dist 이상 떨어진 다음 후보 (align_retries 번).
+        후보가 없으면 align_blocked_wait_sec 동안 1초마다 다시 채점하며 기다린다 (자리에 선 사람이 비켜나길)."""
+        retries = int(self.get_parameter('align_retries').value)
+        wait_sec = self.get_parameter('align_wait_sec').value
+        min_dist = self.get_parameter('align_spot_retry_min_dist').value
+        blocked_wait = self.get_parameter('align_blocked_wait_sec').value
+        failed = []                      # 이동이 실패한 자리 (x, y)
+        driven = []                      # 가 본 자리 (x, y), 겹치지 않게
+        notes = []
+
+        def log_plan(cands, why, head):
+            top = ', '.join(f'{math.degrees(c["a"]):.0f}°/{c["r"]:.2f}m' for c in cands[:3])
+            self.get_logger().info(f'킥보드 {sid}: {head} 자리 후보 {len(cands)}곳 [{top}] 탈락 {why}')
+
+        def pick(head):
+            """후보를 채점해 고른다. 없으면 1초마다 다시 채점하며 기다린다. -> 자리 | None | 'canceled'"""
+            cands, why = self.plan_spots(cx, cy, dist)
+            log_plan(cands, why, head)
+            spot = next_spot(cands, failed, min_dist)
+            if spot is None and blocked_wait > 0:
+                self.get_logger().warn(f'킥보드 {sid}: 팔이 닿는 자리 후보 없음 -> 멈춰 기다렸다 다시 채점 '
+                                       f'(최대 {blocked_wait:.0f}초, 1초마다. 지나가는 장애물이면 비켜남)')
+                t0 = now_sec(self)
+                while spot is None and now_sec(self) - t0 < blocked_wait:
+                    if self.wait_still(gh, tag, 1.0, collect) is None:
+                        return 'canceled'
+                    cands, why = self.plan_spots(cx, cy, dist)
+                    spot = next_spot(cands, failed, min_dist)
+                notes.append(f'{now_sec(self) - t0:.0f}초 기다리며 다시 채점')
+                log_plan(cands, why, f'기다린 뒤({now_sec(self) - t0:.0f}초)')
+            return spot
+
+        def drive(sp):
+            if all(math.hypot(sp['x'] - x, sp['y'] - y) >= min_dist for x, y in driven):
+                driven.append((sp['x'], sp['y']))
+            return too_far(*self.align_drive(gh, self.spot_goal(sp), cx, cy, dist, collect))
+
+        def mark_failed(sp, why):
+            # 도착은 했는데 팔이 조금 안 닿음 -> 그 자리 근처(0.25 m)만 빼서 같은 방향의 더 가까운 자리를 남긴다
+            failed.append((sp['x'], sp['y'], 0.25 if why.startswith('out of arm reach') else min_dist))
+
+        def note(head=''):
+            parts = ([head] if head else []) + ([f'자리 {len(driven)}곳 시도'] if len(driven) > 1 else []) + notes
+            return f' ({", ".join(parts)})' if parts else ''
+
+        spot = pick('정렬')
+        if spot == 'canceled':
+            return 'canceled', 'canceled', ''
+        if spot is None:
+            return 'failed', 'no reachable arm spot', note('주변 장애물로 팔이 닿는 자리 없음')
+        status, msg = drive(spot)
+        if align_next_step(False, status, msg, wait_sec) == 'wait_same' and not in_reach():
+            self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> {wait_sec:.0f}초 멈춰 기다렸다 다시 채점 '
+                                   f'(지나가는 장애물이면 같은 자리가 다시 1등)')
+            seen = self.wait_still(gh, tag, wait_sec, collect)
+            if seen is None:
+                return 'canceled', 'canceled', ''
+            prev, prev_msg = spot, msg
+            spot = pick('기다린 뒤')
+            if spot == 'canceled':
+                return 'canceled', 'canceled', ''
+            if spot is None:
+                return status, msg, note()
+            same = math.hypot(spot['x'] - prev['x'], spot['y'] - prev['y']) < min_dist
+            status, msg = drive(spot)
+            if status == 'ok':
+                how = '같은 자리 성공 -> 지나가는 장애물이었음' if same else '다른 자리 성공'
+                self.get_logger().info(f'킥보드 {sid}: 기다린 뒤 {how}')
+            elif status == 'failed':
+                notes.append('기다린 뒤에도 실패')
+                if same:
+                    self.get_logger().warn(f'킥보드 {sid}: 기다린 뒤에도 같은 자리 실패 ({msg}) -> 고정 장애물로 보고 '
+                                           f'다른 자리 (기다리는 동안 태그 보임 {seen:.0%})')
+                else:
+                    mark_failed(prev, prev_msg)
+        while status == 'failed' and not in_reach() and len(failed) <= retries:
+            mark_failed(spot, msg)
+            if len(failed) > retries:
+                break
+            spot = pick(f'다시 채점 ({len(failed)}곳 실패 뒤)')
+            if spot == 'canceled':
+                return 'canceled', 'canceled', ''
+            if spot is None:
+                notes.append('남은 후보 없음')
+                break
+            self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> 다음 후보 {math.degrees(spot["a"]):.0f}° / '
+                                   f'{spot["r"]:.2f} m 자리로 다시 시도 {len(failed)}/{retries}')
+            status, msg = drive(spot)
+        return status, msg, note()
+
+    def align_by_nav_bridge(self, gh, sid, tag, target, cx, cy, dist, collect, in_reach, too_far):
+        """예전 방식 (align_spot_mode: nav_bridge). -> (상태, 메시지, 최종 실패 시 덧붙일 설명)."""
+        # 첫 시도: 자리는 nav_bridge 가 코스트맵(정적 지도 + 라이다)으로 고른다 (standoff)
+        first = GoToPose.Goal(target_pose=target, standoff=float(dist))
+        status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
+        # 1단계 — 실패했고 팔도 안 닿으면: 멈춰 기다렸다 같은 자리로 다시. 되면 지나가는 장애물(사람·수레),
+        # 또 막히면 고정 장애물(나무·구조물)로 보고 2단계(각도 변경)로 간다.
+        wait_sec = self.get_parameter('align_wait_sec').value
+        waited = ''
+        if align_next_step(False, status, msg, wait_sec) == 'wait_same' and not in_reach():
+            self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> {wait_sec:.0f}초 멈춰 기다렸다 같은 자리로 다시 '
+                                   f'(지나가는 장애물인지 확인)')
+            seen = self.wait_still(gh, tag, wait_sec, collect)
+            if seen is None:
+                return 'canceled', 'canceled', ''
+            status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
+            if status == 'ok':
+                self.get_logger().info(f'킥보드 {sid}: 기다린 뒤 같은 자리 성공 -> 지나가는 장애물이었음')
+            elif status == 'failed':
+                waited = ', 기다린 뒤 같은 자리도 실패'
+                self.get_logger().warn(f'킥보드 {sid}: 기다린 뒤에도 같은 자리 실패 ({msg}) -> 고정 장애물로 보고 '
+                                       f'각도 변경 (기다리는 동안 태그 보임 {seen:.0%})')
+        # 2단계 — 반경 dist 는 그대로, 킥보드 중심에서 본 각도만 바꾼 자리로 직접 지정해 다시 간다.
+        # 바라보는 방향이 바뀌므로 앞을 막던 물체(라이다 앞 구간)나 그 자리의 장애물을 벗어난다.
+        # 시간 초과는 다시 시도하지 않는다 (시도마다 align_timeout_sec 이 더 걸림).
+        retries = int(self.get_parameter('align_retries').value)
+        offsets = list(self.get_parameter('align_retry_offsets_deg').value)
+        min_sep = self.get_parameter('align_retry_min_sep_deg').value
+        tried, base = [], None
+        while status == 'failed' and not in_reach() and len(tried) - (base is not None) < retries:
+            if base is None:                              # 처음 실패한 자리의 각도 (로봇이 멈춘 곳 기준)
+                pose = self.pose.get()
+                if pose is None:
+                    break
+                base = math.atan2(pose[1] - cy, pose[0] - cx)
+                tried.append(base)
+            cands = retry_angles(base, offsets, tried, min_sep)
+            if not cands:
+                break
+            a = cands[0]
+            tried.append(a)
+            n = len(tried) - 1
+            self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> 반경 {dist:.2f} m 유지, 각도 {math.degrees(a):.0f}° '
+                                   f'자리로 다시 시도 {n}/{retries}')
+            x, y, yaw = align_pose(cx, cy, dist, a)
+            goal = PoseStamped()
+            goal.header.frame_id = 'map'
+            goal.pose.position.x, goal.pose.position.y = x, y
+            q = quat_from_yaw(yaw)
+            goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w = q
+            status, msg = too_far(*self.align_drive(
+                gh, GoToPose.Goal(target_pose=goal, standoff=0.0), cx, cy, dist, collect))
+        more = f'같은 반경 {len(tried)}곳 시도' if len(tried) > 1 else ''
+        more = f' ({more}{waited})' if more else (f' ({waited[2:]})' if waited else '')
+        return status, msg, more
 
     def align_drive(self, gh, goal, cx, cy, dist, collect):
         """정렬 자리로 한 번 이동. -> (상태, 메시지). 상태: ok / failed(nav_bridge 이동 실패) / rejected / timeout / canceled"""
