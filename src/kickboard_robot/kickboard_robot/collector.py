@@ -6,8 +6,9 @@ ALIGNING   : 검출한 태그로 킥보드 중심을 추정하고, nav_bridge(Go
              중심 둘레의 '빈 자리'까지 경로 주행해 중심을 바라본다. 자리 선택·경로 모두 코스트맵
              (정적 지도 + 라이다)을 써서 벽·다른 킥보드·이 킥보드의 넘어진 기둥에 부딪히지 않는다.
              로봇팔은 손목을 돌려 킥보드 방향에 맞추므로 어느 쪽에서 접근해도 된다.
-             이미 팔이 닿는 거리면 정렬 주행을 생략한다. 이동이 실패(또는 도착했지만 팔이 안 닿는 먼 자리)하면
-             반경(align_distance)은 그대로 두고 각도만 바꾼 자리로 다시 간다 (align_retries 번까지,
+             이미 팔이 닿는 거리면 정렬 주행을 생략한다. 이동이 실패하면 먼저 align_wait_sec 동안 멈춰 기다렸다
+             같은 자리로 다시 간다 (사람·수레처럼 지나가는 장애물). 그래도 실패(또는 도착했지만 팔이 안 닿는 먼 자리)하면
+             고정 장애물(나무·구조물)로 보고 반경(align_distance)은 그대로 두고 각도만 바꾼 자리로 다시 간다 (align_retries 번까지,
              처음 실패한 자리 기준 align_retry_offsets_deg 순서. 0 이면 바로 실패). 실패·시간 초과여도
              팔이 닿는 거리(align_distance + arm_reach_margin 이내)면 그대로 적재한다.
 LOADING    : 로봇팔(arm_loader, sim:=gz) 이 발판을 집어 적재함 칸에 싣는다 -> 적재 +1, /scooter_loaded 발행
@@ -25,7 +26,8 @@ from std_msgs.msg import String
 from kickboard_interfaces.action import CollectScooter, GoToPose, LoadScooter
 from kickboard_interfaces.msg import RobotStatus, TagDetectionArray
 
-from .collector_logic import ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, align_pose, retry_angles, within_reach
+from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, align_next_step, align_pose, retry_angles,
+                              within_reach)
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
 from .motion import quat_from_yaw, yaw_from_quat
 
@@ -47,7 +49,9 @@ class Collector(Node):
         self.declare_parameter('align_pos_tol', 0.05)
         self.declare_parameter('align_yaw_tol_deg', 10.0)
         self.declare_parameter('align_timeout_sec', 90.0)     # 정렬 자리까지 경로 주행 포함 (시도 1번당)
-        # 정렬 이동 실패 시: 같은 반경(align_distance), 다른 각도의 자리로 다시 시도. 0 = 바로 실패
+        # 정렬 이동 실패 시 1단계: 이만큼(초) 멈춰 기다렸다 같은 자리로 다시 (지나가는 사람·수레). 0 = 바로 2단계
+        self.declare_parameter('align_wait_sec', 5.0)
+        # 2단계: 같은 반경(align_distance), 다른 각도의 자리로 다시 시도 (나무·구조물 같은 고정 장애물). 0 = 안 함
         self.declare_parameter('align_retries', 2)
         self.declare_parameter('align_retry_offsets_deg', [90.0, -90.0, 180.0])   # 처음 실패한 자리 각도 기준 후보 순서
         self.declare_parameter('align_retry_min_sep_deg', 45.0)   # 이미 시도한 각도와 이보다 가까운 후보는 건너뜀
@@ -226,9 +230,26 @@ class Collector(Node):
             self.get_logger().info(f'킥보드 {sid}: 이미 팔이 닿는 거리 -> 정렬 주행 생략')
         else:
             # 첫 시도: 자리는 nav_bridge 가 코스트맵(정적 지도 + 라이다)으로 고른다 (standoff)
-            status, msg = too_far(*self.align_drive(
-                gh, GoToPose.Goal(target_pose=target, standoff=float(dist)), cx, cy, dist, collect))
-            # 실패했고 팔도 안 닿으면: 반경 dist 는 그대로, 킥보드 중심에서 본 각도만 바꾼 자리로 직접 지정해 다시 간다.
+            first = GoToPose.Goal(target_pose=target, standoff=float(dist))
+            status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
+            # 1단계 — 실패했고 팔도 안 닿으면: 멈춰 기다렸다 같은 자리로 다시. 되면 지나가는 장애물(사람·수레),
+            # 또 막히면 고정 장애물(나무·구조물)로 보고 2단계(각도 변경)로 간다.
+            wait_sec = self.get_parameter('align_wait_sec').value
+            waited = ''
+            if align_next_step(False, status, msg, wait_sec) == 'wait_same' and not in_reach():
+                self.get_logger().warn(f'정렬 이동 실패 ({msg}) -> {wait_sec:.0f}초 멈춰 기다렸다 같은 자리로 다시 '
+                                       f'(지나가는 장애물인지 확인)')
+                seen = self.wait_still(gh, tag, wait_sec, collect)
+                if seen is None:
+                    return self.finish(gh, False)
+                status, msg = too_far(*self.align_drive(gh, first, cx, cy, dist, collect))
+                if status == 'ok':
+                    self.get_logger().info(f'킥보드 {sid}: 기다린 뒤 같은 자리 성공 -> 지나가는 장애물이었음')
+                elif status == 'failed':
+                    waited = ', 기다린 뒤 같은 자리도 실패'
+                    self.get_logger().warn(f'킥보드 {sid}: 기다린 뒤에도 같은 자리 실패 ({msg}) -> 고정 장애물로 보고 '
+                                           f'각도 변경 (기다리는 동안 태그 보임 {seen:.0%})')
+            # 2단계 — 반경 dist 는 그대로, 킥보드 중심에서 본 각도만 바꾼 자리로 직접 지정해 다시 간다.
             # 바라보는 방향이 바뀌므로 앞을 막던 물체(라이다 앞 구간)나 그 자리의 장애물을 벗어난다.
             # 시간 초과는 다시 시도하지 않는다 (시도마다 align_timeout_sec 이 더 걸림).
             retries = int(self.get_parameter('align_retries').value)
@@ -269,7 +290,8 @@ class Collector(Node):
                     self.twist()
                     return self.finish(gh, False, 'align_timeout')
                 else:
-                    more = f' (같은 반경 {len(tried)}곳 시도)' if len(tried) > 1 else ''
+                    more = f'같은 반경 {len(tried)}곳 시도' if len(tried) > 1 else ''
+                    more = f' ({more}{waited})' if more else (f' ({waited[2:]})' if waited else '')
                     return self.finish(gh, False, f'align_failed: {msg}{more}')
         self.twist()
 
@@ -329,6 +351,20 @@ class Collector(Node):
             return 'failed', 'no result'
         res = rf.result().result
         return ('ok', '') if res.success else ('failed', res.message)
+
+    def wait_still(self, gh, tag, sec, collect):
+        """멈춰서 sec 초 기다린다. 그동안 태그가 보인 비율(0~1)을 돌려준다 (가림 판단 참고용). 취소되면 None"""
+        t0 = now_sec(self)
+        n = seen = 0
+        while now_sec(self) - t0 < sec:
+            if gh.is_cancel_requested:
+                return None
+            self.twist()
+            collect()
+            n += 1
+            seen += self.fresh(tag) is not None
+            sleep_sim(self, 0.1)
+        return seen / n if n else 0.0
 
     def spin_search(self, gh, tag, w):
         """제자리 회전 탐색. 찾으면 True, 시간 초과 False, 취소 None"""
