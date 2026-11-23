@@ -278,10 +278,12 @@ xdg-open ~/lecture_2026_2/Ros_TermProject/my_ws/results/ops_replay.html
 
 ## 13. 캠퍼스 시나리오 전체 확인 + 전체 리플레이 (`run_all_knu.sh`)
 
+시나리오별 명령 전체 목록: [KNU_COMMANDS.md](KNU_COMMANDS.md) 2번
+
 ```bash
 cd ~/lecture_2026_2/Ros_TermProject/my_ws
-./run_all_knu.sh --gui                    # k00~k32 전부 Gazebo 화면으로, 하나씩 (실제 속도, 매우 오래 걸림)
-./run_all_knu.sh --gui k00 k08 k13        # 고른 것만
+./run_all_knu.sh --gui --rtf 4            # k00~k32 전부 Gazebo 화면 + 4배속, 하나씩 (권장)
+./run_all_knu.sh --gui --rtf 4 k32 k08 k13 # 고른 것만 (발표 데모)
 ./run_all_knu.sh                          # 화면 없이 (Gazebo 서버만)
 ./run_all_knu.sh --speed 2.5              # 로봇 속도를 올려 빨리
 ./run_all_knu.sh --kinematic -j 4         # Gazebo 없이 로직만, 4개 동시에
