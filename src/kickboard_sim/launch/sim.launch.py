@@ -75,10 +75,10 @@ def _setup(context):
             # 처음 화면: 로봇 뒤 위쪽에서 로봇을 바라봄 (캠퍼스 전체가 아니라 시나리오 현장부터 보이게)
             import re
             import tempfile
-            cx, cy = sx - 14 * math.cos(syaw), sy - 14 * math.sin(syaw)
+            cx, cy = sx - 7 * math.cos(syaw), sy - 7 * math.sin(syaw)
             with open(gui_path) as f:
                 gtxt = re.sub(r'<camera_pose>[^<]*</camera_pose>',
-                              f'<camera_pose>{cx:.1f} {cy:.1f} 10 0 0.55 {syaw:.3f}</camera_pose>', f.read())
+                              f'<camera_pose>{cx:.1f} {cy:.1f} 5 0 0.55 {syaw:.3f}</camera_pose>', f.read())
             gtmp = tempfile.NamedTemporaryFile('w', suffix='_gui.config', delete=False)
             gtmp.write(gtxt)
             gtmp.close()
@@ -108,13 +108,22 @@ def _setup(context):
                 arguments=['-world', mf['name'], '-name', 'kickboard_robot', '-file', robot_sdf,
                            '-x', str(sx), '-y', str(sy), '-z', '0.01', '-Y', str(syaw)])]))
         if gui and LC('follow').perform(context) == 'true':
-            # 카메라가 로봇을 따라가게 (Gazebo 의 CameraTracking: /gui/follow). 로봇이 생긴 뒤에 두 번 요청
-            follow = ("gz service -s /gui/follow --reqtype gz.msgs.StringMsg --reptype gz.msgs.Boolean --timeout 3000 "
-                      "--req 'data: \"kickboard_robot\"'; "
-                      "gz service -s /gui/follow/offset --reqtype gz.msgs.Vector3d --reptype gz.msgs.Boolean "
-                      "--timeout 3000 --req 'x: -12 y: 0 z: 9'")
-            for delay in (10.0, 20.0):
-                acts.append(TimerAction(period=delay, actions=[ExecuteProcess(cmd=['bash', '-c', follow], output='log')]))
+            # 카메라가 로봇을 따라가게 (Gazebo 의 CameraTracking: /gui/follow).
+            # world·GUI 를 불러오는 시간이 PC 마다 달라서 정해진 시각에 한 번 부르면 놓친다 ->
+            # 로봇이 생기고 GUI 의 follow 서비스가 뜰 때까지 기다렸다가 부르고, 확실히 하려고 몇 번 더 부른다 (최대 3분)
+            follow = (
+                "for i in $(seq 90); do "
+                "  gz model --list 2>/dev/null | grep -q kickboard_robot && gz service -l 2>/dev/null | grep -q '^/gui/follow$' && break; "
+                "  sleep 2; "
+                "done; "
+                "for k in 1 2 3 4; do "
+                "  gz service -s /gui/follow --reqtype gz.msgs.StringMsg --reptype gz.msgs.Boolean --timeout 3000 "
+                "--req 'data: \"kickboard_robot\"'; "
+                "  gz service -s /gui/follow/offset --reqtype gz.msgs.Vector3d --reptype gz.msgs.Boolean --timeout 3000 "
+                "--req 'x: -6 y: 0 z: 4.5'; "
+                "  sleep 3; "
+                "done")
+            acts.append(TimerAction(period=3.0, actions=[ExecuteProcess(cmd=['bash', '-c', follow], output='log')]))
         acts.append(Node(package='ros_gz_bridge', executable='parameter_bridge', name='gz_bridge',
                          parameters=[{'config_file': os.path.join(share, 'config', 'gz_bridge.yaml'),
                                       'use_sim_time': True}], output='log'))
