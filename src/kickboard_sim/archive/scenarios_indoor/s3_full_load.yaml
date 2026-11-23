@@ -1,0 +1,9 @@
+name: "3. 만재"
+description: "용량 4, 요청 5건. 통과: 4대 후 하역·충전, 남은 1건 이어서 처리"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: -1.0, y: -2.0, yaw_deg: 0}
+  - {id: 2, x: 0.5, y: 1.5, yaw_deg: 45}
+  - {id: 3, x: 2.0, y: -1.0, yaw_deg: 90}
+  - {id: 4, x: 3.0, y: 1.0, yaw_deg: 0}
+  - {id: 5, x: -2.0, y: -1.5, yaw_deg: 120}

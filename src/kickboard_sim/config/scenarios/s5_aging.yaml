@@ -1,14 +1,20 @@
 name: "5. aging (기아 방지)"
+map: street
 description: >
-  먼 곳의 배터리 부족(가중치 최저) 1건 + 충전소 근처에 넘어진 킥보드가 25초마다 생김.
-  통과: 먼 항목(1번)이 점수식 상한(queue_manager 시작 로그의 t_max) 안에 선택됨
+  먼 주차구역(E1)의 배터리 부족 1번(사유 가중치 최저) + 가까운 주차구역(N1)에 서 있던 킥보드가 0·15·90·150초에 차례로 넘어진다.
+  통과: 1번이 선택되는 순간 방금 넘어진 가까운 킥보드가 대기 중이다 (queue_manager 로그 '다음 대상 1 (... 후보 2건 이상)').
+  즉 더 급하고 가까운 새 요청을 제치고 오래 기다린 1번이 선택된다 (aging 역전).
+# 도로 맵 배치 규칙: 킥보드는 연석에서 0.4 m 안쪽 인도에, 연석과 나란히 둔다.
+# yaw 는 넘어질 때 기둥이 인도 안쪽으로 눕는 방향 (북쪽 인도 180, 남쪽 인도 0, 샛길 서쪽 -90, 동쪽 연석 90).
 robot: {initial_battery_pct: 100, capacity: 4}
 scooters:
-  - {id: 1, x: 3.5, y: -3.0, yaw_deg: 0, battery_pct: 8, spawn_at: 0}   # 먼 곳, 구역 B 안 -> LOW_BATTERY
-  # 로봇(1.7 x 0.9 m)이 도킹 자리(-3.55, 0)에서 제자리 회전(반경 ~1 m)할 수 있게 조금 떨어뜨려 둠
-  - {id: 2, x: -2.6, y: -1.6, tilt_deg: 90, spawn_at: 0}
-  - {id: 3, x: -2.6, y: 2.0, tilt_deg: 90, spawn_at: 25}
-  - {id: 4, x: -3.0, y: -2.6, tilt_deg: 90, spawn_at: 50}
-  - {id: 5, x: -1.8, y: 2.4, tilt_deg: 90, spawn_at: 75}
-  - {id: 6, x: -3.4, y: -1.4, tilt_deg: 90, spawn_at: 100}
-  - {id: 7, x: -1.8, y: -2.8, tilt_deg: 90, spawn_at: 125}
+  - {id: 1, x: 12.55, y: 8.0, yaw_deg: 90, battery_pct: 8}      # 구역 E1 안 -> LOW_BATTERY
+  - {id: 2, x: -13.6, y: 5.45, yaw_deg: 180}                    # 구역 N1 안에 나란히 선 4대 (처음엔 정상)
+  - {id: 3, x: -12.9, y: 5.45, yaw_deg: 180}
+  - {id: 4, x: -12.2, y: 5.45, yaw_deg: 180}
+  - {id: 5, x: -11.5, y: 5.45, yaw_deg: 180}
+events:
+  - {t: 0, id: 2, type: fall}
+  - {t: 15, id: 3, type: fall}
+  - {t: 90, id: 4, type: fall}
+  - {t: 150, id: 5, type: fall}

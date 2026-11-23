@@ -1,0 +1,14 @@
+name: "17. 피크 시간 (요청이 계속 들어옴)"
+description: >
+  12초마다 요청 1건씩 총 8건 (사유·배터리 섞임). 처리 속도보다 접수가 빨라 대기열이 쌓인다.
+  통과: 8건 모두 수거. 측정: 최대·평균 대기 시간, 하역 왕복 횟수 (analyze).
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 1.5, y: -1.0, yaw_deg: 30, tilt_deg: 90, spawn_at: 0}
+  - {id: 2, x: 0.5, y: 1.5, yaw_deg: 0, spawn_at: 12}
+  - {id: 3, x: 3.2, y: -2.8, yaw_deg: 90, battery_pct: 8, spawn_at: 24}
+  - {id: 4, x: -1.0, y: -2.2, yaw_deg: 0, tilt_deg: 90, battery_pct: 10, spawn_at: 36}
+  - {id: 5, x: 3.0, y: 1.2, yaw_deg: 60, spawn_at: 48}
+  - {id: 6, x: -2.2, y: 3.0, yaw_deg: 0, battery_pct: 6, spawn_at: 60}
+  - {id: 7, x: 0.8, y: -2.6, yaw_deg: 45, tilt_deg: 90, spawn_at: 72}
+  - {id: 8, x: 2.0, y: 0.2, yaw_deg: 0, spawn_at: 84}

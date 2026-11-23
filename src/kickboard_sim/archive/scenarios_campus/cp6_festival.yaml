@@ -1,0 +1,13 @@
+name: "CP6. 대동제 부스가 본관–도서관 길을 막음"
+map: campus
+description: >
+  축제 부스(12 x 1.5 m)가 본관 동쪽에서 사범대학 앞까지 길을 가로막는다. 방문객 2명.
+  통과: 본관 서쪽으로 돌아 중앙도서관 앞 2대 수거. 측정: 평소(CP1) 대비 이동 거리 증가.
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:
+  - {id: 1, x: 9.5, y: 8.0, yaw_deg: 0, tilt_deg: 90}
+  - {id: 2, x: 17.5, y: 9.5, yaw_deg: 90}
+events:
+  - {t: 0, type: obstacle, name: booths, x: 16.0, y: 3.0, size: [12.0, 1.5, 2.2]}
+  - {t: 0, type: pedestrian, name: visitor_1, path: [[6, -1], [6, 9]], speed: 0.7}
+  - {t: 0, type: pedestrian, name: visitor_2, path: [[-2, 3.2], [8, 3.2]], speed: 0.6}

@@ -42,7 +42,15 @@ class GoToController:
         gx, gy, gth = goal
         dx, dy = gx - x, gy - y
         dist = math.hypot(dx, dy)
-        if dist > self.pos_tol:
+        # 위치에 한 번 들어오면 방향을 맞추는 동안 2배까지는 벗어나도 다시 위치 제어로 돌아가지 않는다.
+        # (제자리 회전 중 위치가 pos_tol 경계를 넘나들면 '위치 맞춤 <-> 방향 맞춤'을 오가며 끝나지 않았다 — Gazebo 도킹 타임아웃)
+        at = getattr(self, '_at', None)
+        if at is not None and (math.hypot(gx - at[0], gy - at[1]) > 2.0 * self.pos_tol or dist > 2.0 * self.pos_tol):
+            at = None                              # 목표가 바뀌었거나 많이 벗어남
+        if at is None and dist <= self.pos_tol:
+            at = (gx, gy)
+        self._at = at
+        if dist > self.pos_tol and at is None:
             heading = math.atan2(dy, dx)
             err = wrap(heading - th)
             sign = 1.0

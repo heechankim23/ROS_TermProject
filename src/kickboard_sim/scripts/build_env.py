@@ -49,6 +49,8 @@ class Env:
         self.gates = []                 # (x, y, 이름) 배치도·3D 표시용
         self.drivable = []              # [(x0, y0, x1, y1)] 주면 '이 사각형들 밖은 전부 진입 금지' (차도만 다니는 맵)
         self.raised = {}                # 바닥 표시 이름 -> 높이 (인도를 차도보다 높게 그린다)
+        self.station = None             # (이름, [x0, y0, x1, y1]) 킥보드 충전소: 로봇 도크와 다른 곳에 있는 하역 장소
+        self.mission_variant = ''       # 'station' 이면 launch 가 mission_manager_station 을 띄운다
         self.x0, self.y0, self.x1, self.y1 = bounds
         self.gps_origin, self.charger, self.params = gps_origin, charger, params
         self.solids = []      # (kind, name, cx, cy, a, b, h, color, label)  box: a=sx b=sy / cyl: a=r
@@ -96,6 +98,12 @@ class Env:
         """인도: 차도보다 h 만큼 높은 판 (시각만 — 충돌체는 없고, 진입 금지는 주행 지도가 막는다)"""
         self.mark(name, x0, y0, x1, y1, 'sidewalk', 1)
         self.raised[name] = h
+
+    def scooter_station(self, name, x0, y0, x1, y1):
+        """킥보드 충전소: 배터리 부족 킥보드를 가져다 놓는 별도 장소 (주차구역처럼 한 변이 차도에 닿아야 한다)"""
+        self.station = (name, [x0, y0, x1, y1])
+        self.mission_variant = 'station'
+        self.mark('station_' + name, x0, y0, x1, y1, 'fountain', 3)
 
     def zone(self, name, x0, y0, x1, y1):
         self.zones.append((name, [x0, y0, x1, y1]))
@@ -188,6 +196,17 @@ def street():
     e.zone('N1', -14, 5, -11, 6.4)            # 간선도로 북쪽 인도 (상가 앞)
     e.zone('E1', 11.6, 6.5, 13, 9.5)          # 연결로 서쪽 인도 (카페 옆)
     e.zone('S1', 9, -2.4, 12, -1)             # 간선도로 남쪽 인도 (오피스 앞)
+    return e
+
+
+def street_cs():
+    """street 와 같은 도로에 '킥보드 충전소'를 따로 둔 버전.
+    배터리 부족 킥보드는 로봇 도크 옆이 아니라 뒷길 쪽 충전소까지 싣고 가서 내려놓는다. 로봇은 그 뒤 자기 도크로 돌아가 충전한다."""
+    e = street()
+    e.name, e.title = 'street_cs', '일반 도로 + 별도 킥보드 충전소'
+    e.scooter_station('CS', -16.0, 10.0, -13.0, 11.0)          # 북서 블록 북쪽 인도, 뒷길(y = 11)에 닿음
+    e.rect('charge_rack', -16.0, 10.0, -13.0, 10.2, 1.0, 'shelter')   # 충전 거치대 (킥보드 뒤 벽)
+    e.labels += [(-18.45, -6.6, '로봇 도크'), (-14.5, 12.9, '뒷길')]
     return e
 
 
@@ -426,6 +445,12 @@ def write_config(e, path):
          'parking_zones:         # 폴리곤 (map 좌표, 반시계)']
     for name, (x0, y0, x1, y1) in e.zones:
         L += [f'  - name: {name}', f'    polygon: [[{x0}, {y0}], [{x1}, {y0}], [{x1}, {y1}], [{x0}, {y1}]]']
+    if e.station:
+        n, (x0, y0, x1, y1) = e.station
+        L += ['', '# 킥보드 충전소: 배터리 부족 킥보드를 내려놓는 곳. 로봇 충전 도크(charger)와 다른 장소다.',
+              f'mission_variant: {e.mission_variant}     # launch 가 mission_manager_station 노드를 띄운다',
+              'scooter_charging_station:', f'  name: {n}',
+              f'  polygon: [[{x0}, {y0}], [{x1}, {y0}], [{x1}, {y1}], [{x0}, {y1}]]']
     L += ['', 'params:                # 이 맵에서 덮어쓸 노드 파라미터 (launch/system.launch.py 가 적용)']
     for node, kv in e.params.items():
         L.append(f'  {node}:')
@@ -469,6 +494,12 @@ def write_svg(e, path):
                    f'fill="none" stroke="#0a5" stroke-width="2"/>')
         out.append(f'<text x="{px((x0 + x1) / 2):.1f}" y="{py((y0 + y1) / 2) + 4:.1f}" font-size="12" '
                    f'text-anchor="middle" font-weight="bold" fill="#031">{name}</text>')
+    if e.station:
+        n, (x0, y0, x1, y1) = e.station
+        out.append(f'<rect x="{px(x0):.1f}" y="{py(y1):.1f}" width="{(x1 - x0) * S:.1f}" height="{(y1 - y0) * S:.1f}" '
+                   f'fill="none" stroke="#1a4fd0" stroke-width="3"/>')
+        out.append(f'<text x="{px((x0 + x1) / 2):.1f}" y="{py(y1) - 6:.1f}" font-size="13" text-anchor="middle" '
+                   f'font-weight="bold" fill="#fff" stroke="#0b2a7a" stroke-width="3" paint-order="stroke">킥보드 충전소 {n}</text>')
     for x, y, text in e.labels:
         out.append(f'<text x="{px(x):.1f}" y="{py(y) + 4:.1f}" font-size="12" text-anchor="middle" '
                    f'fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">{text}</text>')
@@ -501,7 +532,8 @@ def write_json(e, path):
                        'h': e.raised.get(n, 0)} for n, cx, cy, mx, my, col, layer in e.marks],
             'drivable': e.drivable,
             'keepout': [{'x': cx, 'y': cy, 'sx': kx, 'sy': ky} for _, cx, cy, kx, ky in e.keepout],
-            'zones': [{'name': n, 'r': r} for n, r in e.zones], 'gates': e.gates, 'labels': e.labels,
+            'zones': [{'name': n, 'r': r} for n, r in e.zones],
+            'station': ({'name': e.station[0], 'r': e.station[1]} if e.station else None), 'gates': e.gates, 'labels': e.labels,
             'charger': {'x': sx, 'y': sy, 'yaw': syaw, 'dock': dock}}
     with open(path, 'w') as f:
         json.dump(data, f, ensure_ascii=False)
@@ -519,7 +551,7 @@ def room():
     return e
 
 
-ENVS = {'street': street}       # campus() 는 남겨 두었지만 생성 대상에서 뺐다 (결과물은 archive/campus_map)
+ENVS = {'street': street, 'street_cs': street_cs}       # campus() 는 남겨 두었지만 생성 대상에서 뺐다 (결과물은 archive/campus_map)
 
 
 def main():

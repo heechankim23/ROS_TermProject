@@ -10,6 +10,7 @@ from kickboard_interfaces.srv import EnqueueRequest, RequestCollection
 
 from .common import EventLog, spin_single
 from .geo import GeoConverter
+from .queue_logic import ALL_REASONS
 
 
 class RequestGateway(Node):
@@ -32,8 +33,7 @@ class RequestGateway(Node):
         if not req.scooter_id:
             res.accepted, res.message = False, 'scooter_id 비어 있음'
             return res
-        if req.reason not in (RequestCollection.Request.FALLEN, RequestCollection.Request.OUT_OF_ZONE,
-                              RequestCollection.Request.LOW_BATTERY):
+        if req.reason not in ALL_REASONS:
             res.accepted, res.message = False, f'알 수 없는 reason {req.reason}'
             return res
         if not (-90 <= req.lat <= 90 and -180 <= req.lon <= 180):

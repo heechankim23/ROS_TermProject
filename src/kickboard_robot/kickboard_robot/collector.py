@@ -46,7 +46,11 @@ class Collector(Node):
         self.declare_parameter('scooter_half_depth', 0.2)    # 태그 면 -> 킥보드 중심 (근사)
         self.declare_parameter('detection_max_age_sec', 0.6)
         self.declare_parameter('arm_timeout_sec', 120.0)
+        self.declare_parameter('arm_reach_margin', 0.45)     # 정렬 뒤 킥보드까지 align_distance + 이 값보다 멀면 팔이 안 닿음
         self.declare_parameter('early_detect_margin', 0.2)   # 이동 중 태그가 standoff+margin 안에서 보이면 도착 처리
+        # 확장 탐색: 제자리 회전으로 못 찾으면 목표 둘레(3.5 m 간격 원) 지점으로 옮겨 가며 다시 회전 (0 = 안 함).
+        # GPS 오차가 카메라 거리(3 m)보다 큰 신고 위치용 — 캠퍼스 맵에서 켠다
+        self.declare_parameter('search_radius_m', 0.0)
 
         self.cb = ReentrantCallbackGroup()
         self.pose = PoseTracker(self)
@@ -112,10 +116,15 @@ class Collector(Node):
         self.fb(gh, 'NAVIGATING')
         if not self.nav.wait_for_server(timeout_sec=5.0):
             return self.finish(gh, False, 'nav_bridge 없음')
+        self.goal_xy = (gh.request.target_pose.pose.position.x, gh.request.target_pose.pose.position.y)
         ng = GoToPose.Goal(target_pose=gh.request.target_pose,
                            standoff=float(self.get_parameter('approach_standoff').value))
-        nh = future_wait(self, self.nav.send_goal_async(
-            ng, feedback_callback=lambda m: self.fb(gh, 'NAVIGATING', m.feedback.distance_remaining)), 5.0)
+        navigating = [True]      # 취소한 뒤 늦게 도착한 nav 피드백이 상태를 NAVIGATING 으로 되돌리지 않게
+
+        def nav_fb(m):
+            if navigating[0]:
+                self.fb(gh, 'NAVIGATING', m.feedback.distance_remaining)
+        nh = future_wait(self, self.nav.send_goal_async(ng, feedback_callback=nav_fb), 5.0)
         if nh is None or not nh.accepted:
             return self.finish(gh, False, 'nav goal rejected')
         rf = nh.get_result_async()
@@ -139,20 +148,22 @@ class Collector(Node):
             nres = rf.result().result
             if not nres.success:
                 return self.finish(gh, False, f'nav_failed: {nres.message}')
+        navigating[0] = False
         self.twist()
 
         # 2) VERIFYING — 회전 탐색
         self.fb(gh, 'VERIFYING')
         t0 = now_sec(self)
         w = self.get_parameter('search_angular_speed').value
-        while self.fresh(tag) is None:
-            if gh.is_cancel_requested:
+        found = self.spin_search(gh, tag, w)
+        if found is None:
+            return self.finish(gh, False)
+        if not found:
+            found = self.wide_search(gh, tag, w)
+            if found is None:
                 return self.finish(gh, False)
-            if now_sec(self) - t0 > self.get_parameter('verify_timeout_sec').value:
+            if not found:
                 return self.finish(gh, False, 'verify_failed: tag not found')
-            if now_sec(self) - t0 > 0.5:        # 도착 직후 0.5초는 정지 상태에서 확인
-                self.twist(0.0, w)
-            sleep_sim(self, 0.05)
         self.twist()
 
         # 3) ALIGNING — 검출값으로 킥보드 중심을 추정 -> nav_bridge 로 '팔이 닿는 빈 자리'까지 경로 주행.
@@ -180,28 +191,57 @@ class Collector(Node):
         target.pose.position.x = sum(c[0] for c in centers) / len(centers)
         target.pose.position.y = sum(c[1] for c in centers) / len(centers)
         target.pose.orientation.w = 1.0
-        nh = future_wait(self, self.nav.send_goal_async(GoToPose.Goal(target_pose=target, standoff=float(dist))), 5.0)
-        if nh is None or not nh.accepted:
-            return self.finish(gh, False, 'align_failed: nav goal rejected')
-        rf = nh.get_result_async()
-        t0 = now_sec(self)
-        while rclpy.ok() and not rf.done():
-            if gh.is_cancel_requested:
-                nh.cancel_goal_async()
-                return self.finish(gh, False)
-            if now_sec(self) - t0 > self.get_parameter('align_timeout_sec').value:
-                nh.cancel_goal_async()
-                return self.finish(gh, False, 'align_timeout')
-            collect()
+        margin = self.get_parameter('arm_reach_margin').value
+
+        def in_reach(tol=None):
+            # 로봇팔은 손목을 돌려 맞추므로 방향과 무관하게 거리만 맞으면 실을 수 있다
             pose = self.pose.get()
-            if pose is not None:
-                self.fb(gh, 'ALIGNING', math.hypot(target.pose.position.x - pose[0],
-                                                   target.pose.position.y - pose[1]) - dist)
-            sleep_sim(self, 0.1)
-        if rf.result() is None or not rf.result().result.success:
-            msg = rf.result().result.message if rf.result() is not None else 'no result'
-            return self.finish(gh, False, f'align_failed: {msg}')
+            if pose is None:
+                return False
+            r = math.hypot(target.pose.position.x - pose[0], target.pose.position.y - pose[1])
+            return dist - 0.25 <= r <= dist + (margin if tol is None else tol)
+
+        if in_reach(0.15):
+            # 이미 팔이 닿는 거리 -> 정렬 주행 생략. (킥보드를 정면에 둔 채 반대편 자리로 돌아가려다
+            # 앞 장애물 정지에 걸려 맴도는 경우가 있었음: k16 #21 align_timeout)
+            self.get_logger().info(f'킥보드 {sid}: 이미 팔이 닿는 거리 -> 정렬 주행 생략')
+        else:
+            nh = future_wait(self, self.nav.send_goal_async(GoToPose.Goal(target_pose=target, standoff=float(dist))), 5.0)
+            if nh is None or not nh.accepted:
+                return self.finish(gh, False, 'align_failed: nav goal rejected')
+            rf = nh.get_result_async()
+            t0 = now_sec(self)
+            timed_out = False
+            while rclpy.ok() and not rf.done():
+                if gh.is_cancel_requested:
+                    nh.cancel_goal_async()
+                    return self.finish(gh, False)
+                if now_sec(self) - t0 > self.get_parameter('align_timeout_sec').value:
+                    nh.cancel_goal_async()
+                    timed_out = True
+                    break
+                collect()
+                pose = self.pose.get()
+                if pose is not None:
+                    self.fb(gh, 'ALIGNING', math.hypot(target.pose.position.x - pose[0],
+                                                       target.pose.position.y - pose[1]) - dist)
+                sleep_sim(self, 0.1)
+            if timed_out:
+                if not in_reach():
+                    self.twist()
+                    return self.finish(gh, False, 'align_timeout')
+                self.get_logger().warn(f'킥보드 {sid}: 정렬 자리까지는 못 갔지만 팔이 닿는 거리 -> 그대로 적재')
+            elif rf.result() is None or not rf.result().result.success:
+                if not in_reach():
+                    msg = rf.result().result.message if rf.result() is not None else 'no result'
+                    return self.finish(gh, False, f'align_failed: {msg}')
         self.twist()
+        # 좁은 곳(주차 차량 사이, 진입 금지 구역 안)이라 nav_bridge 가 먼 자리를 골랐으면 팔이 닿지 않는다 -> 사람 호출
+        pose = self.pose.get()
+        if pose is not None:
+            reach = math.hypot(target.pose.position.x - pose[0], target.pose.position.y - pose[1])
+            if reach > dist + self.get_parameter('arm_reach_margin').value:
+                return self.finish(gh, False, f'align_failed: out of arm reach ({reach:.2f} m)')
 
         corrected = PoseStamped()
         corrected.header.frame_id = 'map'
@@ -235,6 +275,66 @@ class Collector(Node):
         self.fb(gh, 'LOADING', 0.0, self.load_count + 1)
         self.get_logger().info(f'킥보드 {sid} 적재 완료')
         return self.finish(gh, True, '', corrected)
+
+    def spin_search(self, gh, tag, w):
+        """제자리 회전 탐색. 찾으면 True, 시간 초과 False, 취소 None"""
+        t0 = now_sec(self)
+        while self.fresh(tag) is None:
+            if gh.is_cancel_requested:
+                return None
+            if now_sec(self) - t0 > self.get_parameter('verify_timeout_sec').value:
+                self.twist()
+                return False
+            if now_sec(self) - t0 > 0.5:        # 도착 직후 0.5초는 정지 상태에서 확인
+                self.twist(0.0, w)
+            sleep_sim(self, 0.05)
+        self.twist()
+        return True
+
+    def wide_search(self, gh, tag, w):
+        """확장 탐색: 목표(신고 위치) 둘레 3.5 m 간격 원 위의 지점으로 옮겨 가며 회전 탐색. 찾으면 True"""
+        R = self.get_parameter('search_radius_m').value
+        if R <= 0:
+            return False
+        tp = self.goal_xy
+        pose = self.pose.get()
+        pts = []
+        r = 3.5
+        while r <= R + 0.1:
+            n = max(4, int(round(2 * math.pi * r / 4.0)))
+            pts += [(tp[0] + r * math.cos(2 * math.pi * k / n), tp[1] + r * math.sin(2 * math.pi * k / n)) for k in range(n)]
+            r += 3.5
+        self.get_logger().info(f'태그 {tag} 못 찾음 -> 확장 탐색 (반경 {R:.0f} m, {len(pts)}곳)')
+        cur = pose[:2] if pose else tp
+        while pts:                                         # 가까운 곳부터 차례로
+            nxt = min(pts, key=lambda q: math.dist(q, cur))
+            pts.remove(nxt)
+            target = PoseStamped()
+            target.header.frame_id = 'map'
+            target.pose.position.x, target.pose.position.y = nxt
+            target.pose.orientation.w = 1.0
+            nh = future_wait(self, self.nav.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.6)), 5.0)
+            if nh is None or not nh.accepted:
+                continue
+            rf = nh.get_result_async()
+            while rclpy.ok() and not rf.done():
+                if gh.is_cancel_requested:
+                    nh.cancel_goal_async()
+                    return None
+                if self.fresh(tag) is not None:
+                    nh.cancel_goal_async()
+                    self.twist()
+                    self.get_logger().info(f'확장 탐색 중 태그 {tag} 검출')
+                    return True
+                sleep_sim(self, 0.1)
+            p = self.pose.get()
+            cur = p[:2] if p else nxt
+            ok = self.spin_search(gh, tag, w)
+            if ok is None or ok:
+                if ok:
+                    self.get_logger().info(f'확장 탐색으로 태그 {tag} 검출 (신고 위치에서 {math.dist(cur, tp):.1f} m)')
+                return ok
+        return False
 
     def arm_load(self, gh, sid):
         """arm_loader 로 적재. 성공하면 '', 실패하면 이유. 시작한 뒤에는 취소하지 않는다."""

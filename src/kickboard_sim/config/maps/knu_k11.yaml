@@ -1,0 +1,66 @@
+# 시나리오 k11 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
+# 구역은 이 시나리오에 필요한 2곳만, 로봇 도크는 시나리오 근처 길가.
+mission_variant: campus
+map_json: knu_campus.json
+gps_origin: {lat: 35.8904, lon: 128.6103}
+terrain: {flat: true}
+robot_spawn: {x: -256.468, y: -342.563, yaw_deg: 190.9}
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: -257.45, y: -342.752, yaw_deg: 10.9}
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+parking_zones:
+- name: P24
+  site: 401 공대2호관 인근
+  origin: image
+  polygon:
+  - [-187.1, -238.6]
+  - [-186.9, -269.1]
+  - [-106.2, -273.7]
+  - [-103.8, -236.6]
+  rack: {x: -144.25, y: -240.73, yaw_deg: 178.7, length: 7.0, road: service}
+  robot_access: {x: -144.28, y: -242.48, yaw_deg: 178.7}
+  slots:
+  - {id: P24-01, x: -141.1, y: -240.8, z: -10.54, yaw_deg: 88.7, role: normal}
+  - {id: P24-02, x: -141.8, y: -240.79, z: -10.54, yaw_deg: 88.7, role: normal}
+  - {id: P24-03, x: -142.5, y: -240.77, z: -10.54, yaw_deg: 88.7, role: normal}
+  - {id: P24-04, x: -143.2, y: -240.75, z: -10.55, yaw_deg: 88.7, role: normal}
+  - {id: P24-05, x: -143.9, y: -240.74, z: -10.55, yaw_deg: 88.7, role: normal}
+  - {id: P24-06, x: -144.6, y: -240.72, z: -10.56, yaw_deg: 88.7, role: normal}
+  - {id: P24-07, x: -145.3, y: -240.71, z: -10.56, yaw_deg: 88.7, role: normal}
+  - {id: P24-08, x: -145.99, y: -240.69, z: -10.56, yaw_deg: 88.7, role: normal}
+  - {id: P24-09, x: -146.69, y: -240.68, z: -10.57, yaw_deg: -91.3, role: broken}
+  - {id: P24-10, x: -147.39, y: -240.66, z: -10.57, yaw_deg: -91.3, role: broken}
+- name: P28
+  site: 214 청룡관 인근
+  origin: image
+  polygon:
+  - [-403.9, -351.6]
+  - [-408.9, -391.4]
+  - [-359.5, -392.4]
+  - [-358.3, -355.3]
+  rack: {x: -392.0, y: -354.25, yaw_deg: -7.7, length: 7.0, road: service}
+  robot_access: {x: -391.77, y: -352.52, yaw_deg: -7.7}
+  slots:
+  - {id: P28-01, x: -395.12, y: -353.83, z: -9.78, yaw_deg: -97.7, role: normal}
+  - {id: P28-02, x: -394.43, y: -353.93, z: -9.76, yaw_deg: -97.7, role: normal}
+  - {id: P28-03, x: -393.74, y: -354.02, z: -9.74, yaw_deg: -97.7, role: normal}
+  - {id: P28-04, x: -393.04, y: -354.11, z: -9.72, yaw_deg: -97.7, role: normal}
+  - {id: P28-05, x: -392.35, y: -354.21, z: -9.7, yaw_deg: -97.7, role: normal}
+  - {id: P28-06, x: -391.65, y: -354.3, z: -9.68, yaw_deg: -97.7, role: normal}
+  - {id: P28-07, x: -390.96, y: -354.39, z: -9.66, yaw_deg: -97.7, role: normal}
+  - {id: P28-08, x: -390.27, y: -354.49, z: -9.64, yaw_deg: -97.7, role: normal}
+  - {id: P28-09, x: -389.57, y: -354.58, z: -9.62, yaw_deg: 82.3, role: broken}
+  - {id: P28-10, x: -388.88, y: -354.67, z: -9.6, yaw_deg: 82.3, role: broken}
+charging_zones: []
+params:
+  request_gateway: {max_range_m: 1200.0}
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
+  queue_manager: {d_max: 1200.0, w_d: 1.0}
+  sim_lidar: {range_max: 12.0}
+  collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
+  mission_manager: {return_battery_pct: 20.0}
+  scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

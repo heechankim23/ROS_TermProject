@@ -304,7 +304,7 @@ class MissionManager(Node):
             is_nav = reason.startswith('nav')
             status = 'NEEDS_HUMAN' if (is_nav and self.p('admin_alerts')) else 'FAILED'
             self.report(sid, status, reason)
-            self.alert(sid, 'nav_failed' if is_nav else 'verify_failed', reason)
+            self.alert(sid, 'nav_failed' if is_nav else reason.split(':')[0], reason)
             self.ev.emit('collect_failed', id=sid, reason=reason)
             self.target = None
             self.set_state(FAILED, f'({reason})')

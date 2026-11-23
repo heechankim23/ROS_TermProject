@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+<!-- 대학교 캠퍼스 (KNU 배치 축소·단순화) (90 x 90 m). scripts/build_env.py 가 만든 파일 — 직접 고치지 말고 스크립트를 고칠 것.
+     world 프레임 = map 프레임. 맵 설정: config/maps/campus.yaml. 킥보드는 scooter_fleet_sim 이 시나리오대로 만든다. -->
+<sdf version="1.9">
+  <world name="campus">
+    <physics name="default" type="ignored">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.75 0.85 0.95 1</background>
+      <grid>false</grid>
+    </scene>
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 30 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>120 120</size></plane></geometry></collision>
+        <visual name="v"><geometry><plane><normal>0 0 1</normal><size>120 120</size></plane></geometry>
+          <material><ambient>0.62 0.62 0.60 1</ambient><diffuse>0.62 0.62 0.60 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- 구조물: 건물·울타리·차량·가로수·시설물 (충돌체 있음, 지도에 점유로 들어감) -->
+    <model name="structures">
+      <static>true</static>
+      <link name="link">
+        <collision name="b_0_c"><pose>19.000 31.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_0"><pose>19.000 31.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_1_c"><pose>21.500 25.000 3.000 0 0 0</pose><geometry><box><size>5.000 3.500 6.000</size></box></geometry></collision>
+        <visual name="b_1"><pose>21.500 25.000 3.000 0 0 0</pose><geometry><box><size>5.000 3.500 6.000</size></box></geometry><material><ambient>0.60 0.50 0.62 1</ambient><diffuse>0.60 0.50 0.62 1</diffuse></material></visual>
+        <collision name="b_2_c"><pose>9.000 25.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.500 4.000</size></box></geometry></collision>
+        <visual name="b_2"><pose>9.000 25.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.500 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_3_c"><pose>27.000 19.000 2.000 0 0 0</pose><geometry><box><size>4.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_3"><pose>27.000 19.000 2.000 0 0 0</pose><geometry><box><size>4.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_4_c"><pose>5.000 18.500 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry></collision>
+        <visual name="b_4"><pose>5.000 18.500 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry><material><ambient>0.80 0.74 0.60 1</ambient><diffuse>0.80 0.74 0.60 1</diffuse></material></visual>
+        <collision name="b_5_c"><pose>13.500 18.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_5"><pose>13.500 18.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_6_c"><pose>7.200 12.500 4.000 0 0 0</pose><geometry><box><size>6.000 4.000 8.000</size></box></geometry></collision>
+        <visual name="b_6"><pose>7.200 12.500 4.000 0 0 0</pose><geometry><box><size>6.000 4.000 8.000</size></box></geometry><material><ambient>0.80 0.74 0.60 1</ambient><diffuse>0.80 0.74 0.60 1</diffuse></material></visual>
+        <collision name="b_7_c"><pose>13.200 12.000 3.000 0 0 0</pose><geometry><box><size>6.000 6.000 6.000</size></box></geometry></collision>
+        <visual name="b_7"><pose>13.200 12.000 3.000 0 0 0</pose><geometry><box><size>6.000 6.000 6.000</size></box></geometry><material><ambient>0.80 0.74 0.60 1</ambient><diffuse>0.80 0.74 0.60 1</diffuse></material></visual>
+        <collision name="b_8_c"><pose>29.000 9.500 3.000 0 0 0</pose><geometry><box><size>5.000 4.000 6.000</size></box></geometry></collision>
+        <visual name="b_8"><pose>29.000 9.500 3.000 0 0 0</pose><geometry><box><size>5.000 4.000 6.000</size></box></geometry><material><ambient>0.60 0.50 0.62 1</ambient><diffuse>0.60 0.50 0.62 1</diffuse></material></visual>
+        <collision name="b_9_c"><pose>1.500 6.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_9"><pose>1.500 6.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_10_c"><pose>-6.000 5.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.500 4.000</size></box></geometry></collision>
+        <visual name="b_10"><pose>-6.000 5.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.500 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_11_c"><pose>-14.000 3.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_11"><pose>-14.000 3.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_12_c"><pose>24.000 1.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.500 4.000</size></box></geometry></collision>
+        <visual name="b_12"><pose>24.000 1.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.500 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_13_c"><pose>9.500 -2.000 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry></collision>
+        <visual name="b_13"><pose>9.500 -2.000 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry><material><ambient>0.80 0.74 0.60 1</ambient><diffuse>0.80 0.74 0.60 1</diffuse></material></visual>
+        <collision name="b_14_c"><pose>-25.500 -1.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_14"><pose>-25.500 -1.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_15_c"><pose>-18.000 -5.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_15"><pose>-18.000 -5.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_16_c"><pose>0.500 -7.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_16"><pose>0.500 -7.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_17_c"><pose>-33.000 -8.500 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry></collision>
+        <visual name="b_17"><pose>-33.000 -8.500 2.500 0 0 0</pose><geometry><box><size>5.000 4.000 5.000</size></box></geometry><material><ambient>0.80 0.74 0.60 1</ambient><diffuse>0.80 0.74 0.60 1</diffuse></material></visual>
+        <collision name="b_18_c"><pose>33.000 -6.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_18"><pose>33.000 -6.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_19_c"><pose>25.000 -11.000 2.000 0 0 0</pose><geometry><box><size>5.000 4.000 4.000</size></box></geometry></collision>
+        <visual name="b_19"><pose>25.000 -11.000 2.000 0 0 0</pose><geometry><box><size>5.000 4.000 4.000</size></box></geometry><material><ambient>0.72 0.52 0.40 1</ambient><diffuse>0.72 0.52 0.40 1</diffuse></material></visual>
+        <collision name="b_20_c"><pose>36.000 -12.500 2.000 0 0 0</pose><geometry><box><size>4.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_20"><pose>36.000 -12.500 2.000 0 0 0</pose><geometry><box><size>4.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_21_c"><pose>33.000 -21.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_21"><pose>33.000 -21.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_22_c"><pose>2.000 -20.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_22"><pose>2.000 -20.500 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_23_c"><pose>-13.000 -23.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_23"><pose>-13.000 -23.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_24_c"><pose>9.500 -26.500 2.500 0 0 0</pose><geometry><box><size>6.000 4.000 5.000</size></box></geometry></collision>
+        <visual name="b_24"><pose>9.500 -26.500 2.500 0 0 0</pose><geometry><box><size>6.000 4.000 5.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_25_c"><pose>-6.500 -28.500 2.500 0 0 0</pose><geometry><box><size>5.000 3.000 5.000</size></box></geometry></collision>
+        <visual name="b_25"><pose>-6.500 -28.500 2.500 0 0 0</pose><geometry><box><size>5.000 3.000 5.000</size></box></geometry><material><ambient>0.72 0.52 0.40 1</ambient><diffuse>0.72 0.52 0.40 1</diffuse></material></visual>
+        <collision name="b_26_c"><pose>-17.000 -30.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_26"><pose>-17.000 -30.500 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_27_c"><pose>-29.000 -30.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_27"><pose>-29.000 -30.000 2.000 0 0 0</pose><geometry><box><size>5.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="b_28_c"><pose>20.500 -31.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry></collision>
+        <visual name="b_28"><pose>20.500 -31.000 2.000 0 0 0</pose><geometry><box><size>6.000 3.000 4.000</size></box></geometry><material><ambient>0.55 0.62 0.72 1</ambient><diffuse>0.55 0.62 0.72 1</diffuse></material></visual>
+        <collision name="rotary_c_c"><pose>-4.000 -2.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry></collision>
+        <visual name="rotary_c"><pose>-4.000 -2.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry><material><ambient>0.45 0.40 0.30 1</ambient><diffuse>0.45 0.40 0.30 1</diffuse></material></visual>
+        <collision name="rotary_e_c"><pose>19.000 6.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry></collision>
+        <visual name="rotary_e"><pose>19.000 6.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry><material><ambient>0.45 0.40 0.30 1</ambient><diffuse>0.45 0.40 0.30 1</diffuse></material></visual>
+        <collision name="rotary_w_c"><pose>-22.000 -12.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry></collision>
+        <visual name="rotary_w"><pose>-22.000 -12.000 0.150 0 0 0</pose><geometry><cylinder><radius>1.000</radius><length>0.300</length></cylinder></geometry><material><ambient>0.45 0.40 0.30 1</ambient><diffuse>0.45 0.40 0.30 1</diffuse></material></visual>
+        <collision name="car_0_c"><pose>19.000 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry></collision>
+        <visual name="car_0"><pose>19.000 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry><material><ambient>0.20 0.30 0.55 1</ambient><diffuse>0.20 0.30 0.55 1</diffuse></material></visual>
+        <collision name="car_1_c"><pose>21.500 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry></collision>
+        <visual name="car_1"><pose>21.500 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry><material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.85 0.85 0.88 1</diffuse></material></visual>
+        <collision name="car_2_c"><pose>24.000 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry></collision>
+        <visual name="car_2"><pose>24.000 -22.000 0.750 0 0 0</pose><geometry><box><size>1.900 4.500 1.500</size></box></geometry><material><ambient>0.60 0.15 0.15 1</ambient><diffuse>0.60 0.15 0.15 1</diffuse></material></visual>
+        <collision name="tree_0_c"><pose>-4.000 11.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_0"><pose>-4.000 11.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_1_c"><pose>17.000 3.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_1"><pose>17.000 3.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_2_c"><pose>6.000 -12.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_2"><pose>6.000 -12.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_3_c"><pose>-10.000 -8.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_3"><pose>-10.000 -8.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_4_c"><pose>-20.000 -27.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_4"><pose>-20.000 -27.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_5_c"><pose>15.000 -22.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_5"><pose>15.000 -22.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_6_c"><pose>30.000 -16.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_6"><pose>30.000 -16.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="tree_7_c"><pose>15.000 27.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry></collision>
+        <visual name="tree_7"><pose>15.000 27.000 2.000 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>4.000</length></cylinder></geometry><material><ambient>0.20 0.45 0.20 1</ambient><diffuse>0.20 0.45 0.20 1</diffuse></material></visual>
+        <collision name="fence_0_c"><pose>21.000 37.250 0.5 0 0 -0.9332</pose><geometry><box><size>17.000 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_0"><pose>21.000 37.250 0.5 0 0 -0.9332</pose><geometry><box><size>17.000 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_1_c"><pose>28.500 24.750 0.5 0 0 -1.1607</pose><geometry><box><size>12.740 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_1"><pose>28.500 24.750 0.5 0 0 -1.1607</pose><geometry><box><size>12.740 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_2_c"><pose>33.750 12.000 0.5 0 0 -1.1965</pose><geometry><box><size>15.242 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_2"><pose>33.750 12.000 0.5 0 0 -1.1965</pose><geometry><box><size>15.242 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_3_c"><pose>38.000 -0.500 0.5 0 0 -1.3045</pose><geometry><box><size>11.602 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_3"><pose>38.000 -0.500 0.5 0 0 -1.3045</pose><geometry><box><size>11.602 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_4_c"><pose>41.000 -11.000 0.5 0 0 -1.2793</pose><geometry><box><size>10.640 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_4"><pose>41.000 -11.000 0.5 0 0 -1.2793</pose><geometry><box><size>10.640 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_5_c"><pose>37.250 -29.750 0.5 0 0 -1.9355</pose><geometry><box><size>29.636 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_5"><pose>37.250 -29.750 0.5 0 0 -1.9355</pose><geometry><box><size>29.636 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_6_c"><pose>28.500 -44.000 0.5 0 0 -2.9997</pose><geometry><box><size>7.271 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_6"><pose>28.500 -44.000 0.5 0 0 -2.9997</pose><geometry><box><size>7.271 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_7_c"><pose>20.500 -40.500 0.5 0 0 2.4150</pose><geometry><box><size>12.242 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_7"><pose>20.500 -40.500 0.5 0 0 2.4150</pose><geometry><box><size>12.242 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_8_c"><pose>9.000 -35.750 0.5 0 0 3.0349</pose><geometry><box><size>14.280 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_8"><pose>9.000 -35.750 0.5 0 0 3.0349</pose><geometry><box><size>14.280 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_9_c"><pose>-2.000 -38.500 0.5 0 0 -2.4228</pose><geometry><box><size>10.830 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_9"><pose>-2.000 -38.500 0.5 0 0 -2.4228</pose><geometry><box><size>10.830 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_10_c"><pose>-9.500 -42.000 0.5 0 0 3.1416</pose><geometry><box><size>7.200 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_10"><pose>-9.500 -42.000 0.5 0 0 3.1416</pose><geometry><box><size>7.200 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_11_c"><pose>-13.000 -39.000 0.5 0 0 1.5708</pose><geometry><box><size>6.200 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_11"><pose>-13.000 -39.000 0.5 0 0 1.5708</pose><geometry><box><size>6.200 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_12_c"><pose>-17.000 -35.250 0.5 0 0 2.9562</pose><geometry><box><size>8.339 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_12"><pose>-17.000 -35.250 0.5 0 0 2.9562</pose><geometry><box><size>8.339 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_13_c"><pose>-26.750 -34.250 0.5 0 0 3.0981</pose><geometry><box><size>11.711 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_13"><pose>-26.750 -34.250 0.5 0 0 3.0981</pose><geometry><box><size>11.711 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_14_c"><pose>-35.750 -32.500 0.5 0 0 2.7092</pose><geometry><box><size>7.359 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_14"><pose>-35.750 -32.500 0.5 0 0 2.7092</pose><geometry><box><size>7.359 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_15_c"><pose>-41.000 -24.250 0.5 0 0 1.8589</pose><geometry><box><size>14.280 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_15"><pose>-41.000 -24.250 0.5 0 0 1.8589</pose><geometry><box><size>14.280 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_16_c"><pose>-42.750 -13.750 0.5 0 0 1.5042</pose><geometry><box><size>7.717 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_16"><pose>-42.750 -13.750 0.5 0 0 1.5042</pose><geometry><box><size>7.717 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_17_c"><pose>-38.250 -5.250 0.5 0 0 0.8409</pose><geometry><box><size>12.948 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_17"><pose>-38.250 -5.250 0.5 0 0 0.8409</pose><geometry><box><size>12.948 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_18_c"><pose>-27.500 3.750 0.5 0 0 0.5791</pose><geometry><box><size>15.732 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_18"><pose>-27.500 3.750 0.5 0 0 0.5791</pose><geometry><box><size>15.732 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_19_c"><pose>-14.000 11.750 0.5 0 0 0.4918</pose><geometry><box><size>16.082 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_19"><pose>-14.000 11.750 0.5 0 0 0.4918</pose><geometry><box><size>16.082 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_20_c"><pose>-2.500 19.750 0.5 0 0 0.7568</pose><geometry><box><size>12.579 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_20"><pose>-2.500 19.750 0.5 0 0 0.7568</pose><geometry><box><size>12.579 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_21_c"><pose>6.500 31.000 0.5 0 0 0.9995</pose><geometry><box><size>16.843 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_21"><pose>6.500 31.000 0.5 0 0 0.9995</pose><geometry><box><size>16.843 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+        <collision name="fence_22_c"><pose>13.500 41.000 0.5 0 0 0.8761</pose><geometry><box><size>8.010 0.2 1.0</size></box></geometry></collision>
+        <visual name="fence_22"><pose>13.500 41.000 0.5 0 0 0.8761</pose><geometry><box><size>8.010 0.2 1.0</size></box></geometry><material><ambient>0.50 0.50 0.50 1</ambient><diffuse>0.50 0.50 0.50 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- 바닥 표시: 보도·차도·횡단보도·잔디·주차구역 (시각만) -->
+    <model name="ground_marks">
+      <static>true</static>
+      <link name="link">
+        <visual name="baseball"><pose>-35.000 -20.500 0.004 0 0 0</pose><geometry><box><size>8.000 8.000 0.002</size></box></geometry><material><ambient>0.35 0.60 0.30 1</ambient><diffuse>0.35 0.60 0.30 1</diffuse></material></visual>
+        <visual name="soccer"><pose>-25.000 -20.500 0.004 0 0 0</pose><geometry><box><size>7.000 9.000 0.002</size></box></geometry><material><ambient>0.35 0.60 0.30 1</ambient><diffuse>0.35 0.60 0.30 1</diffuse></material></visual>
+        <visual name="courts"><pose>-11.000 -14.000 0.004 0 0 0</pose><geometry><box><size>6.000 3.000 0.002</size></box></geometry><material><ambient>0.35 0.60 0.30 1</ambient><diffuse>0.35 0.60 0.30 1</diffuse></material></visual>
+        <visual name="pond"><pose>12.500 -15.500 0.004 0 0 0</pose><geometry><box><size>4.000 4.000 0.002</size></box></geometry><material><ambient>0.45 0.65 0.80 1</ambient><diffuse>0.45 0.65 0.80 1</diffuse></material></visual>
+        <visual name="wolpa"><pose>16.500 -10.000 0.004 0 0 0</pose><geometry><box><size>5.000 4.000 0.002</size></box></geometry><material><ambient>0.35 0.60 0.30 1</ambient><diffuse>0.35 0.60 0.30 1</diffuse></material></visual>
+        <visual name="central_park"><pose>29.500 -28.000 0.004 0 0 0</pose><geometry><box><size>5.000 5.000 0.002</size></box></geometry><material><ambient>0.35 0.60 0.30 1</ambient><diffuse>0.35 0.60 0.30 1</diffuse></material></visual>
+        <visual name="zone_LIB"><pose>13.000 8.300 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+        <visual name="zone_NURI"><pose>21.500 22.550 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+        <visual name="zone_SCI"><pose>-25.500 -3.700 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+        <visual name="zone_ENG"><pose>-13.000 -20.800 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+        <visual name="zone_IT"><pose>9.500 -23.800 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+        <visual name="zone_WEL"><pose>25.000 -13.700 0.008 0 0 0</pose><geometry><box><size>3.000 1.400 0.002</size></box></geometry><material><ambient>0.20 0.70 0.30 1</ambient><diffuse>0.20 0.70 0.30 1</diffuse></material></visual>
+      </link>
+    </model>
+    <include>
+      <uri>model://charging_station</uri>
+      <name>charging_station</name>
+      <pose>9.500 -4.150 0 0 0 -1.5708</pose>
+    </include>
+  </world>
+</sdf>

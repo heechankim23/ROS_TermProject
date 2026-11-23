@@ -1,0 +1,22 @@
+# K27. GPS 오차가 큰 곳의 신고   [D 돌발상황]   발전시킨 기존 시나리오: s6_verify_fail
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K27. GPS 오차가 큰 곳의 신고"
+id: k27
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s6_verify_fail]
+situation: "건물이 높게 둘러싼 IT대학 일대에서 GPS 오차가 커진다(표준편차 6 m). 신고 위치는 실제보다 12 m 어긋난다."
+mission: "신고 위치에서 못 찾으면 반경을 넓혀 탐색(확장 탐색)해 카메라로 찾고 수거한다. 찾은 위치와 신고 위치 차이를 기록한다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 1, dest: general, zone: P26, reasons: ["통행 방해 신고", "불법 주차"], hint: "P26 417 반도체연구동 인근 (62 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #1 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+gps_noise_sigma: 6.0
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 215.24, y: -346.93, yaw_deg: 30.4, battery_pct: 58, silent: true, place: walkway, where: "IT대학1호관 앞 보행로"}
+events:
+  - {t: 15, id: 1, type: "report", reason: "obstruction", gps_error_m: 12.0, note: "통로 막음"}
+  - {t: 0, type: "gps_drift", x: 221.413, y: -323.55, radius: 60, sigma: 6.0}

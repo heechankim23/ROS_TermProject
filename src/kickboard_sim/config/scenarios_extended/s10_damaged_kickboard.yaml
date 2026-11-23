@@ -1,0 +1,33 @@
+name: 파손 킥보드 격리·관리자 호출
+map: street_extended
+gps_noise_sigma: 0.15
+robot:
+  initial_battery_pct: 95
+  capacity: 4
+scooters:
+- id: 1
+  x: -8
+  y: 5.25
+  yaw_deg: 180
+  tilt_deg: 90
+  battery_pct: 80
+  weight_kg: 18
+  damaged: true
+- id: 2
+  x: 4
+  y: 5.3
+  yaw_deg: 180
+  tilt_deg: 90
+  battery_pct: 80
+  weight_kg: 18
+extended:
+  weight_limit_kg: 75
+  speed_limit: 0.5
+  accel_limit: 0.4
+params:
+  mission_manager:
+    max_dock_retries: 3
+  nav_bridge:
+    goal_timeout_sec: 600.0
+  sim_tag_detector:
+    camera_offset_x: 0.76

@@ -1,0 +1,23 @@
+# K22. 꽂으려던 충전 스탠드 고장   [D 돌발상황]   발전시킨 기존 시나리오: s9_drop_sites
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K22. 꽂으려던 충전 스탠드 고장"
+id: k22
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s9_drop_sites]
+situation: "배터리 부족 2대를 싣고 C5 인문대 쪽으로 가는 중, C5 의 1·2번 스탠드가 고장(전원 차단) 보고된다."
+mission: "고장 스탠드를 건너뛰고 같은 구역의 남은 스탠드에 꽂는다. 남은 스탠드가 없으면 다음 충전구역으로."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 2, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (65 m)"}
+  - {id: 2, order: 1, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (87 m)"}
+pass_criteria:
+  - "충전 주차구역: #1,2 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 43.11, y: 72.93, yaw_deg: 153.3, battery_pct: 7, place: walkway, where: "인문대 앞 보행로"}
+  - {id: 2, x: 55.0, y: 52.0, yaw_deg: -135.0, battery_pct: 10, place: walkway, where: "영선동 앞 보행로"}
+events:
+  - {t: 45, type: "stand_fault", slot: "C5-01"}
+  - {t: 45, type: "stand_fault", slot: "C5-02"}

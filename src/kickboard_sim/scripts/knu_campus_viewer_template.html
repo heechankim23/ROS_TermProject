@@ -1,0 +1,616 @@
+<title>KNU 킥보드 캠퍼스 맵</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* 레이아웃: 상단 브랜드 바 + 왼쪽 큰 캠퍼스 3D/2D 지도 + 오른쪽 안내 칼럼 (KNU 안심동행 지도와 같은 야간 톤, 단일 다크 테마) */
+:root {
+  color-scheme: dark;
+  --bg: #07111c; --bg-2: #0b1420; --panel: #0f1c2b; --panel-2: #132336; --line: #ffffff14; --line-2: #ffffff24;
+  --fg: #e8edf8; --muted: #8b98ae; --dim: #5f6d84;
+  --brand-1: #e7495b; --brand-2: #a62c4e;
+  --z1: #cb679e; --z2: #eaa06b; --z3: #89bc81; --z4: #72a7df; --z5: #a48bd9;
+  --park: #1d4ed8; --charge: #4fe0bf; --broken: #ff6b78; --steep: #f0a040; --gate: #ffd98a;
+  --f-display: "DM Sans", "Noto Sans KR", system-ui, sans-serif;
+  --f-body: "Noto Sans KR", "DM Sans", system-ui, sans-serif;
+  --r: 14px;
+}
+html, body { height: 100%; }
+body { background: radial-gradient(at 34% 4%, #101e32 0, #091422 43%, var(--bg) 100%); background-color: var(--bg); color: var(--fg); font-family: var(--f-body); }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+.app { min-height: 100%; display: flex; flex-direction: column; }
+header.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  height: 62px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: #091321e6; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: #091321; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font: 800 17px var(--f-display); color: #fff;
+  background: linear-gradient(140deg, var(--brand-1), var(--brand-2)); box-shadow: 0 5px 18px #e241553b; flex: none; }
+.brand b { display: block; font: 700 13px var(--f-body); letter-spacing: .1px; }
+.brand small { display: block; margin-top: 2px; font: 500 8px var(--f-display); letter-spacing: 1.4px; color: #7f8da5; }
+.brand .sep { width: 1px; height: 26px; background: var(--line-2); margin: 0 4px; }
+.brand .live b { font-size: 12px; }
+.brand .live small { color: var(--charge); }
+.modes { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #ffffff0a; border: 1px solid var(--line); flex: none; }
+.modes button { border: 0; background: transparent; padding: 7px 14px; border-radius: 9px; font: 700 12px var(--f-display); letter-spacing: .6px; color: var(--muted); cursor: pointer; }
+.modes button[aria-pressed="true"] { background: #ffffff14; color: var(--fg); box-shadow: inset 0 0 0 1px var(--line-2); }
+.modes button:focus-visible, .chip:focus-visible, .zone-row:focus-visible, .tog:focus-within { outline: 2px solid var(--charge); outline-offset: 2px; }
+
+main.grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px;
+  padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.map-wrap { position: relative; min-height: 560px; height: calc(100vh - 62px - 28px); border-radius: 18px; overflow: hidden;
+  background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 30px 80px #00000055; }
+#scene { position: absolute; inset: 0; }
+#scene canvas { display: block; width: 100%; height: 100%; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font: 600 10.5px var(--f-body); color: #f2f5fb;
+  text-shadow: 0 1px 3px #000, 0 0 6px #000a; text-align: center; line-height: 1.15; }
+.lbl .n { display: inline-block; font: 800 10px var(--f-display); padding: 1px 5px; border-radius: 6px; background: #0b1420cc; border: 1px solid var(--line-2); margin-bottom: 2px; }
+.lbl.zone { font-weight: 700; color: var(--charge); }
+.lbl.zone .n { background: #063b33dd; border-color: #4fe0bf66; color: var(--charge); }
+.lbl.park .n { background: #1d4ed8ee; border-color: #6f9dff; color: #fff; }
+.lbl.gate { color: var(--gate); font-weight: 700; }
+.lbl.sel .n { background: #fff; color: #0b1420; }
+/* 2D 밝은 지도: 라벨을 어두운 글자로 */
+.map-wrap.light { background: #eef1ec; }
+.map-wrap.light .lbl { color: #1b2430; text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 1px 1px #fff; }
+.map-wrap.light .lbl .n { background: #ffffffee; border-color: #1b243033; color: #1b2430; }
+.map-wrap.light .lbl.zone { color: #047a64; }
+.map-wrap.light .lbl.zone .n { background: #0aa889; border-color: #047a64; color: #fff; }
+.map-wrap.light .lbl.park .n { background: #1d4ed8; border-color: #1e3a8a; color: #fff; }
+.map-wrap.light .lbl.gate { color: #b4232f; }
+.map-wrap.light .lbl.sel .n { background: #1b2430; color: #fff; }
+.map-chip { position: absolute; left: 14px; top: 14px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 28px); }
+.chip { font: 700 10px var(--f-display); letter-spacing: 1px; padding: 6px 10px; border-radius: 999px; background: #0b1420d9; border: 1px solid var(--line-2); color: var(--muted); }
+.chip b { color: var(--fg); font-weight: 800; }
+.legend { position: absolute; left: 14px; bottom: 14px; display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px;
+  background: #0b1420e0; border: 1px solid var(--line); font-size: 11px; color: #c9d3e3; }
+.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 8px; }
+.compass { position: absolute; right: 14px; top: 14px; width: 46px; height: 46px; border-radius: 50%; background: #0b1420d9; border: 1px solid var(--line-2);
+  display: grid; place-items: center; font: 800 11px var(--f-display); color: var(--fg); }
+.compass span { position: absolute; top: 4px; color: var(--brand-1); }
+.compass svg { width: 26px; height: 26px; }
+.attr { position: absolute; right: 14px; bottom: 12px; font-size: 10px; color: var(--dim); text-align: right; max-width: 60%; }
+.hint { position: absolute; right: 14px; bottom: 30px; font-size: 10.5px; color: var(--muted); }
+
+aside.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; max-height: calc(100vh - 62px - 28px); overflow: auto; padding-right: 2px; }
+.card { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; }
+.eyebrow { font: 800 9.5px var(--f-display); letter-spacing: 1.6px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--charge); box-shadow: 0 0 10px var(--charge); }
+.card h2 { margin: 6px 0 4px; font: 800 18px var(--f-body); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.stat { padding: 10px; border-radius: 10px; background: #ffffff08; border: 1px solid var(--line); min-width: 0; }
+.stat b { display: block; font: 800 20px var(--f-display); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 10.5px; color: var(--muted); }
+.stat.c b { color: var(--charge); } .stat.p b { color: #8fb0ff; } .stat.r b { color: var(--broken); }
+.toggles { display: grid; gap: 8px; margin-top: 10px; }
+.tog { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 8px 10px; border-radius: 10px; background: #ffffff06; border: 1px solid var(--line); cursor: pointer; }
+.tog input[type=checkbox] { accent-color: var(--charge); width: 16px; height: 16px; }
+.tog input[type=range] { width: 120px; accent-color: var(--steep); }
+.tog output { font: 700 11px var(--f-display); color: var(--steep); min-width: 30px; text-align: right; }
+.zone-list { display: grid; gap: 6px; margin-top: 10px; }
+.zone-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff06; cursor: pointer; }
+.zone-row:hover { background: #ffffff10; }
+.zone-row .id { font: 800 11px var(--f-display); color: var(--charge); padding: 3px 0; text-align: center; border-radius: 7px; background: #4fe0bf18; }
+.zone-row.park .id { color: #8fb0ff; background: #2563eb24; }
+.zone-row .nm { font-size: 12.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zone-row small { font: 600 10.5px var(--f-display); color: var(--muted); font-variant-numeric: tabular-nums; }
+.zones5 { display: grid; gap: 6px; margin-top: 10px; }
+.zones5 button { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff06; cursor: pointer; text-align: left; font-size: 12.5px; }
+.zones5 i { width: 12px; height: 12px; border-radius: 4px; }
+.zones5 small { font: 700 11px var(--f-display); color: var(--muted); }
+.sel-card .num { display: inline-block; font: 800 12px var(--f-display); padding: 3px 8px; border-radius: 7px; background: #ffffff12; margin-right: 6px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin-top: 10px; font-size: 12px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 6px; margin-top: 10px; }
+.tabs button { flex: 1; border: 1px solid var(--line); background: #ffffff06; border-radius: 9px; padding: 6px; font-size: 12px; cursor: pointer; color: var(--muted); }
+.tabs button[aria-pressed="true"] { color: var(--fg); background: #ffffff12; }
+.note { font-size: 11px; color: var(--dim); line-height: 1.5; }
+@media (max-width: 980px) {
+  main.grid { grid-template-columns: minmax(0, 1fr); }
+  .map-wrap { height: 70vh; min-height: 420px; }
+  aside.side { max-height: none; overflow: visible; }
+  .brand .sep, .brand .live { display: none; }
+}
+@media (max-width: 520px) { .legend { display: none; } .attr { max-width: 90%; } .modes button { padding: 7px 10px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <span class="mark">K</span>
+      <span><b>경북대학교</b><small>KYUNGPOOK NATIONAL UNIVERSITY</small></span>
+      <span class="sep"></span>
+      <span class="live"><b>대구캠퍼스</b><small>KICKBOARD MAP</small></span>
+    </div>
+    <div class="modes" role="group" aria-label="지도 보기">
+      <button id="m3d" aria-pressed="true">3D</button>
+      <button id="m2d" aria-pressed="false">2D</button>
+    </div>
+  </header>
+  <main class="grid">
+    <section class="map-wrap light" aria-label="경북대 캠퍼스 지도">
+      <div id="scene"></div>
+      <div id="labels"></div>
+      <div class="map-chip">
+        <span class="chip">KNU CAMPUS <b id="chipMode">3D</b></span>
+        <span class="chip">높이 <b id="chipExag">×3</b></span>
+        <span class="chip">표고 <b id="chipElev">–</b></span>
+      </div>
+      <div class="compass" aria-hidden="true"><span>N</span><svg viewBox="-10 -10 20 20"><path d="M0-8 3 2 0 0-3 2Z" fill="#e7495b"/><path d="M0 8 3-2 0 0-3-2Z" fill="#5f6d84"/></svg></div>
+      <div class="legend">
+        <div><i style="background:var(--charge)"></i>충전 주차구역 (충전 스탠드)</div>
+        <div><i style="background:var(--park)"></i>일반 주차구역 (슬롯 거치대)</div>
+        <div><i style="background:var(--broken)"></i>고장 분류 칸 (반대 방향)</div>
+        <div><i style="background:var(--steep)"></i>경사 5 % 이상인 길</div>
+        <div><i style="background:#d4c99c"></i>보행로 · <i style="background:#68776d;margin-left:4px"></i>차량 도로</div>
+      </div>
+      <div class="hint" id="hint">드래그로 회전 · 휠로 확대 · 건물·구역을 누르면 정보</div>
+      <div class="attr">© OpenStreetMap contributors · 고도 SRTM · 건물 번호 경북대 캠퍼스 안내도</div>
+    </section>
+    <aside class="side">
+      <section class="card">
+        <div class="eyebrow"><span class="dot"></span> KICKBOARD ZONES</div>
+        <h2>킥보드 주차·충전 구역</h2>
+        <p>앱에 표시된 주차 가능 구역을 그대로 일반 주차구역으로 두고, 사람이 많이 오가는 8곳을 충전 주차구역으로 정했어요.</p>
+        <div class="stats">
+          <div class="stat c"><b id="sCharge">–</b><span>충전 구역 · 스탠드</span></div>
+          <div class="stat p"><b id="sPark">–</b><span>일반 구역 · 정상 칸</span></div>
+          <div class="stat r"><b id="sBroken">–</b><span>고장 분류 칸</span></div>
+        </div>
+        <div class="toggles">
+          <label class="tog" for="tExag">지형 높이 과장 <span><input id="tExag" type="range" min="1" max="6" step="1" value="3"> <output id="oExag">×3</output></span></label>
+          <label class="tog" for="tNames">건물 이름 모두 보기 <input id="tNames" type="checkbox"></label>
+          <label class="tog" for="tPark">일반 주차구역 표시 <input id="tPark" type="checkbox" checked></label>
+          <label class="tog" for="tContour">등고선 · 경사로 표시 <input id="tContour" type="checkbox" checked></label>
+        </div>
+      </section>
+      <section class="card sel-card" id="selCard">
+        <div class="eyebrow">선택한 장소</div>
+        <h2 id="selTitle">구역이나 건물을 눌러 보세요</h2>
+        <p id="selSub">지도에서 건물이나 구역 표시를 누르면 여기에 정보가 나와요.</p>
+        <dl class="kv" id="selKv"></dl>
+      </section>
+      <section class="card">
+        <div class="eyebrow">ZONE LIST</div>
+        <div class="tabs" role="group" aria-label="구역 목록">
+          <button id="tabC" aria-pressed="true">충전 주차구역</button>
+          <button id="tabP" aria-pressed="false">일반 주차구역</button>
+        </div>
+        <div class="zone-list" id="zoneList"></div>
+      </section>
+      <section class="card">
+        <div class="eyebrow">CAMPUS DIRECTORY</div>
+        <div class="zones5" id="zones5"></div>
+        <p class="note" style="margin-top:10px">구역·건물 번호는 공식 안내판 기준이에요. 안내판에 있는 102·109·119·123·125·218·301·309·422·507·510번은 OSM 지도에 외곽선이 없어 빠져 있어요.</p>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script id="campus-data" type="application/json">/*DATA*/</script>
+<script>
+(async () => {
+const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/+esm');
+const { OrbitControls } = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm');
+
+const D = JSON.parse(document.getElementById('campus-data').textContent);
+const $ = (id) => document.getElementById(id);
+const ZCOL = { 1: '#b85a85', 2: '#c78b48', 3: '#6c9b6e', 4: '#5688b5', 5: '#8c76ae' };   // 3D 건물 색 (안심동행 지도와 같음)
+const ZUI = Object.fromEntries(Object.entries(D.zones_info).map(([k, v]) => [k, v]));
+const E = D.elevation;
+let EXAG = 3;
+
+// ---------- 좌표 / 고도 ----------
+function elev(x, y) {
+  const fx = Math.min(Math.max((x - E.xs0) / E.step, 0), E.nx - 1.001), fy = Math.min(Math.max((y - E.ys0) / E.step, 0), E.ny - 1.001);
+  const i = Math.floor(fx), j = Math.floor(fy), u = fx - i, v = fy - j, Z = E.elev;
+  return Z[j][i] * (1 - u) * (1 - v) + Z[j][i + 1] * u * (1 - v) + Z[j + 1][i] * (1 - u) * v + Z[j + 1][i + 1] * u * v;
+}
+const zw = (x, y) => (elev(x, y) - E.datum) * EXAG;           // 3D 높이 (도크 = 0)
+const V3 = (x, y, h = 0) => new THREE.Vector3(x, h, -y);     // map(x 동, y 북) -> three(x, y 위, -z 북)
+let minE = Infinity, maxE = -Infinity;
+{
+  // 캠퍼스 안 표고 범위: 건물 바닥 높이에서
+  for (const b of D.buildings) { const e = b.base_z + E.datum; minE = Math.min(minE, e); maxE = Math.max(maxE, e); }
+}
+$('chipElev').textContent = `${Math.round(minE)}–${Math.round(maxE)} m`;
+
+// ---------- 렌더러 · 장면 ----------
+const host = $('scene');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#e4e8e2');
+scene.fog = new THREE.Fog('#e4e8e2', 1750, 3300);
+scene.add(new THREE.HemisphereLight('#dce9f8', '#243129', 2.1));
+const sun = new THREE.DirectionalLight('#fff1d5', 2.25); sun.position.set(-520, 1050, 350); scene.add(sun);
+
+const persp = new THREE.PerspectiveCamera(42, 1, 1, 8000);
+persp.position.set(0, 1150, 1050);
+const ortho = new THREE.OrthographicCamera(-600, 600, 600, -600, 1, 6000);
+ortho.position.set(0, 3000, 0); ortho.up.set(0, 0, -1); ortho.lookAt(0, 0, 0);
+let camera = persp;
+const controls = new OrbitControls(persp, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.07; controls.minDistance = 25; controls.maxDistance = 3000;
+controls.maxPolarAngle = Math.PI * 0.48; controls.minPolarAngle = 0.12; controls.target.set(0, 0, 0);
+const controls2 = new OrbitControls(ortho, renderer.domElement);
+controls2.enableRotate = false; controls2.screenSpacePanning = true; controls2.enableDamping = true;
+controls2.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+controls2.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+controls2.minZoom = 0.6; controls2.maxZoom = 40; controls2.enabled = false;
+
+// ---------- 바닥 텍스처 (캔버스) ----------
+const [bx0, by0, bx1, by1] = D.bounds;
+const TMAX = Math.min(4096, renderer.capabilities.maxTextureSize), ASP = (by1 - by0) / (bx1 - bx0);
+const TW = Math.round(ASP > 1 ? TMAX / ASP : TMAX), TH = Math.round(ASP > 1 ? TMAX : TMAX * ASP);
+const tex = document.createElement('canvas'); tex.width = TW; tex.height = TH;
+const g = tex.getContext('2d');
+const sx = TW / (bx1 - bx0), sy = TH / (by1 - by0);
+const P = ([x, y]) => [(x - bx0) * sx, (by1 - y) * sy];
+function poly(pts, fill, stroke, lw) {
+  g.beginPath(); pts.forEach((p, i) => { const [u, v] = P(p); i ? g.lineTo(u, v) : g.moveTo(u, v); }); g.closePath();
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); }
+}
+function line(pts, color, wm, dash) {
+  g.beginPath(); pts.forEach((p, i) => { const [u, v] = P(p); i ? g.lineTo(u, v) : g.moveTo(u, v); });
+  g.strokeStyle = color; g.lineWidth = Math.max(1, wm * sx); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.setLineDash(dash || []); g.stroke(); g.setLineDash([]);
+}
+const RW = { service: 6, residential: 6, pedestrian: 4, footway: 2.5, steps: 2.5 };
+const PAL = {
+  dark: { out: '#0e1a25', campus: '#274437', green: '#2d5a3e', cars: '#33413c', track: '#6e463a', pitch: '#2f6a45', water: '#2b679a',
+          c10: 'rgba(170,215,185,.30)', c2: 'rgba(170,215,185,.13)', steps: '#9b7d5c', foot: 'rgba(212,201,156,.80)', road: '#68776d',
+          steep: 'rgba(240,160,64,.95)', border: '#91b69a', bld: '#1a2530',
+          pFill: 'rgba(37,99,235,.32)', pLine: '#6f9dff', pSlot: '#3b6fff' },
+  light: { out: '#e4e8e2', campus: '#f4f1e8', green: '#cfe4bd', cars: '#dcdedb', track: '#e0a68c', pitch: '#acd59e', water: '#93c4ea',
+          c10: 'rgba(120,95,60,.45)', c2: 'rgba(120,95,60,.20)', steps: '#a8865f', foot: '#dcc58c', road: '#8d949b',
+          steep: '#e8830f', border: '#c0504d', bld: '#c9ccc8',
+          pFill: 'rgba(29,78,216,.28)', pLine: '#1d4ed8', pSlot: '#1e3a8a' },
+};
+function drawGround(opts) {
+  const C = PAL[opts.light ? 'light' : 'dark'];
+  g.fillStyle = C.out; g.fillRect(0, 0, TW, TH);
+  poly(D.boundary, C.campus);
+  D.green.forEach(a => poly(a.poly, C.green));
+  D.car_parking.forEach(a => poly(a.poly, C.cars));
+  D.pitch.forEach(a => poly(a.poly, (a.kind === 'track' || a.kind === 'stadium') ? C.track : C.pitch));
+  D.pitch.filter(a => a.kind === 'pitch' && (a.sport === 'soccer' || a.sport === 'baseball')).forEach(a => poly(a.poly, C.pitch));
+  D.water.forEach(a => poly(a.poly, C.water));
+  if (opts.contour) {
+    D.contours.forEach(c => c.lines.forEach(l => line(l, c.level % 10 === 0 ? C.c10 : C.c2, c.level % 10 === 0 ? 1.1 : 0.6)));
+  }
+  for (const kind of ['footway', 'pedestrian', 'steps', 'service', 'residential']) {
+    D.roads.filter(r => r.kind === kind).forEach(r => {
+      const foot = kind === 'footway' || kind === 'pedestrian';
+      line(r.pts, kind === 'steps' ? C.steps : foot ? C.foot : C.road, RW[kind], kind === 'steps' ? [3, 3] : null);
+    });
+  }
+  if (opts.contour) {   // 경사 5 % 이상인 구간
+    D.roads.forEach(r => {
+      if (r.kind === 'steps' || r.grade_pct < 5) return;
+      for (let i = 1; i < r.pts.length; i++) {
+        const a = r.pts[i - 1], b = r.pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (L > 3 && Math.abs(elev(...b) - elev(...a)) / L > 0.05) line([a, b], C.steep, 1.6);
+      }
+    });
+  }
+  poly(D.boundary, null, C.border, 3);
+  D.parking_zones.forEach(z => {
+    const ch = z.type === 'charging';
+    if (!ch && !opts.park) return;
+    if (ch) poly(z.poly, 'rgba(79,224,191,.16)', 'rgba(79,224,191,.9)', 4);
+    else {       // 일반 주차구역: 진한 채움 + 굵은 테두리 + 안쪽 점선
+      poly(z.poly, C.pFill, C.pLine, 7);
+      g.setLineDash([14, 10]); poly(z.poly, null, opts.light ? '#ffffff' : '#0b1420', 2.5); g.setLineDash([]);
+    }
+    if (!z.rack) return;
+    const pitch = ch ? 0.85 : 0.7, [ox, oy] = z.rack.out, tx = -oy, ty = ox;   // 거치대 축 = out 를 90° 돌린 방향
+    z.slots.forEach(s => {
+      const hw = pitch / 2 - 0.06, hd = z.rack.depth / 2, c = s.xy;
+      const q = [[c[0] - tx * hw - ox * hd, c[1] - ty * hw - oy * hd], [c[0] + tx * hw - ox * hd, c[1] + ty * hw - oy * hd],
+                 [c[0] + tx * hw + ox * hd, c[1] + ty * hw + oy * hd], [c[0] - tx * hw + ox * hd, c[1] - ty * hw + oy * hd]];
+      poly(q, s.role === 'broken' ? '#ff6b78' : ch ? '#3fd0b0' : C.pSlot);
+    });
+  });
+  D.buildings.forEach(b => poly(b.poly, C.bld));
+}
+const groundTex = new THREE.CanvasTexture(tex);
+groundTex.colorSpace = THREE.SRGBColorSpace; groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const opts = { contour: true, park: true, light: true };   // 2D·3D 모두 밝은 지도
+drawGround(opts); groundTex.needsUpdate = true;
+
+// ---------- 지형 메시 ----------
+const GW = bx1 - bx0, GH = by1 - by0, SEG_X = 156, SEG_Y = Math.round(SEG_X * GH / GW);
+const terrainGeo = new THREE.PlaneGeometry(GW, GH, SEG_X, SEG_Y);
+terrainGeo.rotateX(-Math.PI / 2);
+terrainGeo.translate((bx0 + bx1) / 2, 0, -(by0 + by1) / 2);
+const terrainLit = new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.95, metalness: 0 });
+terrainLit.color.setRGB(0.72, 0.72, 0.72);    // 밝은 바닥이 조명에 하얗게 날아가지 않게
+const terrainFlat = new THREE.MeshBasicMaterial({ map: groundTex, toneMapped: false });   // 2D: 텍스처 색 그대로
+const terrain = new THREE.Mesh(terrainGeo, terrainLit);
+scene.add(terrain);
+function updateTerrain() {
+  const p = terrainGeo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setY(i, zw(p.getX(i), -p.getZ(i)) - 0.4);
+  p.needsUpdate = true; terrainGeo.computeVertexNormals();
+}
+
+// ---------- 건물 ----------
+const pickables = [];
+const bGroup = new THREE.Group(); scene.add(bGroup);
+const edgeMat = new THREE.LineBasicMaterial({ color: '#c5d1d3', transparent: true, opacity: 0.18 });
+D.buildings.forEach(b => {
+  const sh = new THREE.Shape(); b.poly.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
+  const h = Math.max(4, Math.min(b.height, 68));
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: h + 3, bevelEnabled: false, curveSegments: 1 });
+  geo.rotateX(-Math.PI / 2);
+  const col = new THREE.Color(ZCOL[b.zone]);
+  const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.72, metalness: 0.08, emissive: col, emissiveIntensity: 0.07 });
+  const m = new THREE.Mesh(geo, mat); m.userData = { kind: 'building', b };
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat);
+  m.add(e); bGroup.add(m); pickables.push(m);
+});
+function updateBuildings() { bGroup.children.forEach(m => { m.position.y = m.userData.b.base_z * EXAG - 3; }); }
+
+// ---------- 거치대 · 충전 스탠드 (인스턴스) ----------
+const box = new THREE.BoxGeometry(1, 1, 1);
+const slotsAll = D.parking_zones.flatMap(z => z.slots.map(s => ({ z, s })));
+const mkInst = (color, n, emissive = 0) => {
+  const m = new THREE.InstancedMesh(box, new THREE.MeshStandardMaterial({ color, roughness: 0.5, emissive: color, emissiveIntensity: emissive }), Math.max(1, n));
+  scene.add(m); return m;
+};
+const stands = mkInst('#2bb5a2', slotsAll.filter(o => o.z.type === 'charging').length, 0.5);
+const holders = mkInst('#1d4ed8', slotsAll.filter(o => o.z.type !== 'charging' && o.s.role !== 'broken').length, 0.25);
+const brokenH = mkInst('#ff5d6c', slotsAll.filter(o => o.s.role === 'broken').length, 0.45);
+const rails = mkInst('#2a2f37', D.parking_zones.filter(z => z.rack).length, 0.05);
+const pinGeo = new THREE.CylinderGeometry(0.9, 0.9, 1, 12), ballGeo = new THREE.SphereGeometry(1, 18, 14);
+const pins = new THREE.Group(); scene.add(pins);
+D.parking_zones.forEach(z => {
+  if (!z.rack) return;
+  const ch = z.type === 'charging';
+  const color = ch ? '#4fe0bf' : '#1d4ed8';
+  const grp = new THREE.Group(); grp.userData = { kind: 'zone', z };
+  const beam = new THREE.Mesh(pinGeo, new THREE.MeshBasicMaterial({ color: ch ? color : '#2563eb', transparent: true, opacity: ch ? 0.55 : 0.8 }));
+  const ball = new THREE.Mesh(ballGeo, new THREE.MeshBasicMaterial({ color: ch ? '#c9fff1' : '#1e3a8a' }));
+  beam.userData = ball.userData = { kind: 'zone', z };
+  grp.add(beam, ball); pins.add(grp); pickables.push(beam, ball);
+});
+const tmp = new THREE.Object3D();
+function updateRacks() {
+  let a = 0, b = 0, c = 0, r = 0;
+  D.parking_zones.forEach(z => {
+    if (!z.rack) return;
+    const yaw = Math.atan2(z.rack.out[1], z.rack.out[0]);
+    const base = (s) => zw(s.xy[0], s.xy[1]);
+    z.slots.forEach(s => {
+      const back = [s.xy[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.1), s.xy[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.1)];
+      if (z.type === 'charging') {
+        tmp.position.copy(V3(back[0], back[1], base(s) + 0.6)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.16, 1.2, 0.34);
+        tmp.updateMatrix(); stands.setMatrixAt(a++, tmp.matrix);
+      } else {
+        const p = [s.xy[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.45), s.xy[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.45)];
+        tmp.position.copy(V3(p[0], p[1], base(s) + 0.08)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.62, 0.16, 0.18);
+        tmp.updateMatrix();
+        if (s.role === 'broken') brokenH.setMatrixAt(c++, tmp.matrix); else holders.setMatrixAt(b++, tmp.matrix);
+      }
+    });
+    if (z.type !== 'charging') {
+      const k = z.rack.center, bk = [k[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.12), k[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.12)];
+      tmp.position.copy(V3(bk[0], bk[1], zw(...k) + 0.35)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.25, 0.7, z.rack.length + 0.2);
+      tmp.updateMatrix(); rails.setMatrixAt(r++, tmp.matrix);
+    }
+  });
+  [stands, holders, brokenH, rails].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  pins.children.forEach(grp => {
+    const z = grp.userData.z, k = z.rack.center, ch = z.type === 'charging', h = ch ? 26 : 18;
+    const y0 = zw(...k);
+    grp.children[0].position.copy(V3(k[0], k[1], y0 + h / 2)); grp.children[0].scale.set(1, h, 1);
+    grp.children[1].position.copy(V3(k[0], k[1], y0 + h + (ch ? 3.6 : 2.4))); grp.children[1].scale.setScalar(ch ? 3.6 : 3.2);
+  });
+}
+
+// ---------- 출입문 ----------
+const gates = new THREE.Group(); scene.add(gates);
+const gateCols = Object.values(ZCOL);
+D.gates.forEach((gt, i) => {
+  const grp = new THREE.Group(); grp.userData = { gt };
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 12), new THREE.MeshStandardMaterial({ color: gateCols[i % 5], emissive: gateCols[i % 5], emissiveIntensity: 0.36 }));
+  cone.rotation.x = Math.PI; cone.position.y = 7;
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(gt.named ? 3.4 : 2.2, 16, 12), new THREE.MeshBasicMaterial({ color: '#fff1be' }));
+  glow.position.y = 14; grp.add(cone, glow); gates.add(grp);
+});
+function updateGates() { gates.children.forEach(grp => { const [x, y] = grp.userData.gt.xy; grp.position.copy(V3(x, y, zw(x, y))); }); }
+
+// ---------- 로봇 도크 ----------
+const dock = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ color: '#3b6fe0', emissive: '#3b6fe0', emissiveIntensity: 0.6 }));
+scene.add(dock);
+function updateDock() { const [x, y] = D.robot_dock.body; dock.position.copy(V3(x, y, zw(x, y) + 0.6)); }
+
+function relayout() { updateTerrain(); updateBuildings(); updateRacks(); updateGates(); updateDock(); placeLabels(true); }
+
+// ---------- 라벨 ----------
+const labelsEl = $('labels');
+const labels = [];
+function addLabel(cls, html, pos, data) {
+  const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html; labelsEl.appendChild(el);
+  labels.push({ el, pos, data, cls }); return el;
+}
+D.buildings.filter(b => b.number || b.name).forEach(b => {
+  addLabel('bld', `${b.number ? `<span class="n">${b.number}</span><br>` : ''}<span class="t">${b.name}</span>`, () => V3(b.c[0], b.c[1], b.base_z * EXAG + Math.min(b.height, 68) + 2), { b });
+});
+D.parking_zones.forEach(z => {
+  if (!z.rack) return;
+  const ch = z.type === 'charging', k = z.rack.center;
+  addLabel(ch ? 'zone' : 'park', `<span class="n">${z.id}</span>${ch ? `<br>${z.site}` : ''}`, () => V3(k[0], k[1], zw(...k) + (ch ? 34 : 20)), { z });
+});
+D.gates.filter(gt => gt.named).forEach(gt => addLabel('gate', gt.name, () => V3(gt.xy[0], gt.xy[1], zw(...gt.xy) + 20), { gt }));
+D.water.filter(w => w.name).forEach(w => {
+  const c = w.poly.reduce((a, p) => [a[0] + p[0] / w.poly.length, a[1] + p[1] / w.poly.length], [0, 0]);
+  addLabel('gate', w.name, () => V3(c[0], c[1], zw(...c) + 4), {});
+});
+D.pitch.filter(p => p.name).forEach(p => {
+  const c = p.poly.reduce((a, q) => [a[0] + q[0] / p.poly.length, a[1] + q[1] / p.poly.length], [0, 0]);
+  addLabel('gate', p.name.split(' (')[0], () => V3(c[0], c[1], zw(...c) + 4), {});
+});
+let selected = null, showNames = false;
+const v = new THREE.Vector3();
+function placeLabels() {
+  const w = host.clientWidth, h = host.clientHeight;
+  const dist = camera === persp ? persp.position.distanceTo(controls.target) : 1400 / ortho.zoom;
+  for (const L of labels) {
+    const p = L.pos(); v.copy(p).project(camera);
+    let show = v.z < 1 && v.x > -1.05 && v.x < 1.05 && v.y > -1.05 && v.y < 1.05;
+    if (show) {
+      if (L.cls === 'bld') show = showNames ? dist < 1900 : (selected && selected.b === L.data.b) || dist < 520;
+      else if (L.cls === 'park') show = opts.park && (camera === ortho || dist < 1100);
+      else if (L.cls === 'zone') show = true;
+      else show = dist < 1500;
+      if (L.cls === 'bld' && show && !showNames && dist >= 280) L.el.querySelector('.t').style.display = 'none';
+      else if (L.cls === 'bld') L.el.querySelector('.t').style.display = '';
+    }
+    L.el.hidden = !show;
+    if (show) { L.el.style.left = ((v.x + 1) / 2 * w).toFixed(1) + 'px'; L.el.style.top = ((1 - v.y) / 2 * h).toFixed(1) + 'px'; }
+    L.el.classList.toggle('sel', !!selected && (selected.b === L.data.b && !!L.data.b || selected.z === L.data.z && !!L.data.z));
+  }
+}
+
+// ---------- 선택 ----------
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(pickables, false).find(h => h.object.visible && h.object.parent.visible !== false);
+  if (hit) select(hit.object.userData);
+});
+const fmt = (n, d = 0) => Number(n).toFixed(d);
+function nearestZone(x, y, type) {
+  let best = null, bd = 1e9;
+  D.parking_zones.forEach(z => { if (!z.rack || (type && z.type !== type)) return; const d = Math.hypot(z.rack.center[0] - x, z.rack.center[1] - y); if (d < bd) { bd = d; best = z; } });
+  return [best, bd];
+}
+function select(u) {
+  bGroup.children.forEach(m => { m.material.emissiveIntensity = 0.07; });
+  selected = null;
+  if (u.kind === 'building') {
+    const b = u.b; selected = { b };
+    bGroup.children.find(m => m.userData.b === b).material.emissiveIntensity = 0.45;
+    $('selTitle').innerHTML = `${b.number ? `<span class="num">${b.number}</span>` : ''}${b.name || '이름 없는 건물'}`;
+    $('selSub').textContent = `${b.zone}구역 · ${ZUI[b.zone].name}`;
+    const [cz, cd] = nearestZone(b.c[0], b.c[1], 'charging'), [pz, pd] = nearestZone(b.c[0], b.c[1], 'general');
+    kv([['높이', `${fmt(b.height, 1)} m`], ['바닥 표고', `${fmt(b.base_z + E.datum, 1)} m`],
+        ['가까운 충전구역', `${cz.id} ${cz.site} · ${fmt(cd)} m`], ['가까운 일반구역', `${pz.id} · ${fmt(pd)} m`]]);
+  } else if (u.kind === 'zone') {
+    const z = u.z; selected = { z };
+    const ch = z.type === 'charging', normal = z.slots.filter(s => s.role === 'normal').length, broken = z.slots.filter(s => s.role === 'broken').length;
+    $('selTitle').innerHTML = `<span class="num" style="color:${ch ? 'var(--charge)' : 'var(--park)'}">${z.id}</span>${ch ? '충전 주차구역' : '일반 주차구역'}`;
+    $('selSub').textContent = z.site + (z.origin === 'new' ? ' · 새로 만든 구역' : ' · 앱 주차 가능 구역');
+    kv(ch ? [['충전 스탠드', `${z.slots.length}칸`], ['거치대 위치', `${fmt(z.rack.center[0])}, ${fmt(z.rack.center[1])} (m)`],
+             ['붙은 길', z.rack.road_kind === 'footway' ? '보행로' : '차량 도로'], ['표고', `${fmt(z.slots[0].z + E.datum, 1)} m`]]
+          : [['정상 칸', `${normal}칸`], ['고장 분류 칸', `${broken}칸 (반대 방향)`], ['붙은 길', z.rack.road_kind === 'footway' ? '보행로' : z.rack.road_kind === 'pedestrian' ? '보행 광장' : '차량 도로'],
+             ['표고', `${fmt(z.slots[0].z + E.datum, 1)} m`]]);
+    flyTo(z.rack.center, ch ? 120 : 90);
+  }
+  placeLabels();
+}
+function kv(rows) { $('selKv').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join(''); }
+
+// ---------- 카메라 이동 ----------
+let fly = null;
+function flyTo([x, y], dist) {
+  const tgt = V3(x, y, zw(x, y));
+  if (camera === persp) {
+    const dir = persp.position.clone().sub(controls.target).normalize();
+    fly = { t: 0, from: controls.target.clone(), to: tgt, pfrom: persp.position.clone(), pto: tgt.clone().add(dir.multiplyScalar(dist)) };
+  } else {
+    ortho.position.set(tgt.x, 3000, tgt.z); controls2.target.set(tgt.x, 0, tgt.z); ortho.zoom = Math.max(ortho.zoom, 6); ortho.updateProjectionMatrix();
+  }
+}
+
+// ---------- 패널 ----------
+const charging = D.parking_zones.filter(z => z.type === 'charging'), general = D.parking_zones.filter(z => z.type === 'general');
+$('sCharge').textContent = `${charging.length} · ${charging.reduce((a, z) => a + z.slots.length, 0)}`;
+$('sPark').textContent = `${general.length} · ${general.reduce((a, z) => a + z.slots.filter(s => s.role === 'normal').length, 0)}`;
+$('sBroken').textContent = `${general.reduce((a, z) => a + z.slots.filter(s => s.role === 'broken').length, 0)}`;
+function renderList(type) {
+  const list = type === 'charging' ? charging : general;
+  $('zoneList').innerHTML = list.map(z => `<button class="zone-row ${type === 'charging' ? '' : 'park'}" data-id="${z.id}">
+    <span class="id">${z.id}</span><span class="nm">${z.site}</span><small>${z.slots.length}칸</small></button>`).join('');
+  $('zoneList').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => select({ kind: 'zone', z: D.parking_zones.find(z => z.id === btn.dataset.id) })));
+  $('tabC').setAttribute('aria-pressed', type === 'charging'); $('tabP').setAttribute('aria-pressed', type !== 'charging');
+}
+$('tabC').onclick = () => renderList('charging'); $('tabP').onclick = () => renderList('general');
+renderList('charging');
+$('zones5').innerHTML = Object.entries(ZUI).map(([k, z]) => {
+  const n = D.buildings.filter(b => b.zone == k && b.number).length;
+  return `<button data-z="${k}"><i style="background:${z.color}"></i><span>${k}구역 · ${z.name}</span><small>${n}동</small></button>`;
+}).join('');
+$('zones5').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+  const bs = D.buildings.filter(b => b.zone == btn.dataset.z);
+  const c = bs.reduce((a, b) => [a[0] + b.c[0] / bs.length, a[1] + b.c[1] / bs.length], [0, 0]);
+  const first = bs.filter(b => b.number).sort((a, b) => a.number - b.number)[0];
+  if (first) select({ kind: 'building', b: first });
+  flyTo(c, 520);
+}));
+
+// ---------- 토글 ----------
+$('tExag').addEventListener('input', e => { EXAG = +e.target.value; $('oExag').textContent = `×${EXAG}`; $('chipExag').textContent = `×${EXAG}`; relayout(); });
+$('tNames').addEventListener('change', e => { showNames = e.target.checked; placeLabels(); });
+$('tPark').addEventListener('change', e => {
+  opts.park = e.target.checked; drawGround(opts); groundTex.needsUpdate = true;
+  holders.visible = brokenH.visible = rails.visible = opts.park;
+  pins.children.forEach(grp => { if (grp.userData.z.type !== 'charging') grp.visible = opts.park; });
+  placeLabels();
+});
+$('tContour').addEventListener('change', e => { opts.contour = e.target.checked; drawGround(opts); groundTex.needsUpdate = true; });
+function setMode(m) {
+  const is2 = m === '2d';
+  camera = is2 ? ortho : persp; controls.enabled = !is2; controls2.enabled = is2;
+  $('m2d').setAttribute('aria-pressed', is2); $('m3d').setAttribute('aria-pressed', !is2);
+  $('chipMode').textContent = is2 ? '2D' : '3D';
+  $('hint').textContent = is2 ? '드래그로 이동 · 휠로 확대 · 건물·구역을 누르면 정보' : '드래그로 회전 · 휠로 확대 · 건물·구역을 누르면 정보';
+  if (is2) { const t = controls.target; ortho.position.set(t.x, 3000, t.z); controls2.target.set(t.x, 0, t.z); }
+  terrain.material = is2 ? terrainFlat : terrainLit;
+  scene.fog = is2 ? null : new THREE.Fog('#e4e8e2', 1750, 3300);
+  resize();
+}
+$('m2d').onclick = () => setMode('2d'); $('m3d').onclick = () => setMode('3d');
+
+// ---------- 루프 ----------
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight; renderer.setSize(w, h, false);
+  persp.aspect = w / h; persp.updateProjectionMatrix();
+  const half = 680; ortho.left = -half * w / h; ortho.right = half * w / h; ortho.top = half; ortho.bottom = -half; ortho.updateProjectionMatrix();
+  placeLabels();
+}
+new ResizeObserver(resize).observe(host);
+let last = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (fly) {
+    fly.t = Math.min(1, fly.t + dt * 1.4); const k = fly.t < 0.5 ? 2 * fly.t * fly.t : 1 - Math.pow(-2 * fly.t + 2, 2) / 2;
+    controls.target.lerpVectors(fly.from, fly.to, k); persp.position.lerpVectors(fly.pfrom, fly.pto, k);
+    if (fly.t >= 1) fly = null;
+  }
+  (camera === persp ? controls : controls2).update();
+  const t = now / 1000;
+  pins.children.forEach((grp, i) => { if (grp.userData.z.type === 'charging') grp.children[1].material.color.setHSL(0.45, 0.85, 0.72 + 0.12 * Math.sin(t * 2 + i)); });
+  renderer.render(scene, camera); placeLabels();
+  requestAnimationFrame(tick);
+}
+relayout(); resize(); requestAnimationFrame(tick);
+})().catch(e => { console.error(e); document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;left:16px;bottom:16px;background:#fff;color:#b91c1c;padding:8px 12px;border-radius:8px;font:14px sans-serif">지도를 불러오지 못했습니다: ' + String(e.message || e).replace(/</g,'&lt;') + '</div>'); });
+</script>

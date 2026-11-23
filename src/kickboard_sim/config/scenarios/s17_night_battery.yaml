@@ -1,0 +1,14 @@
+name: "17. 야간 배터리 일괄 수거"
+map: street
+description: >
+  밤: 주차구역 세 곳에 얌전히 서 있지만 배터리가 부족한 5대. 충전소 충전 자리는 4곳, 로봇은 60% 에서 시작.
+  통과: 4대 수거 -> 충전소 하역 -> 5번째 수거 -> 가장 오래 맡긴 것을 '충전 끝'으로 치우고(charged_out) 하역
+# 도로 맵 배치 규칙: 킥보드는 연석에서 0.4 m 안쪽 인도에, 연석과 나란히 둔다.
+# yaw 는 넘어질 때 기둥이 인도 안쪽으로 눕는 방향 (북쪽 인도 180, 남쪽 인도 0, 샛길 서쪽 -90, 동쪽 연석 90).
+robot: {initial_battery_pct: 60, capacity: 4}
+scooters:
+  - {id: 1, x: -13.0, y: 5.45, yaw_deg: 180, battery_pct: 9}
+  - {id: 2, x: -12.0, y: 5.45, yaw_deg: 180, battery_pct: 12}
+  - {id: 3, x: 10.0, y: -1.45, yaw_deg: 0, battery_pct: 6}
+  - {id: 4, x: 11.0, y: -1.45, yaw_deg: 0, battery_pct: 11}
+  - {id: 5, x: 12.55, y: 8.0, yaw_deg: 90, battery_pct: 4}

@@ -1,0 +1,24 @@
+# K20. 가는 도중 누가 빌려 감   [D 돌발상황]   발전시킨 기존 시나리오: s14_rent_in_progress
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K20. 가는 도중 누가 빌려 감"
+id: k20
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s14_rent_in_progress]
+situation: "로봇이 화학관(407) 앞 넘어진 킥보드로 가는 중(약 5분 거리) 그 킥보드가 세워지고 대여된다. 그 사이 IT대학 앞에서 새 요청이 생긴다."
+mission: "도착 전에 펌웨어 보고(대여 중)를 받으면 현재 임무를 취소하고 다음 요청으로 간다. 보고가 늦으면 회전 탐색 후 실패 처리."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 1, dest: cancelled, zone: null, reasons: ["넘어짐", "불법 주차"], hint: "펌웨어 보고(대여 중·슬롯 주차)로 대기열에서 제거, 그 킥보드로 가지 않음"}
+  - {id: 2, order: 2, dest: general, zone: P21, reasons: ["불법 주차"], hint: "P21 415 IT대학5호관 인근 (88 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #2 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "요청 자동 취소 (대여·사용자 정렬): #1 → 취소 사유가 기록되고 로봇이 그 킥보드에서 수거 동작을 하지 않음"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: -211.22, y: -444.12, yaw_deg: -165.3, tilt_deg: 90, battery_pct: 66, place: walkway, where: "화학관 앞 보행로"}
+  - {id: 2, x: 91.94, y: -281.41, yaw_deg: 25.8, battery_pct: 74, spawn_at: 90, place: entrance, where: "416 IT대학2호관 출입구 앞"}
+events:
+  - {t: 60, id: 1, type: "stand"}
+  - {t: 75, id: 1, type: "rent"}

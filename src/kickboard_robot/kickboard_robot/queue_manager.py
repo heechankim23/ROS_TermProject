@@ -33,6 +33,9 @@ class QueueManager(Node):
         self.declare_parameter('auto_cancel', True)      # F13
         self.declare_parameter('tilt_threshold_deg', 45.0)
         self.declare_parameter('battery_threshold_pct', 20.0)
+        # 보고(/scooter_states)가 이 시간 넘게 끊긴 WAITING 항목은 취소 (누가 빌려 갔거나 치워짐). 0 = 끔
+        self.declare_parameter('stale_cancel_sec', 8.0)
+        self.last_seen = {}        # id -> 마지막 보고 시각 (한 번이라도 보고한 킥보드만)
 
         self.items = {}            # id -> ql.Item
         self.robot_xy = (0.0, 0.0)
@@ -175,13 +178,14 @@ class QueueManager(Node):
 
     # ---------- F13 자동 취소 ----------
     def on_scooter_state(self, msg):
+        self.last_seen[msg.id] = now_sec(self)
         if not self.get_parameter('auto_cancel').value:
             return
         it = self.items.get(msg.id)
         if it is None or it.status != ql.WAITING:
             return
         ok = (msg.tilt_deg <= self.get_parameter('tilt_threshold_deg').value and msg.in_parking_zone
-              and msg.battery_pct >= self.get_parameter('battery_threshold_pct').value)
+              and msg.battery_pct >= self.get_parameter('battery_threshold_pct').value and not msg.fault)
         if ok:
             it.status = ql.CANCELLED
             self.get_logger().info(f'{it.id}: 정상 상태로 돌아와 자동 취소')
@@ -199,7 +203,28 @@ class QueueManager(Node):
         out.sort(key=lambda q: (q.status not in ql.ACTIVE, -q.score))
         return out
 
+    def cancel_stale(self):
+        """보고가 끊긴 대기 항목 취소: 로봇이 빈 자리로 헛걸음하지 않게 (처리 중인 항목은 건드리지 않음 — 비선점)"""
+        stale = self.get_parameter('stale_cancel_sec').value
+        if stale <= 0 or not self.get_parameter('auto_cancel').value:
+            return
+        now = now_sec(self)
+        # 이 노드가 멈춰 있었거나 시계가 건너뛴 경우(PC 절전, WSL 시계 보정)는 킥보드 탓이 아니다 -> 이번에는 판정하지 않음
+        late = now - getattr(self, 'stale_checked', now) > 3.0
+        self.stale_checked = now
+        if late:
+            self.last_seen = {k: now for k in self.last_seen}
+            return
+        for it in self.items.values():
+            seen = self.last_seen.get(it.id)
+            if it.status == ql.WAITING and seen is not None and now - seen > stale:
+                it.status = ql.CANCELLED
+                self.get_logger().info(f'{it.id}: 보고가 {now - seen:.0f}s 끊김(대여·이동 추정) -> 자동 취소')
+                self.ev.emit('item_status', id=it.id, status=it.status,
+                             wait_sec=now - it.t_enqueued, note='auto cancel: no heartbeat')
+
     def publish_status(self):
+        self.cancel_stale()
         items = self.snapshot()
         m = QueueStatus(items=items)
         m.stamp = self.get_clock().now().to_msg()

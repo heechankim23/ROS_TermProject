@@ -1,0 +1,24 @@
+# K29. 수거 중 로봇팔 고장   [D 돌발상황]   발전시킨 기존 시나리오: s6_verify_fail
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K29. 수거 중 로봇팔 고장"
+id: k29
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s6_verify_fail]
+situation: "2번째 킥보드를 들어 올리는 도중 로봇팔 관절 이상이 발생한다(복구 불가). 이미 1대가 실려 있다."
+mission: "남은 요청을 대기열로 돌려놓고(보류), 관리자 알림 후 실은 킥보드는 도크 옆에 둔 채 정비 대기한다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 1, dest: held, zone: null, reasons: ["넘어짐", "불법 주차"], hint: "로봇팔 고장: 대기열로 되돌리고 관리자 알림"}
+  - {id: 2, order: 2, dest: held, zone: null, reasons: ["불법 주차"], hint: "로봇팔 고장: 대기열로 되돌리고 관리자 알림"}
+  - {id: 3, order: 3, dest: held, zone: null, reasons: ["불법 주차", "배터리 부족"], hint: "로봇팔 고장: 대기열로 되돌리고 관리자 알림"}
+pass_criteria:
+  - "보류 (로봇 정비 후 재개): #1,2,3 → 요청이 대기열에 남아 있고 관리자 알림 1회, 로봇은 도크로 복귀"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: -217.3, y: -84.24, yaw_deg: 141.8, tilt_deg: 90, battery_pct: 67, place: walkway, where: "제1과학관 앞 보행로"}
+  - {id: 2, x: -300.69, y: 13.11, yaw_deg: 71.8, battery_pct: 62, place: entrance, where: "209 자연과학대학 출입구 앞"}
+  - {id: 3, x: -345.85, y: -77.26, yaw_deg: 167.7, battery_pct: 11, place: walkway, where: "제2과학관 앞 보행로"}
+events:
+  - {t: 0, type: "robot_fault", part: "arm", trigger: "second_load", recover: false}

@@ -1,0 +1,57 @@
+--- a/src/kickboard_robot/kickboard_robot/collector.py
++++ b/src/kickboard_robot/kickboard_robot/collector.py
+@@ -46,6 +46,7 @@
+         self.declare_parameter('scooter_half_depth', 0.2)    # 태그 면 -> 킥보드 중심 (근사)
+         self.declare_parameter('detection_max_age_sec', 0.6)
+         self.declare_parameter('arm_timeout_sec', 120.0)
++        self.declare_parameter('arm_reach_margin', 0.45)     # 정렬 뒤 킥보드까지 align_distance + 이 값보다 멀면 팔이 안 닿음
+         self.declare_parameter('early_detect_margin', 0.2)   # 이동 중 태그가 standoff+margin 안에서 보이면 도착 처리
+ 
+         self.cb = ReentrantCallbackGroup()
+@@ -114,8 +115,12 @@
+             return self.finish(gh, False, 'nav_bridge 없음')
+         ng = GoToPose.Goal(target_pose=gh.request.target_pose,
+                            standoff=float(self.get_parameter('approach_standoff').value))
+-        nh = future_wait(self, self.nav.send_goal_async(
+-            ng, feedback_callback=lambda m: self.fb(gh, 'NAVIGATING', m.feedback.distance_remaining)), 5.0)
++        navigating = [True]      # 취소한 뒤 늦게 도착한 nav 피드백이 상태를 NAVIGATING 으로 되돌리지 않게
++
++        def nav_fb(m):
++            if navigating[0]:
++                self.fb(gh, 'NAVIGATING', m.feedback.distance_remaining)
++        nh = future_wait(self, self.nav.send_goal_async(ng, feedback_callback=nav_fb), 5.0)
+         if nh is None or not nh.accepted:
+             return self.finish(gh, False, 'nav goal rejected')
+         rf = nh.get_result_async()
+@@ -139,6 +144,7 @@
+             nres = rf.result().result
+             if not nres.success:
+                 return self.finish(gh, False, f'nav_failed: {nres.message}')
++        navigating[0] = False
+         self.twist()
+ 
+         # 2) VERIFYING — 회전 탐색
+@@ -202,6 +208,12 @@
+             msg = rf.result().result.message if rf.result() is not None else 'no result'
+             return self.finish(gh, False, f'align_failed: {msg}')
+         self.twist()
++        # 좁은 곳(주차 차량 사이, 진입 금지 구역 안)이라 nav_bridge 가 먼 자리를 골랐으면 팔이 닿지 않는다 -> 사람 호출
++        pose = self.pose.get()
++        if pose is not None:
++            reach = math.hypot(target.pose.position.x - pose[0], target.pose.position.y - pose[1])
++            if reach > dist + self.get_parameter('arm_reach_margin').value:
++                return self.finish(gh, False, f'align_failed: out of arm reach ({reach:.2f} m)')
+ 
+         corrected = PoseStamped()
+         corrected.header.frame_id = 'map'
+--- a/src/kickboard_robot/kickboard_robot/mission_manager.py
++++ b/src/kickboard_robot/kickboard_robot/mission_manager.py
+@@ -292,7 +292,7 @@
+             is_nav = reason.startswith('nav')
+             status = 'NEEDS_HUMAN' if (is_nav and self.p('admin_alerts')) else 'FAILED'
+             self.report(sid, status, reason)
+-            self.alert(sid, 'nav_failed' if is_nav else 'verify_failed', reason)
++            self.alert(sid, 'nav_failed' if is_nav else reason.split(':')[0], reason)
+             self.ev.emit('collect_failed', id=sid, reason=reason)
+             self.target = None
+             self.set_state(FAILED, f'({reason})')
