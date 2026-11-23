@@ -1,6 +1,6 @@
 {
  "policy": {
-  "low_battery": 15.0,
+  "low_battery": 20.0,
   "fall_tilt": 45.0,
   "robot_capacity": 4,
   "robot_return": 20.0,
@@ -1885,7 +1885,7 @@
     "s17_night_battery"
    ],
    "map": "knu_campus_flat",
-   "situation": "공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 15 % 아래다.",
+   "situation": "공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 20 % 아래다.",
    "mission": "3대 모두 충전 주차구역(가까운 C6 공식당 쪽 또는 C7 테니스장 쪽) 충전 스탠드에 꽂는다. 정렬 상태여도 배터리 부족이면 옮긴다.",
    "robot": {
     "initial_battery_pct": 100,

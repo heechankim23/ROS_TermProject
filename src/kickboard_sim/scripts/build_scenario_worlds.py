@@ -72,7 +72,7 @@ def pick_zones(sc, zones):
     by_id = {z['id']: z for z in zones if z['rack']}
     want = set()
     # 충전구역은 충전이 필요한 킥보드가 있을 때만 (일반 구역은 정상·고장 킥보드 하역과 '자리 없음' 대비로 2곳씩)
-    need_charge = any(s.get('battery_pct', 80) < 15 and not s.get('fault') and not s.get('charging')
+    need_charge = any(s.get('battery_pct', 80) < 20 and not s.get('fault') and not s.get('charging')
                       for s in sc.get('scooters') or [])
     for s in sc.get('scooters') or []:
         if s.get('slot'):

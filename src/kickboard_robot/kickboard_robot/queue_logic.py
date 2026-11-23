@@ -12,6 +12,7 @@ REASON_NAMES = {FALLEN: 'FALLEN', OUT_OF_ZONE: 'OUT_OF_ZONE', LOW_BATTERY: 'LOW_
 REASON_WEIGHT = {FALLEN: 3.0, OUT_OF_ZONE: 2.0, LOW_BATTERY: 1.0, BROKEN: 2.5, OBSTRUCTION: 4.0, REPORTED: 2.0,
                  MISALIGNED: 1.5}
 ALL_REASONS = tuple(REASON_NAMES)
+USER_REPORTS = (OBSTRUCTION, REPORTED)                          # 사용자 신고로만 들어오는 사유
 
 WAITING, IN_PROGRESS, DONE = 'WAITING', 'IN_PROGRESS', 'DONE'
 FAILED, NEEDS_HUMAN, CANCELLED = 'FAILED', 'NEEDS_HUMAN', 'CANCELLED'
@@ -37,6 +38,18 @@ class Weights:
     w_r: float = 10.0
     w_t: float = 1.0
     w_d: float = 5.0
+
+
+def merge_reason(old, new):
+    """같은 킥보드 요청을 병합할 때 남길 사유.
+
+    킥보드 판정끼리는 최신 상태를 따른다 (구역 밖 -> 넘어짐, 다시 세워지면 배터리 부족으로 내려감).
+    사용자 신고가 끼면 가중치가 높은 쪽을 남긴다: 신고가 넘어짐 판정을 덮어 순위를 내리거나,
+    킥보드 판정이 통행 방해 신고를 지우지 않게.
+    """
+    if old in USER_REPORTS or new in USER_REPORTS:
+        return max((old, new), key=lambda r: REASON_WEIGHT.get(r, 0.0))
+    return new
 
 
 def score(item, now, robot_xy, w):

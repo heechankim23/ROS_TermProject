@@ -76,9 +76,10 @@ class QueueManager(Node):
         now = now_sec(self)
         it = self.items.get(req.scooter_id)
         if it is not None and it.status in ql.ACTIVE:
-            it.reason = req.reason                       # 병합: 사유만 갱신
+            it.reason = ql.merge_reason(it.reason, req.reason)   # 병합: 사유 갱신 (신고가 판정을 덮어 내리지 않음)
             res.merged = True
-            if it.status == ql.WAITING:                  # 처리 중인 항목은 위치를 바꾸지 않음
+            # 처리 중인 항목은 위치를 바꾸지 않음. 사용자 신고 위치는 오차가 커서 킥보드가 보낸 위치를 덮지 않음
+            if it.status == ql.WAITING and req.reason not in ql.USER_REPORTS:
                 it.x, it.y, it.lat, it.lon = req.x, req.y, req.lat, req.lon
         else:
             self.items[req.scooter_id] = ql.Item(req.scooter_id, req.reason, req.x, req.y,

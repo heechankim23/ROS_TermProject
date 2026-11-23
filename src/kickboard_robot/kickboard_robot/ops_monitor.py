@@ -49,7 +49,7 @@ def scooter_code(st, in_slot_charge=False):
         return 'MISALIGNED' if st.in_slot_area else 'OUT_OF_ZONE'
     if in_slot_charge:
         return 'CHARGING'
-    if st.battery_pct < 15:
+    if st.battery_pct < 20:
         return 'LOW_BATTERY'
     return 'OK'
 

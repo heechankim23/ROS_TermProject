@@ -5,7 +5,7 @@ id: k06
 category: "A 상태별 기본"
 map: knu_campus_flat
 based_on: [s9_drop_sites, s17_night_battery]
-situation: "공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 15 % 아래다."
+situation: "공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 20 % 아래다."
 mission: "3대 모두 충전 주차구역(가까운 C6 공식당 쪽 또는 C7 테니스장 쪽) 충전 스탠드에 꽂는다. 정렬 상태여도 배터리 부족이면 옮긴다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
   - {id: 1, order: 3, dest: charging, zone: C7, reasons: ["배터리 부족"], hint: "C7 테니스장 쪽 (100 m)"}
