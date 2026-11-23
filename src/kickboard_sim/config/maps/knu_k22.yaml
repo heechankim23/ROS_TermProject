@@ -115,8 +115,7 @@ charging_zones:
   - {id: C5-07, x: -12.35, y: 108.31, z: -5.58, yaw_deg: 109.7, role: charge}
   - {id: C5-08, x: -13.15, y: 108.03, z: -5.6, yaw_deg: 109.7, role: charge}
 params:
-  request_gateway:
-    max_range_m: 1200.0      # 캠퍼스 전체 (원점에서 서쪽 끝까지 약 600 m)
+  request_gateway: {max_range_m: 1200.0}
   nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {d_max: 1200.0, w_d: 1.0}

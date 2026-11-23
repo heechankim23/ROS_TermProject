@@ -34,6 +34,11 @@ MESH = os.path.join(PKG, 'models', K.NAME, 'meshes')
 MARGIN = 40.0
 
 
+
+# 건물 보이는 크기 (로봇·킥보드와의 화면 비율용, 주행에는 영향 없음)
+BLD_H_SCALE, BLD_H_MIN, BLD_H_MAX = 0.35, 2.5, 6.0
+BLD_XY_SCALE = 0.8
+
 def setup():
     L = K.load_layers()
     b = L['boundary']
@@ -125,7 +130,13 @@ def write_meshes(L, T, sid, zones, bbox, gbounds):
         p = b['poly']
         if p[:, 0].max() < x0 or p[:, 0].min() > x1 or p[:, 1].max() < y0 or p[:, 1].min() > y1:
             continue
-        obj.prism(f'zone{b["zone"]}', p, -0.5, b['height'], roof_mat=f'roof{b["zone"]}')
+        # 화면 비율: 실제 크기 그대로면 로봇(1.7 m)·킥보드(1.1 m)에 비해 건물이 너무 커 보여서
+        # 높이를 낮추고(실제의 BLD_H_SCALE, BLD_H_MIN~BLD_H_MAX m) 바닥 윤곽도 중심 쪽으로 줄인다.
+        # 주행·라이다는 2D 지도(원래 윤곽)를 쓰므로 로봇 경로는 그대로이고 보이는 모습만 바뀐다.
+        c = p.mean(axis=0)
+        ps = c + (p - c) * BLD_XY_SCALE
+        h = min(max(b['height'] * BLD_H_SCALE, BLD_H_MIN), BLD_H_MAX)
+        obj.prism(f'zone{b["zone"]}', ps, -0.5, h, roof_mat=f'roof{b["zone"]}')
         nb += 1
     mats = {}
     for k, (_, _, col) in K.ZONES.items():

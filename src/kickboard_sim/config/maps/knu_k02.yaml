@@ -106,8 +106,7 @@ parking_zones:
   - {id: P25-10, x: -10.06, y: -306.03, z: -4.99, yaw_deg: -2.2, role: broken}
 charging_zones: []
 params:
-  request_gateway:
-    max_range_m: 1200.0      # 캠퍼스 전체 (원점에서 서쪽 끝까지 약 600 m)
+  request_gateway: {max_range_m: 1200.0}
   nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {d_max: 1200.0, w_d: 1.0}
