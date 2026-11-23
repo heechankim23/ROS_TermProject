@@ -69,6 +69,18 @@ def test_collector_align_retry_same_radius():
         assert abs(collector_logic.wrap_angle(math.atan2(-1.0 - y, 2.0 - x) - yaw)) < 1e-9
 
 
+def test_collector_align_next_step_wait_then_angle():
+    """정렬 실패: 먼저 기다렸다 같은 자리(지나가는 장애물), 또 실패하면 각도 변경(고정 장애물)."""
+    step = collector_logic.align_next_step
+    assert step(False, 'ok', '', 5.0) == 'done'
+    for s in ('timeout', 'rejected', 'canceled'):
+        assert step(False, s, '', 5.0) == 'done'
+    assert step(False, 'failed', 'nav failed after 1 attempts: sensor timeout', 5.0) == 'wait_same'
+    assert step(True, 'failed', 'nav failed after 1 attempts: sensor timeout', 5.0) == 'change_angle'
+    assert step(False, 'failed', 'no path', 0.0) == 'change_angle'          # align_wait_sec 0 = 바로 각도 변경
+    assert step(False, 'failed', 'out of arm reach (2.10 m)', 5.0) == 'change_angle'   # 자리 선택 문제는 기다려도 같음
+
+
 def test_collector_arm_reach_window():
     """팔이 닿는 거리: [dist - 0.25, dist + far]. 정렬 생략(far 0.15)은 적재 허용(far 0.45)보다 좁다."""
     near, skip, margin = collector_logic.ARM_REACH_NEAR, collector_logic.ARM_REACH_SKIP_FAR, 0.45

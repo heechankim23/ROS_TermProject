@@ -46,7 +46,20 @@ def align_pose(cx, cy, r, angle):
     return cx + r * math.cos(angle), cy + r * math.sin(angle), wrap_angle(angle + math.pi)
 
 
-ARM_REACH_NEAR = 0.25      # align_distance 보다 이만큼 가까워도 팔이 닿음
+def align_next_step(waited, status, msg, wait_sec):
+    """정렬 이동이 끝난 뒤 다음 단계.
+    'done'        : 성공했거나, 재시도로 해결할 수 없는 결과(취소·거절·시간 초과)
+    'wait_same'   : 잠깐 기다렸다 같은 자리로 다시 (사람·수레처럼 지나가는 장애물이면 비켜 있음)
+    'change_angle': 같은 반경에서 각도를 바꾼 자리로 (기다려도 막혀 있음 = 나무·구조물 같은 고정 장애물)
+    팔이 안 닿는 먼 자리('out of arm reach')는 자리 선택 문제라 기다려도 같으므로 바로 각도를 바꾼다."""
+    if status != 'failed':
+        return 'done'
+    if not waited and wait_sec > 0 and not msg.startswith('out of arm reach'):
+        return 'wait_same'
+    return 'change_angle'
+
+
+ARM_REACH_NEAR = 0.25     # align_distance 보다 이만큼 가까워도 팔이 닿음
 ARM_REACH_SKIP_FAR = 0.15  # 정렬 주행을 생략할 때 허용하는 바깥쪽 여유 (적재 허용 여유 arm_reach_margin 보다 좁게)
 
 
