@@ -50,9 +50,13 @@
 - [src/kickboard_sim/rviz/kickboard.rviz](src/kickboard_sim/rviz/kickboard.rviz)
 - 워크스페이스 맨 위: [run_all_knu.sh](run_all_knu.sh), [KNU_COMMANDS.md](KNU_COMMANDS.md), [GAZEBO_COMMANDS.md](GAZEBO_COMMANDS.md), [patches_for_team/CAMPUS_SIM_CHANGES.md](patches_for_team/CAMPUS_SIM_CHANGES.md)
 
+## 시나리오 전용 작은 world (함께 올림)
+
+- `models/knu_campus/meshes/*_k00`~`*_k32`, `worlds/knu_k*.sdf`, `config/maps/knu_k*.yaml`, `maps/knu_k*.yaml` (약 80 MB)
+- 받은 뒤 바로 `map:=local` 로 쓸 수 있다. 맵·시나리오를 고쳤으면 `python3 src/kickboard_sim/scripts/build_scenario_worlds.py` 로 다시 만든다 (약 50초)
+- 큰 `.obj` 파일(지형 메시)은 깃허브 화면에서 "View raw" 로만 나온다. Gazebo 가 읽는 데이터라 정상이다
+
 ## 올리지 않는 것
 
-- 시나리오 전용 작은 world 생성물 (약 80 MB, `python3 src/kickboard_sim/scripts/build_scenario_worlds.py` 로 50초면 다시 만듦):
-  `models/knu_campus/meshes/*_k00`~`*_k32`, `worlds/knu_k*.sdf`, `config/maps/knu_k*.yaml`, `maps/knu_k*.yaml`
-- `results/`, `build/`, `install/`, `log/`, `~/.ros/kickboard_ops/`
+- `results/`, `build/`, `install/`, `log/`, `~/.ros/kickboard_ops/` (각자 PC 에서 생성)
 - 검증 결과와 최종 리플레이는 `docs/knu_results/` 에 복사해 둠 (33개 모두 통과)
