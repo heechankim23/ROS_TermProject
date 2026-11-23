@@ -36,10 +36,10 @@ colcon build --packages-select kickboard_interfaces kickboard_robot kickboard_si
 ```bash
 ./run_all_knu.sh --gui --rtf 4 k01 k02 k03 k04 k05 k06 k07 k08        # A 상태별 기본
 ./run_all_knu.sh --gui --rtf 4 k09 k10 k11 k12                        # B 복합 판단
-./run_all_knu.sh --gui --rtf 4 k13 k14 k15 k16 k17 k18 k19            # C 수용량·적재량
+./run_all_knu.sh --gui --rtf 4 --limit 5400 k13 k14 k15 k16 k17 k18 k19   # C 수용량·적재량
 ./run_all_knu.sh --gui --rtf 4 k20 k21 k22 k23 k24 k25 k26 k27 k28 k29 k30 k31 k32  # D 돌발상황
 ./run_all_knu.sh --gui --rtf 4 k00                                    # E 운영 환경
-./run_all_knu.sh --gui --rtf 4                                        # 33개 전부 (k00~k32)
+./run_all_knu.sh --gui --rtf 4 --limit 5400                             # 33개 전부 (k00~k32)
 ```
 
 ### 시나리오 하나씩
