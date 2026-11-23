@@ -113,8 +113,11 @@ class SimLidar(Node):
         first = np.where(hit.any(axis=1), hit.argmax(axis=1), -1)
         rng = np.where(first >= 0, self.steps[np.maximum(first, 0)], np.inf)
         noise = gp('noise').value
-        ranges = [float(r) if math.isinf(r) else float(max(gp('range_min').value, r + random.gauss(0, noise)))
-                  for r in rng]
+        # Noise must not create finite readings outside the advertised sensor range.
+        # nav_bridge correctly treats out-of-range forward beams as unknown.
+        range_min, range_max = gp('range_min').value, gp('range_max').value
+        ranges = [float(r) if math.isinf(r) else
+                  float(min(range_max, max(range_min, r + random.gauss(0, noise)))) for r in rng]
         m = LaserScan()
         stamp = pose[3]
         m.header.stamp = stamp if (stamp.sec or stamp.nanosec) else self.get_clock().now().to_msg()

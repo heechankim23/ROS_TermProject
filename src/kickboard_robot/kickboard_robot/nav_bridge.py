@@ -7,8 +7,8 @@ backend:
            장애물에서 로봇 반폭(0.47 m) 안으로는 안 가고, 0.95 m(로봇 전체를 덮는 원)까지는 되도록 피한다.
            그래도 전방 obstacle_stop_dist 안에 뭔가 있으면 정지 (안전장치).
 standoff > 0 이면 목표 주변 standoff 원 위에서 장애물과 goal_clearance 이상 떨어진 빈 자리를 목표로 한다
-(로봇 쪽 방향부터 좌우로 넓혀 찾음). 실패 시 max_retries 번 재시도.
-실패 시 max_retries 번 재시도.
+(로봇 쪽 방향부터 좌우로 넓혀 찾음). 탐색·이동 실패 모두 max_retries 번 재시도한다.
+목표 제한·재계획은 ROS 시간, 센서 수신 감시·취소 확인 대기는 실제 경과 시간을 쓴다.
 """
 import math
 import threading
@@ -212,71 +212,111 @@ class NavBridge(Node):
         finally:
             self.goal_lock.release()
 
+    def sensor_problem(self):
+        pose_missing = self.current_pose() is None
+        scan_missing = not self.nav2 and not self.scan_ready()
+        if pose_missing and scan_missing:
+            return 'pose/scan unavailable'
+        if pose_missing:
+            return 'pose unavailable'
+        return 'scan unavailable' if scan_missing else ''
+
+    def wait_for_sensors(self, gh):
+        """Wait stopped, bounded by wall time even if the simulation clock stops."""
+        deadline = time.monotonic() + self.get_parameter('sensor_wait_timeout_sec').value
+        while rclpy.ok():
+            if gh.is_cancel_requested:
+                return 'canceled'
+            problem = self.sensor_problem()
+            if not problem:
+                return ''
+            self.stop()
+            if time.monotonic() >= deadline:
+                return problem
+            time.sleep(0.05)
+        return 'shutdown'
+
+    def wait_stopped(self, gh, duration):
+        """Keep publishing zero velocity and allow cancellation between retries."""
+        deadline = time.monotonic() + duration
+        while rclpy.ok():
+            self.stop()
+            if gh.is_cancel_requested:
+                return 'canceled'
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return ''
+            time.sleep(min(0.05, remaining))
+        return 'shutdown'
+
+    def failed_result(self, gh, res, reason):
+        self.stop()
+        res.success, res.message = False, reason
+        if gh.is_cancel_requested or reason == 'canceled':
+            res.message = 'canceled'
+            gh.canceled()
+        else:
+            gh.abort()
+        return res
+
     def _execute_goal(self, gh):
         g = gh.request
         res = GoToPose.Result()
-        deadline = time.monotonic() + self.get_parameter('sensor_wait_timeout_sec').value
-        while rclpy.ok() and (self.current_pose() is None or (not self.nav2 and not self.scan_ready())):
-            self.stop()
-            if gh.is_cancel_requested:
-                res.success, res.message = False, 'canceled'
-                gh.canceled()
-                return res
-            if time.monotonic() >= deadline:
-                res.success, res.message = False, 'pose/scan unavailable'
-                gh.abort()
-                return res
-            time.sleep(0.05)
-        tries = 1 + self.get_parameter('max_retries').value
+        problem = self.wait_for_sensors(gh)
+        if problem:
+            return self.failed_result(gh, res, problem)
+
+        # attempts is uint8 in the existing action; do not change its interface.
+        tries = min(255, max(1, 1 + self.get_parameter('max_retries').value))
         for attempt in range(1, tries + 1):
             res.attempts = attempt
+            problem = self.wait_for_sensors(gh)
+            if problem:
+                return self.failed_result(gh, res, problem)
+            goal, msg = self.resolve_goal(g)
             if gh.is_cancel_requested:
-                self.stop()
-                res.success, res.message = False, 'canceled'
-                gh.canceled()
-                return res
-            goal = self.make_goal(g)
+                return self.failed_result(gh, res, 'canceled')
+            if not rclpy.ok():
+                return self.failed_result(gh, res, 'shutdown')
             if goal is None:
-                self.stop()
-                res.success, res.message = False, 'no safe approach point or pose unavailable'
-                gh.abort()
-                return res
-            self.get_logger().info(f'이동 시도 {attempt}/{tries} -> ({goal[0]:.2f}, {goal[1]:.2f}, '
-                                   f'{math.degrees(goal[2]):.0f}°)')
-            ok, msg = (self.run_nav2 if self.nav2 else self.run_simple)(gh, goal, attempt)
+                ok = False
+            else:
+                self.get_logger().info(f'이동 시도 {attempt}/{tries} -> ({goal[0]:.2f}, {goal[1]:.2f}, '
+                                       f'{math.degrees(goal[2]):.0f}°)')
+                ok, msg = (self.run_nav2 if self.nav2 else self.run_simple)(gh, goal, attempt)
             if gh.is_cancel_requested:
-                self.stop()
-                res.success, res.message = False, 'canceled'
-                gh.canceled()
-                return res
+                return self.failed_result(gh, res, 'canceled')
+            if not rclpy.ok():
+                return self.failed_result(gh, res, 'shutdown')
+            self.stop()
             if ok:
-                self.stop()
                 res.success, res.message = True, 'arrived'
                 gh.succeed()
                 return res
-            self.get_logger().warn(f'이동 실패({msg}), 재시도')
-            self.stop()
-            if not self.nav2 and msg in ('sensor timeout', 'shutdown'):
-                break
-            if msg == 'cancel pending':
+            p = g.target_pose.pose.position
+            self.get_logger().warn(f'이동 실패 {attempt}/{tries}: {msg}; '
+                                   f'target=({p.x:.2f}, {p.y:.2f}), standoff={g.standoff:.2f}')
+            if msg in ('sensor timeout', 'shutdown', 'canceled', 'cancel pending'):
                 break
             if attempt < tries:
-                time.sleep(0.1)
-        self.stop()
-        res.success, res.message = False, f'nav failed after {attempt} attempts: {msg}'
-        gh.abort()
-        return res
+                problem = self.wait_stopped(gh, 0.1)
+                if problem:
+                    return self.failed_result(gh, res, problem)
+        return self.failed_result(gh, res, f'nav failed after {attempt} attempts: {msg}')
 
     def make_goal(self, g):
+        """Keep the existing goal-only helper API for navigation callers/tests."""
+        return self.resolve_goal(g)[0]
+
+    def resolve_goal(self, g):
+        """Return (goal, reason) without changing GoToPose or other nodes."""
         p = g.target_pose.pose
         tx, ty = p.position.x, p.position.y
         if g.standoff > 0.0:
             pose = self.current_pose()
             if pose is None:
-                return None
+                return None, 'pose unavailable'
             rx, ry, _ = pose
-            # PRD: 킥보드에서 standoff 만큼 떨어진 '빈 공간'. 로봇 쪽 방향이 막혀 있으면 각도를 돌려 재탐색.
-            # 코스트맵(정적 지도 + 라이다로 본 킥보드)으로 판정 -> 다른 킥보드·벽 옆 자리는 고르지 않음
             clearance = self.get_parameter('goal_clearance').value
             if self.cm is not None:
                 with self.cm_lock:
@@ -295,10 +335,8 @@ class NavBridge(Node):
                 if goal is not None:
                     self.get_logger().warn(f'standoff 원 위에 빈 자리 없음 -> 가장 가까운 빈 자리 '
                                            f'({goal[0]:.2f}, {goal[1]:.2f}) 사용')
-            if goal is None:
-                self.get_logger().warn('No safe approach point; stopping')
-            return goal
-        return tx, ty, yaw_from_quat(p.orientation)
+            return (goal, '') if goal is not None else (None, 'no safe approach point')
+        return (tx, ty, yaw_from_quat(p.orientation)), ''
 
     def stop(self):
         self.cmd_pub.publish(Twist())
@@ -329,7 +367,9 @@ class NavBridge(Node):
                 path = None
                 if sensor_missing_since is None:
                     sensor_missing_since = time.monotonic()
+                    self.get_logger().warn(f'센서 복구 대기: {self.sensor_problem()}')
                 if time.monotonic() - sensor_missing_since > gp('sensor_wait_timeout_sec').value:
+                    self.get_logger().warn(f'센서 복구 시간 초과: {self.sensor_problem()}')
                     return False, 'sensor timeout'
                 time.sleep(0.05)
                 continue
@@ -344,10 +384,10 @@ class NavBridge(Node):
                         tight = not self.cm.spot_ok(goal[0], goal[1], now, gp('goal_clearance').value - 0.05,
                                                     None if self.keep_clear is None else self.keep_clear - 0.05)
                     if tight:
-                        new = self.make_goal(gh.request)
+                        new, reason = self.resolve_goal(gh.request)
                         if new is None:
                             self.stop()
-                            return False, 'no safe approach point'
+                            return False, reason
                         self.get_logger().info(f'목표 주변에 새 장애물 -> 목표 변경 ({goal[0]:.2f}, {goal[1]:.2f}) -> '
                                                f'({new[0]:.2f}, {new[1]:.2f})')
                         goal, path = new, None
