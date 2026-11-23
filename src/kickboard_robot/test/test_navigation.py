@@ -182,7 +182,9 @@ def test_scan_reception_timeout(bridge, monkeypatch, clock):
 def test_no_safe_standoff_has_no_unchecked_fallback(bridge, monkeypatch):
     prepare(bridge, monkeypatch)
     bridge.cm = object()
-    monkeypatch.setattr(nav, 'free_spot', lambda *args: None)
+    monkeypatch.setattr(nav, 'free_spot', lambda *args, **kwargs: None)
+    # A 의 대체 목표(가장 가까운 빈 자리)도 빈 자리를 못 찾은 경우 -> 검사 안 한 목표로 가면 안 됨
+    monkeypatch.setattr(nav, 'nearest_free', lambda *args, **kwargs: None)
     g = goal()
     g.standoff = 1.6
     assert bridge.make_goal(g) is None

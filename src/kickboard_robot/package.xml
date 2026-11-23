@@ -17,6 +17,8 @@
   <exec_depend>action_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
   <exec_depend>rosbag2_py</exec_depend>
   <!-- 선택: nav2_msgs (nav:=nav2), apriltag_msgs (perception:=apriltag) -->
 
