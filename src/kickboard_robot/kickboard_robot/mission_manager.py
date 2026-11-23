@@ -42,8 +42,9 @@ from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
 from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans, nearby_drop
-from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
-                            LYING_STATUSES,
+# IDLE 은 여기서 쓰지 않지만 mission_manager_campus / _station 이 이 모듈에서 가져가므로 남겨 둔다
+from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, IDLE,  # noqa: F401
+                            LOADING, LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
                             EnergyModel, MissionParams, WaitGuard, affordable, charge_needed, classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,

@@ -273,3 +273,14 @@ def test_cargo_and_charger_slots():
     s.release('z')
     assert s.occ == [None, 'x'] and s.fifo == [1]
     assert ml.ChargerSlots([]).plan_unload(['q']) == [('q', None, 'remove')]
+
+
+# ---------------- 노드 모듈 import ----------------
+def test_mission_manager_variants_import():
+    """mission_manager 에서 이름을 가져가는 변형 노드들이 import 된다 (IDLE 이 빠져 KNU 가 시작부터 죽은 적이 있음)."""
+    import importlib
+
+    import pytest
+    pytest.importorskip('rclpy')                 # ROS 없이 돌릴 때는 건너뜀
+    for name in ('mission_manager', 'mission_manager_campus', 'mission_manager_station', 'extended_runtime'):
+        importlib.import_module(f'kickboard_robot.{name}')
