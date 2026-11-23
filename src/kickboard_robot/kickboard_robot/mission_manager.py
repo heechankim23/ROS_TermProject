@@ -169,6 +169,23 @@ class MissionManager(Node):
             self._mp = MissionParams(**{n: self.p(n) for n in MISSION_PARAM_NAMES})
         return self._mp
 
+    # 변형 노드(mission_manager_campus / _station, extended_runtime) 가 예전 이름으로 쓰는 적재함 접근.
+    # campus 는 self.cargo = [...] 로 통째로 바꾸기도 하므로 들어온 리스트를 Cargo 로 감싼다.
+    @property
+    def cargo(self):
+        return self._cargo
+
+    @cargo.setter
+    def cargo(self, items):
+        self._cargo = items if isinstance(items, Cargo) else Cargo(items)
+
+    @property
+    def load(self):
+        return self._cargo.load
+
+    def cargo_for(self, dest):
+        return self._cargo.for_dest(dest)
+
     def on_set_params(self, params):
         # 값이 실제로 적용되기 전에 불린다 -> 여기서는 캐시만 비우고, 다음에 읽을 때 적용된 값을 가져온다
         if any(p.name in MISSION_PARAM_NAMES for p in params):

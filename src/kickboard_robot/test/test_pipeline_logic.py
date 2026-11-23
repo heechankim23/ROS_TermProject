@@ -275,6 +275,19 @@ def test_cargo_and_charger_slots():
     assert ml.ChargerSlots([]).plan_unload(['q']) == [('q', None, 'remove')]
 
 
+def test_cargo_is_list_for_variant_nodes():
+    """campus/station/extended 노드는 cargo 를 리스트로 다룬다: append, 반복, 빈 판정, 통째 교체."""
+    c = ml.Cargo()
+    assert not c and c.load == 0
+    c.append(('1', 'normal'))                                    # campus: self.cargo.append((sid, kind))
+    c.add('2', ml.PARKING)
+    assert c and c.load == 2 and [s for s, _ in c] == ['1', '2'] and c.for_dest('normal') == ['1']
+    c.remove('1')                                                # id 로 지움
+    assert c == [('2', ml.PARKING)]
+    c2 = ml.Cargo([(s, ml.CHARGER) for s, _ in c])               # 통째 교체 -> setter 가 Cargo 로 감쌈
+    assert c2.for_dest(ml.CHARGER) == ['2']
+
+
 # ---------------- 노드 모듈 import ----------------
 def test_mission_manager_variants_import():
     """mission_manager 에서 이름을 가져가는 변형 노드들이 import 된다 (IDLE 이 빠져 KNU 가 시작부터 죽은 적이 있음)."""

@@ -228,32 +228,34 @@ class WaitGuard:
         return None
 
 
-class Cargo:
-    """적재함: [(킥보드 id, PARKING | CHARGER)] 실은 순서대로."""
+class Cargo(list):
+    """적재함: [(킥보드 id, 목적지)] 실은 순서대로.
 
-    def __init__(self):
-        self.items = []
+    list 를 그대로 상속한다: mission_manager_campus / _station / extended_runtime 은 예전처럼
+    self.cargo 를 리스트로 쓴다 (append, 반복, `if self.cargo`, c[0]).
+    remove 는 list.remove(값) 와 달리 킥보드 id 로 지운다 (예전 mission_manager 동작).
+    """
 
     @property
     def load(self):
-        return len(self.items)
+        return len(self)
 
     def add(self, sid, dest):
-        self.items.append((sid, dest))
+        self.append((sid, dest))
 
     def for_dest(self, dest):
-        return [sid for sid, d in self.items if d == dest]
+        return [sid for sid, d in self if d == dest]
 
     def ids_for_dock(self, unload_all):
         """충전소에서 내릴 킥보드: 충전소행, unload_all 이면 전부."""
-        return [sid for sid, d in self.items if d == CHARGER or unload_all]
+        return [sid for sid, d in self if d == CHARGER or unload_all]
 
     def remove(self, sid):
-        self.items = [c for c in self.items if c[0] != sid]
+        self[:] = [c for c in self if c[0] != sid]
 
     def redirect_to_charger(self, sid):
         """주차구역에 못 내린 킥보드는 충전소에서 내린다."""
-        self.items = [(s, CHARGER if s == sid else d) for s, d in self.items]
+        self[:] = [(s, CHARGER if s == sid else d) for s, d in self]
 
 
 def parking_jobs(cargo, spots):
