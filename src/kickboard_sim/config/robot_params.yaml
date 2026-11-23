@@ -34,6 +34,8 @@ collector:
     verify_timeout_sec: 10.0
     align_distance: 1.35       # 로봇 중심 -> 킥보드 중심. 로봇팔이 발판에 닿는 거리 (자리는 nav_bridge 가 고름)
     align_yaw_tol_deg: 10.0
+    align_retries: 2           # 정렬 이동 실패 시 같은 반경(align_distance), 다른 각도 자리로 다시 시도. 0 = 바로 실패
+    align_retry_offsets_deg: [90.0, -90.0, 180.0]   # 처음 실패한 자리 각도 기준 후보 순서
     load_time_sec: 3.0
 
 nav_bridge:

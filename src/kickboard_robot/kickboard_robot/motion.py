@@ -30,10 +30,15 @@ class GoToController:
 
     def __init__(self, k_lin=0.8, k_ang=1.8, v_max=0.22, w_max=1.2,
                  pos_tol=0.05, yaw_tol=math.radians(5), heading_gate=math.radians(25),
-                 allow_reverse=False):
+                 allow_reverse=False, pos_tol_exit=None):
         self.k_lin, self.k_ang = k_lin, k_ang
         self.v_max, self.w_max = v_max, w_max
         self.pos_tol, self.yaw_tol = pos_tol, yaw_tol
+        # 히스테리시스: 한 번 pos_tol 안에 들어오면 pos_tol_exit 를 넘을 때까지 '도착'으로 본다
+        # (도착 후 1~2 cm 흔들림에 임의 방향으로 크게 도는 진동 방지. A 도 같은 문제를 따로 고쳤었음:
+        #  제자리 회전 중 위치가 pos_tol 경계를 넘나들며 '위치 맞춤 <-> 방향 맞춤'을 오가 Gazebo 도킹 타임아웃)
+        self.pos_tol_exit = 2.5 * pos_tol if pos_tol_exit is None else pos_tol_exit
+        self.arrived = False
         self.heading_gate = heading_gate
         self.allow_reverse = allow_reverse
 
@@ -42,15 +47,11 @@ class GoToController:
         gx, gy, gth = goal
         dx, dy = gx - x, gy - y
         dist = math.hypot(dx, dy)
-        # 위치에 한 번 들어오면 방향을 맞추는 동안 2배까지는 벗어나도 다시 위치 제어로 돌아가지 않는다.
-        # (제자리 회전 중 위치가 pos_tol 경계를 넘나들면 '위치 맞춤 <-> 방향 맞춤'을 오가며 끝나지 않았다 — Gazebo 도킹 타임아웃)
-        at = getattr(self, '_at', None)
-        if at is not None and (math.hypot(gx - at[0], gy - at[1]) > 2.0 * self.pos_tol or dist > 2.0 * self.pos_tol):
-            at = None                              # 목표가 바뀌었거나 많이 벗어남
-        if at is None and dist <= self.pos_tol:
-            at = (gx, gy)
-        self._at = at
-        if dist > self.pos_tol and at is None:
+        if dist <= self.pos_tol:
+            self.arrived = True
+        elif dist > self.pos_tol_exit:
+            self.arrived = False
+        if not self.arrived:
             heading = math.atan2(dy, dx)
             err = wrap(heading - th)
             sign = 1.0

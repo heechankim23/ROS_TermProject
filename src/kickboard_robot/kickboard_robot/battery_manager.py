@@ -14,7 +14,7 @@ from kickboard_interfaces.msg import RobotStatus
 from .common import now_sec
 
 # CHARGING 에서만 충전. IDLE(충전소 대기)은 소모도 충전도 없음 -> 시나리오 시작 배터리가 그대로 유지된다
-NO_DRAIN_STATES = ('CHARGING', 'IDLE')
+NO_DRAIN_STATES = ('CHARGING', 'IDLE', 'NEEDS_HUMAN')   # NEEDS_HUMAN: 정지 상태
 
 
 class BatteryManager(Node):

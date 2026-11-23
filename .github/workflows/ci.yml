@@ -1,0 +1,84 @@
+# PR·push 마다: 빌드 -> 가공부 단위 테스트 -> 가공 벤치마크 -> kinematic 시나리오 스모크 테스트
+# Gazebo 없이 돈다 (sim:=kinematic). Gazebo·Nav2 시나리오는 각자 PC 에서 tools/run_scenarios.py 로 확인.
+name: ci
+
+# 팀 규칙: 각자 role_A~E 브랜치에 push, role_E 가 매주 main 에 병합 -> 모든 브랜치 push 에서 돈다
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-22.04
+    container: ros:humble
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 의존성 설치
+        run: |
+          apt-get update
+          rosdep update --rosdistro humble
+          # Gazebo·RViz 는 kinematic 테스트에 필요 없어서 건너뜀
+          rosdep install --from-paths src --ignore-src -y --rosdistro humble \
+            --skip-keys "ros_gz_sim ros_gz_bridge rviz2 nav2_bringup apriltag_ros"
+
+      - name: 빌드
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_cohesion+
+
+      - name: 가공부 단위 테스트
+        run: |
+          source install/setup.bash
+          cd src/kickboard_robot && python3 -m pytest -q test/
+
+      - name: 가공 벤치마크 (참고용, 실패 판정 안 함)
+        run: |
+          source install/setup.bash
+          python3 tools/bench_logic.py --json bench.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench
+          path: bench.json
+
+  scenarios:
+    needs: build-test
+    runs-on: ubuntu-22.04
+    container: ros:humble
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 의존성 설치·빌드
+        run: |
+          apt-get update
+          rosdep update --rosdistro humble
+          rosdep install --from-paths src --ignore-src -y --rosdistro humble \
+            --skip-keys "ros_gz_sim ros_gz_bridge rviz2 nav2_bringup apriltag_ros"
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_cohesion+
+
+      - name: kinematic 시나리오 스모크 테스트
+        run: |
+          source install/setup.bash
+          python3 tools/run_scenarios.py s1_single s6_verify_fail s8_auto_cancel \
+            --sim kinematic --out ci_runs --timeout-scale 1.5
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scenario-runs
+          path: |
+            ci_runs/summary.md
+            ci_runs/*.log
+            ci_runs/*.jsonl

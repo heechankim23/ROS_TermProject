@@ -49,27 +49,45 @@ def free_spots(plan, used):
             if all(math.hypot(s[0] - u[0], s[1] - u[1]) >= MIN_GAP for u in used)]
 
 
-def choose_plan(plans, used, robot_xy, need=1):
-    """빈 자리가 있는 후보 중 가장 가까운 것. 빈 자리가 need 개 이상인 후보를 우선. 없으면 None."""
+def plan_cost(plan, robot_xy, next_xys=None, next_weight=1.0):
+    """로봇 -> 하역 위치 거리 + next_weight x (하역 위치 -> 다음 목적지 후보 중 가장 가까운 곳까지 거리).
+    직선 거리라 실제 경로보다 짧지만, 후보끼리 비교하는 데는 충분하다. next_weight=0 이면 예전 방식(가장 가까운 곳).
+    무작위 환경 검증(tools/drop_choice_eval.py): 1 을 넘기면 오히려 나빠졌다."""
+    rx, ry = plan['robot'][0], plan['robot'][1]
+    d = math.hypot(rx - robot_xy[0], ry - robot_xy[1])
+    if next_xys and next_weight:
+        d += next_weight * min(math.hypot(rx - x, ry - y) for x, y in next_xys)
+    return d
+
+
+def clear_plans(plans, obstacles_xy, keepout):
+    """로봇이 서는 위치가 장애물(누워 있는 킥보드 등)에서 keepout 이상 떨어진 후보만.
+    s5 에서 정렬 실패한 킥보드가 서는 위치 0.83 m 옆에 있어 경로를 못 찾고 전부 충전소에 내린 일이 있었다."""
+    return [p for p in plans
+            if all(math.hypot(p['robot'][0] - x, p['robot'][1] - y) >= keepout for x, y in obstacles_xy)]
+
+
+def choose_plan(plans, used, robot_xy, need=1, next_xys=None, next_weight=1.0):
+    """빈 자리가 있는 후보 중 plan_cost 가 가장 작은 것. 빈 자리가 need 개 이상인 후보를 우선. 없으면 None.
+    next_xys: 하역 후 갈 곳 후보 [(x, y)] (충전소, 대기 중인 킥보드). 없으면 로봇에서 가장 가까운 후보."""
     best = None
     for p in plans:
         fs = free_spots(p, used)
         if not fs:
             continue
-        d = math.hypot(p['robot'][0] - robot_xy[0], p['robot'][1] - robot_xy[1])
-        key = (len(fs) < need, d)
+        key = (len(fs) < need, plan_cost(p, robot_xy, next_xys, next_weight))
         if best is None or key < best[0]:
             best = (key, p, fs)
     return None if best is None else (best[1], best[2])
 
 
-def nearby_drop(plans, used, robot_xy, need, max_dist):
+def nearby_drop(plans, used, robot_xy, need, max_dist, next_xys=None, next_weight=1.0):
     """근처 주차구역 하역 판정: choose_plan 이 고를 하역 자리(로봇이 설 곳)가 max_dist(m) 안이면 그 거리, 아니면 None.
     max_dist <= 0 이거나 내릴 킥보드가 없으면(need <= 0) 항상 None (기능 끔).
-    start_drop 과 같은 choose_plan 호출을 쓰므로, 여기서 고른 자리로 실제로 이동한다."""
+    start_drop 과 같은 choose_plan 호출을 쓰므로(next_xys, next_weight 도 같이 넘김), 여기서 고른 자리로 실제로 이동한다."""
     if max_dist <= 0 or need <= 0:
         return None
-    ch = choose_plan(plans, used, robot_xy, need=need)
+    ch = choose_plan(plans, used, robot_xy, need=need, next_xys=next_xys, next_weight=next_weight)
     if ch is None:
         return None
     rx, ry, _ = ch[0]['robot']
