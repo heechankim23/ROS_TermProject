@@ -460,10 +460,28 @@ t_max 가 보장하는 것은 "1번보다 t_max 이상 늦게 들어온 요청�
   0.47 m 까지 붙을 수 있어 회전 중 모서리가 닿을 수 있다. s5 의 킥보드 위치는 도킹 자리에서 회전할 수 있도록 옮겼다.
 
 
-## 12. 통합 현황과 협업 규칙 (2026-11-17, 병합 관리)
+## 12. 통합 현황과 협업 규칙 (2026-11-17 · 11-23 갱신, 병합 관리)
 
-main 에 role_A · role_B · role_C 를 합친 결과와, 아직 브랜치에 올라오지 않은 파일 목록이다.
-role_D 는 main 과 같고 변경이 없었다.
+12-0 은 11-23 병합, 12-1 ~ 12-4 는 11-17 병합 당시 기록이다 (12-3 의 빠진 파일은 대부분 11-23 병합으로 들어옴).
+
+### 12-0. 2026-11-23 병합 (role_A · B · C · D 전부)
+
+| 순서 | 브랜치 | 내용 | 병합 시 처리 |
+|---|---|---|---|
+| 1 | role_B (role_A 포함) | A: 경북대 캠퍼스 맵·시나리오 `scenarios_knu/` k00~k32, 도로 맵 s1~s19, 확장 프로필, `archive/`. B: 킥보드 배터리 기준 15→20%, 경북대 맵 가중치 100/0.5/1, 요청 병합 규칙 | fast-forward (충돌 없음) |
+| 2 | role_C | 접근 지점 없음도 재시도, 실패 사유 구분(pose/scan unavailable, no safe approach point), 경로 없음 진단, sim_lidar 잡음 범위 제한 | `nav_bridge.py` 충돌: A 의 '가장 가까운 빈 자리' 대체 목표 + C 의 (목표, 사유) 반환 형식을 **둘 다 유지**. 경로 없음 로그는 A 의 상세판 |
+| 3 | role_D | 가공부 분리(`*_logic.py`), 에너지 기반 배터리 판단, 하역 위치 막힘 처리, 근처 하역 D 구조 이식, 정렬 다른 각도 재시도, CI·PR 템플릿·CONTRIBUTING | `collector.py`: D 버전(A 패치 이미 포함). `motion.py`: D 의 히스테리시스(A 와 같은 진동 문제 수정이라 하나로). `mission_manager.py`: D 구조 + 배터리 20% |
+| 4 | (공통) | 줄바꿈 renormalize (확장 프로필 CRLF 26개 → LF). `mission_logic` 기본값 20%, `lidar_logic.add_noise` 에 C 의 range_max 제한 반영 | 병합 커밋에 포함 |
+
+검증 (ROS 없는 환경): 전체 `.py` 문법·pyflakes 통과, ROS 무관 pytest **54/56 통과**
+(실패 2 = `test_sim_localizer_map_odom` rclpy 없음, `test_legacy_manifest_hashes` 확장 프로필 해시 — 둘 다 병합 전부터 실패),
+`build_env.py` 재생성 결과가 저장소 파일과 동일. **Ubuntu 에서 `colcon build` · kinematic/Gazebo 회귀는 아직 안 함.**
+
+확인 요청:
+- **C**: `nav_bridge.py` 병합 결과 (A 의 nearest_free 대체 목표가 C 의 재시도 흐름 안에서 도는지)
+- **D · A**: `collector.py` 를 D 버전으로 정리한 것, `motion.py` 의 A 쪽 `_at` 방식을 D 히스테리시스로 대체한 것
+- **D**: 새 `nav_logic.py` · `lidar_logic.py` 등 제안 파일은 아직 노드가 쓰지 않음. `nav_logic.choose_goal` 에는 A·C 의 최신 목표 선택(가장 가까운 빈 자리, 실패 사유)이 없음
+- **전체**: D 의 CI(`.github/workflows/ci.yml`)는 모든 push 에서 돌고, 위 해시 테스트 때문에 지금은 실패로 나옴 → 확장 프로필 유지·삭제 결정 필요
 
 ### 12-1. 이번에 main 에 합친 것
 
