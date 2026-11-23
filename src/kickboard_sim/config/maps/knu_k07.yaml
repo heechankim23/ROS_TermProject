@@ -1,0 +1,118 @@
+# 시나리오 k07 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
+# 구역은 이 시나리오에 필요한 4곳만, 로봇 도크는 시나리오 근처 길가.
+mission_variant: campus
+map_json: knu_campus.json
+gps_origin: {lat: 35.8904, lon: 128.6103}
+terrain: {flat: true}
+robot_spawn: {x: 397.222, y: -60.875, yaw_deg: 99.4}
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: 397.058, y: -59.889, yaw_deg: -80.6}
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+parking_zones:
+- name: P11
+  site: 110 정보화본부 인근
+  origin: image
+  polygon:
+  - [307.4, 62.2]
+  - [295.8, 33.0]
+  - [331.1, 17.4]
+  - [345.2, 46.6]
+  - [315.2, 62.3]
+  rack: {x: 326.68, y: 57.35, yaw_deg: 154.2, length: 7.0, road: service}
+  robot_access: {x: 327.44, y: 58.92, yaw_deg: 154.2}
+  slots:
+  - {id: P11-01, x: 329.51, y: 55.98, z: -1.05, yaw_deg: -115.8, role: normal}
+  - {id: P11-02, x: 328.88, y: 56.28, z: -1.03, yaw_deg: -115.8, role: normal}
+  - {id: P11-03, x: 328.25, y: 56.59, z: -1.0, yaw_deg: -115.8, role: normal}
+  - {id: P11-04, x: 327.62, y: 56.89, z: -0.98, yaw_deg: -115.8, role: normal}
+  - {id: P11-05, x: 326.99, y: 57.2, z: -0.95, yaw_deg: -115.8, role: normal}
+  - {id: P11-06, x: 326.36, y: 57.5, z: -0.93, yaw_deg: -115.8, role: normal}
+  - {id: P11-07, x: 325.73, y: 57.8, z: -0.9, yaw_deg: -115.8, role: normal}
+  - {id: P11-08, x: 325.1, y: 58.11, z: -0.88, yaw_deg: -115.8, role: normal}
+  - {id: P11-09, x: 324.47, y: 58.41, z: -0.85, yaw_deg: 64.2, role: broken}
+  - {id: P11-10, x: 323.84, y: 58.72, z: -0.83, yaw_deg: 64.2, role: broken}
+- name: P12
+  site: 303 우당교육관 인근
+  origin: image
+  polygon:
+  - [412.9, 53.8]
+  - [375.5, -39.3]
+  - [431.5, -49.4]
+  - [463.8, 17.1]
+  - [463.7, 25.0]
+  - [420.7, 53.8]
+  rack: {x: 428.48, y: 12.04, yaw_deg: 153.2, length: 7.0, road: service}
+  robot_access: {x: 429.27, y: 13.6, yaw_deg: 153.2}
+  slots:
+  - {id: P12-01, x: 431.29, y: 10.62, z: -5.88, yaw_deg: -116.8, role: normal}
+  - {id: P12-02, x: 430.67, y: 10.94, z: -5.85, yaw_deg: -116.8, role: normal}
+  - {id: P12-03, x: 430.04, y: 11.25, z: -5.83, yaw_deg: -116.8, role: normal}
+  - {id: P12-04, x: 429.42, y: 11.57, z: -5.8, yaw_deg: -116.8, role: normal}
+  - {id: P12-05, x: 428.79, y: 11.88, z: -5.78, yaw_deg: -116.8, role: normal}
+  - {id: P12-06, x: 428.17, y: 12.2, z: -5.75, yaw_deg: -116.8, role: normal}
+  - {id: P12-07, x: 427.54, y: 12.52, z: -5.73, yaw_deg: -116.8, role: normal}
+  - {id: P12-08, x: 426.92, y: 12.83, z: -5.71, yaw_deg: -116.8, role: normal}
+  - {id: P12-09, x: 426.29, y: 13.15, z: -5.69, yaw_deg: 63.2, role: broken}
+  - {id: P12-10, x: 425.67, y: 13.46, z: -5.67, yaw_deg: 63.2, role: broken}
+- name: P17
+  site: 304 제4합동강의동 인근
+  origin: image
+  polygon:
+  - [469.1, -9.4]
+  - [461.3, -9.4]
+  - [412.3, -113.2]
+  - [412.3, -122.5]
+  - [456.7, -148.6]
+  - [463.2, -148.6]
+  - [492.9, -87.4]
+  - [510.9, -38.2]
+  - [510.8, -30.2]
+  rack: {x: 468.85, y: -66.16, yaw_deg: 149.8, length: 7.0, road: service}
+  robot_access: {x: 467.97, y: -67.67, yaw_deg: 149.8}
+  slots:
+  - {id: P17-01, x: 471.57, y: -67.75, z: -5.03, yaw_deg: 59.8, role: normal}
+  - {id: P17-02, x: 470.96, y: -67.4, z: -5.02, yaw_deg: 59.8, role: normal}
+  - {id: P17-03, x: 470.36, y: -67.04, z: -5.01, yaw_deg: 59.8, role: normal}
+  - {id: P17-04, x: 469.75, y: -66.69, z: -5.0, yaw_deg: 59.8, role: normal}
+  - {id: P17-05, x: 469.15, y: -66.34, z: -4.99, yaw_deg: 59.8, role: normal}
+  - {id: P17-06, x: 468.54, y: -65.99, z: -4.98, yaw_deg: 59.8, role: normal}
+  - {id: P17-07, x: 467.94, y: -65.63, z: -4.97, yaw_deg: 59.8, role: normal}
+  - {id: P17-08, x: 467.33, y: -65.28, z: -4.96, yaw_deg: 59.8, role: normal}
+  - {id: P17-09, x: 466.73, y: -64.93, z: -4.95, yaw_deg: -120.2, role: broken}
+  - {id: P17-10, x: 466.13, y: -64.58, z: -4.94, yaw_deg: -120.2, role: broken}
+- name: P18
+  site: 305 복지관 인근
+  origin: image
+  polygon:
+  - [300.3, -91.6]
+  - [281.0, -138.1]
+  - [322.7, -161.6]
+  - [329.2, -161.6]
+  - [351.1, -112.4]
+  - [308.1, -91.5]
+  rack: {x: 312.3, y: -139.41, yaw_deg: -27.2, length: 7.0, road: service}
+  robot_access: {x: 311.5, y: -140.96, yaw_deg: -27.2}
+  slots:
+  - {id: P18-01, x: 309.5, y: -137.97, z: -5.22, yaw_deg: 62.8, role: normal}
+  - {id: P18-02, x: 310.12, y: -138.29, z: -5.19, yaw_deg: 62.8, role: normal}
+  - {id: P18-03, x: 310.74, y: -138.61, z: -5.16, yaw_deg: 62.8, role: normal}
+  - {id: P18-04, x: 311.37, y: -138.93, z: -5.13, yaw_deg: 62.8, role: normal}
+  - {id: P18-05, x: 311.99, y: -139.25, z: -5.1, yaw_deg: 62.8, role: normal}
+  - {id: P18-06, x: 312.61, y: -139.57, z: -5.07, yaw_deg: 62.8, role: normal}
+  - {id: P18-07, x: 313.23, y: -139.89, z: -5.04, yaw_deg: 62.8, role: normal}
+  - {id: P18-08, x: 313.86, y: -140.21, z: -5.0, yaw_deg: 62.8, role: normal}
+  - {id: P18-09, x: 314.48, y: -140.53, z: -4.97, yaw_deg: -117.2, role: broken}
+  - {id: P18-10, x: 315.1, y: -140.85, z: -4.93, yaw_deg: -117.2, role: broken}
+charging_zones: []
+params:
+  request_gateway: {max_range_m: 1200.0}
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
+  queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
+  sim_lidar: {range_max: 12.0}
+  collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
+  mission_manager: {return_battery_pct: 20.0}
+  scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

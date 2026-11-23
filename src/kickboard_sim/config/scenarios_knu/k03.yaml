@@ -1,0 +1,20 @@
+# K03. 통행 방해 신고 접수   [A 상태별 기본]   발전시킨 기존 시나리오: s6_verify_fail
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K03. 통행 방해 신고 접수"
+id: k03
+category: "A 상태별 기본"
+map: knu_campus_flat
+based_on: [s6_verify_fail]
+situation: "펌웨어 기준으로는 정상(서 있음·배터리 정상)인 킥보드가 글로벌플라자 앞 보행로를 막고 있다. 20초에 사용자가 앱으로 신고한다. 신고 GPS 는 6 m 어긋나 있다."
+mission: "신고 위치로 가서 카메라로 찾고(GPS 보정), 수거해 일반 주차구역에 정렬한다. 신고 처리 결과를 남긴다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 1, dest: general, zone: P05, reasons: ["통행 방해 신고", "불법 주차"], hint: "P05 108 첨성인미래관 인근 (146 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #1 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 62.18, y: 167.12, yaw_deg: 97.1, battery_pct: 77, silent: true, place: walkway, where: "글로벌플라자 앞 보행로"}
+events:
+  - {t: 20, id: 1, type: "report", reason: "obstruction", gps_error_m: 6.0, note: "사용자 신고: 보행로를 막고 있어요"}

@@ -1,0 +1,23 @@
+# K21. 대기 중 사용자가 직접 정렬   [D 돌발상황]   발전시킨 기존 시나리오: s8_auto_cancel, s13_rent_waiting
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K21. 대기 중 사용자가 직접 정렬"
+id: k21
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s8_auto_cancel, s13_rent_waiting]
+situation: "경상대(308) 앞 보행로의 불법 주차 킥보드가 대기열에 있는 동안, 사용자가 반납하면서 P17 구역 빈 슬롯에 바르게 다시 세운다."
+mission: "대기열에서 자동 취소하고 그 킥보드로 가지 않는다. 다른 요청(넘어진 1대)은 그대로 처리한다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 2, dest: cancelled, zone: null, reasons: ["불법 주차"], hint: "펌웨어 보고(대여 중·슬롯 주차)로 대기열에서 제거, 그 킥보드로 가지 않음"}
+  - {id: 2, order: 1, dest: general, zone: P17, reasons: ["넘어짐", "불법 주차"], hint: "P17 304 제4합동강의동 인근 (119 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #2 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "요청 자동 취소 (대여·사용자 정렬): #1 → 취소 사유가 기록되고 로봇이 그 킥보드에서 수거 동작을 하지 않음"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 480.39, y: -175.78, yaw_deg: -33.5, battery_pct: 70, place: walkway, where: "경상대 앞 보행로"}
+  - {id: 2, x: 494.77, y: -182.8, yaw_deg: -13.6, tilt_deg: 90, battery_pct: 61, place: walkway, where: "사회과학대 앞 보행로"}
+events:
+  - {t: 40, id: 1, type: "park", slot: "P17-05"}

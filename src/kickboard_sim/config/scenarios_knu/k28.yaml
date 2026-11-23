@@ -1,0 +1,27 @@
+# K28. 수업 교대 시간 보행자 혼잡   [D 돌발상황]   발전시킨 기존 시나리오: s7_obstacle
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K28. 수업 교대 시간 보행자 혼잡"
+id: k28
+category: "D 돌발상황"
+map: knu_campus_flat
+based_on: [s7_obstacle]
+situation: "정각 수업 교대 시간에 공대 거리 보행로에 보행자 6명이 오가고, 그 보행로에 넘어진 킥보드 2대가 있다."
+mission: "움직이는 보행자와 부딪히지 않게 속도를 줄이거나 기다리며 접근·수거한다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 2, dest: general, zone: P23, reasons: ["넘어짐", "불법 주차"], hint: "P23 409 공대3호관 인근 (15 m)"}
+  - {id: 2, order: 1, dest: general, zone: P25, reasons: ["넘어짐", "불법 주차"], hint: "P25 412 미래창직관 인근 (84 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #1,2 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: -44.3, y: -266.8, yaw_deg: 0.6, tilt_deg: 90, battery_pct: 63, place: walkway, where: "공대3호관 앞 보행로"}
+  - {id: 2, x: 72.4, y: -319.78, yaw_deg: 7.7, tilt_deg: 90, battery_pct: 71, place: walkway, where: "공대7호관 앞 보행로"}
+events:
+  - {t: 5, type: "pedestrian", name: "student_0", path: [[-44.3, -266.8], [-65.0, -258.6], [-71.0, -263.6], [-76.8, -262.9], [-83.2, -250.3]], speed: 1.2, loop: true}
+  - {t: 8, type: "pedestrian", name: "student_1", path: [[64.2, -319.6], [82.4, -320.0]], speed: 1.2, loop: true}
+  - {t: 11, type: "pedestrian", name: "student_2", path: [[-33.5, -264.6], [-23.3, -270.0], [-23.9, -276.3]], speed: 1.2, loop: true}
+  - {t: 14, type: "pedestrian", name: "student_3", path: [[82.2, -354.1], [119.5, -355.1], [119.9, -372.4]], speed: 1.2, loop: true}
+  - {t: 17, type: "pedestrian", name: "student_4", path: [[-23.3, -270.0], [-19.9, -255.2], [-19.9, -247.2], [-15.7, -242.3], [-0.3, -243.7]], speed: 1.2, loop: true}
+  - {t: 20, type: "pedestrian", name: "student_5", path: [[159.6, -280.1], [160.7, -256.5], [155.0, -247.3], [104.1, -207.9]], speed: 1.2, loop: true}

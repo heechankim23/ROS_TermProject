@@ -64,7 +64,7 @@ class MissionManager(Node):
         self.declare_parameter('charge_target_pct', 80.0)
         self.declare_parameter('admin_alerts', True)        # F14 (P1)
         self.declare_parameter('max_dock_retries', 3)
-        self.declare_parameter('scooter_battery_threshold_pct', 15.0)   # 이보다 낮으면 충전소에 하역
+        self.declare_parameter('scooter_battery_threshold_pct', 20.0)   # 이보다 낮으면 충전소에 하역
         self.declare_parameter('drop_next_weight', 1.0)    # 하역 자리: 하역 후 갈 곳 거리 가중치 (0 = 예전 방식)
         self.declare_parameter('drop_keepout_m', 1.5)      # 대기·실패 킥보드에서 이보다 가까운 하역 위치는 안 씀 (0 = 끔)
         self.declare_parameter('max_drop_attempts', 2)     # 하역 이동 실패 시 다른 하역 위치까지 몇 곳 시도

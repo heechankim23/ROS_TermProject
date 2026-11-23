@@ -5,7 +5,7 @@ Costmap
   라이다 빔이 지나간 칸은 비우고(raytrace clearing) 맞은 칸은 장애물로 기억한다 (decay_sec 동안).
   장애물까지 거리 d 로 비용을 매긴다:
     d < inscribed (로봇 반폭 0.47 m)      -> 통과 불가
-    d < inflate   (운영값 1.1 m = 로봇을 덮는 원 0.98 m + 격자 오차)  -> 가까울수록 비쌈 (그래야 제자리 회전해도 안 부딪힘)
+    d < inflate   (로봇을 덮는 원 0.95 m)  -> 가까울수록 비쌈 (그래야 제자리 회전해도 안 부딪힘)
 A* (8방향) 로 경로를 찾고, 보이는 곳까지 건너뛰어(line of sight) 꺾임을 줄인다.
 """
 import heapq
@@ -31,6 +31,41 @@ class Costmap:
         self.seen = np.full((self.h, self.w), -np.inf)             # 라이다로 장애물을 마지막으로 본 시각
         self._dist = None
         self._t = None
+        # 진입 금지 구역(인도 등): 지나갈 수는 없지만 벽이 아니다. set_physical() 로 물리 지도를 주면 구분한다.
+        self.phys = None            # 물리 장애물만 (벽·건물·차). None 이면 static 과 같다고 본다
+        self.keepout = None         # static 중 물리 장애물이 아닌 칸
+        self._dist_keep = None
+        self._dist_phys = None
+        self._t_phys = None
+
+    def set_physical(self, omap):
+        """물리 장애물만 든 지도(라이다용)를 받아 static(주행 지도)과의 차이를 진입 금지 구역으로 둔다"""
+        other = Costmap.from_occupancy(omap, res=self.res)
+        self.phys = other.static & self.static
+        self.keepout = self.static & ~self.phys
+        self._dist_keep = ndimage.distance_transform_edt(~self.keepout) * self.res
+
+    def spot_ok(self, x, y, t, clearance, keep_clearance=None):
+        """(x, y) 에 로봇이 서도 되는가. 물리 장애물과는 clearance(제자리 회전 반경), 진입 금지 경계와는
+        keep_clearance(앞 범퍼 길이 정도) 만큼만 떨어지면 된다 -> 차도 가장자리에 서서 인도의 킥보드에 팔을 뻗을 수 있다"""
+        j, i = self.cell(x, y)
+        if not self.inside(j, i):
+            return False
+        if self.keepout is None or keep_clearance is None:
+            return float(self.distance(t)[j, i]) >= clearance
+        tk = math.floor(t)
+        if self._dist_phys is None or self._t_phys != tk or self._dist is None:
+            self._dist_phys = ndimage.distance_transform_edt(~(self.phys | (self.seen > t - self.decay))) * self.res
+            self._t_phys = tk
+            self.distance(t)
+        return float(self._dist_phys[j, i]) >= clearance and float(self._dist_keep[j, i]) >= keep_clearance
+
+    def ok_mask(self, t, clearance, keep_clearance=None):
+        """spot_ok 를 지도 전체에 대해 (nearest_free 용)"""
+        if self.keepout is None or keep_clearance is None:
+            return self.distance(t) >= clearance
+        self.spot_ok(self.x0, self.y0, t, clearance, keep_clearance)       # 캐시 갱신
+        return (self._dist_phys >= clearance) & (self._dist_keep >= keep_clearance)
 
     @classmethod
     def from_occupancy(cls, omap, **kw):
@@ -119,13 +154,17 @@ class Costmap:
             return None
         if math.isinf(cost[gj, gi]):
             return None
-        er = int(math.ceil(escape / self.res))
+        # 출발점이 진입 금지 구역(인도 등) 안이면 — 주행 오차로 밀려난 경우 — 그 구역을 지나 차도로 되돌아오게 한다.
+        # 이게 없으면 출발 칸이 막힌 곳이라 어떤 목표로도 길이 없어 그 자리에 영영 선다. 물리 장애물(벽·차)은 여전히 못 지난다.
+        off_road = self.keepout is not None and bool(self.keepout[sj, si])
+        er = int(math.ceil((1.5 if off_road else escape) / self.res))
         for dj in range(-er, er + 1):
             for di in range(-er, er + 1):
                 j, i = sj + dj, si + di
-                if self.inside(j, i) and math.isinf(cost[j, i]) and not self.static[j, i] \
-                        and dj * dj + di * di <= er * er:
-                    cost[j, i] = 1.0 + self.weight
+                if not (self.inside(j, i) and math.isinf(cost[j, i]) and dj * dj + di * di <= er * er):
+                    continue
+                if not self.static[j, i] or (off_road and self.keepout[j, i]):
+                    cost[j, i] = 1.0 + self.weight * (4.0 if self.static[j, i] else 1.0)
         nbrs = [(-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
                 (-1, -1, math.sqrt(2)), (-1, 1, math.sqrt(2)), (1, -1, math.sqrt(2)), (1, 1, math.sqrt(2))]
         g = {(sj, si): 0.0}
@@ -202,7 +241,7 @@ class Costmap:
         return False
 
 
-def free_spot(cm, target, robot_xy, dist, clearance, t, step_deg=15, max_extra=0.6):
+def free_spot(cm, target, robot_xy, dist, clearance, t, step_deg=15, max_extra=0.6, keep_clearance=None):
     """target 주변 반경 dist 원 위에서, 로봇 쪽 방향부터 좌우로 넓혀 가며
     장애물(정적 + 라이다)과 clearance 이상 떨어진 점을 찾는다. -> (x, y, target 을 보는 yaw) 또는 None"""
     base = math.atan2(robot_xy[1] - target[1], robot_xy[0] - target[0])
@@ -213,7 +252,25 @@ def free_spot(cm, target, robot_xy, dist, clearance, t, step_deg=15, max_extra=0
             for sgn in ((1,) if k == 0 else (1, -1)):
                 a = base + sgn * math.radians(k * step_deg)
                 gx, gy = target[0] + r * math.cos(a), target[1] + r * math.sin(a)
-                if cm.dist_at(gx, gy, t) >= clearance:
+                if cm.spot_ok(gx, gy, t, clearance, keep_clearance):
                     return gx, gy, math.atan2(target[1] - gy, target[0] - gx)
         extra += 0.2
     return None
+
+
+def nearest_free(cm, target, clearance, t, min_dist=0.0, max_dist=6.0, keep_clearance=None):
+    """target 에서 가장 가까운 '빈 자리'(장애물과 clearance 이상) -> (x, y, target 을 보는 yaw) 또는 None.
+    GPS 오차로 target 이 벽 근처·벽 밖·건물 안에 찍혀 standoff 원 위에 빈 자리가 없을 때 쓴다 (free_spot 의 대안).
+    min_dist: target 과 이보다 가까운 칸은 제외 (킥보드 위에 서지 않게)."""
+    jj, ii = np.nonzero(cm.ok_mask(t, clearance, keep_clearance))
+    if len(jj) == 0:
+        return None
+    xs = cm.x0 + (ii + 0.5) * cm.res
+    ys = cm.y0 + (jj + 0.5) * cm.res
+    r = np.hypot(xs - target[0], ys - target[1])
+    r = np.where(r < min_dist, np.inf, r)
+    k = int(np.argmin(r))
+    if not np.isfinite(r[k]) or r[k] > max_dist:
+        return None
+    gx, gy = float(xs[k]), float(ys[k])
+    return gx, gy, math.atan2(target[1] - gy, target[0] - gx)

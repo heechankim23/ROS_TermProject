@@ -1,0 +1,37 @@
+# K18. 가장 가까운 일반 주차구역이 만석   [C 수용량·적재량]   발전시킨 기존 시나리오: s9_drop_sites
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K18. 가장 가까운 일반 주차구역이 만석"
+id: k18
+category: "C 수용량·적재량"
+map: knu_campus_flat
+based_on: [s9_drop_sites]
+situation: "IT대학 쪽 P21 구역의 정상 슬롯 8칸이 모두 찼다. 근처 보행로에서 정상 킥보드 2대가 불법 주차로 수거된다."
+mission: "P21 에는 자리가 없으므로 다음으로 가까운 일반 구역(P26 등)의 빈 슬롯에 세운다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 2, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 3, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 4, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 5, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 6, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 7, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 8, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
+  - {id: 9, order: 2, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (95 m), 가장 가까운 P21 은 자리 없음"}
+  - {id: 10, order: 1, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (73 m)"}
+pass_criteria:
+  - "일반 주차구역 슬롯: #9,10 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
+  - "조치 없음: #1,2,3,4,5,6,7,8 → 수거하지 않음 (위치 변화 0.2 m 이하)"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 129.523, y: -201.016, yaw_deg: 51.8, battery_pct: 53, slot: P21-01, place: slot, where: "P21 415 IT대학5호관 인근 01번 칸"}
+  - {id: 2, x: 130.073, y: -201.449, yaw_deg: 51.8, battery_pct: 56, slot: P21-02, place: slot, where: "P21 415 IT대학5호관 인근 02번 칸"}
+  - {id: 3, x: 130.623, y: -201.882, yaw_deg: 51.8, battery_pct: 59, slot: P21-03, place: slot, where: "P21 415 IT대학5호관 인근 03번 칸"}
+  - {id: 4, x: 131.174, y: -202.314, yaw_deg: 51.8, battery_pct: 62, slot: P21-04, place: slot, where: "P21 415 IT대학5호관 인근 04번 칸"}
+  - {id: 5, x: 131.724, y: -202.747, yaw_deg: 51.8, battery_pct: 65, slot: P21-05, place: slot, where: "P21 415 IT대학5호관 인근 05번 칸"}
+  - {id: 6, x: 132.274, y: -203.18, yaw_deg: 51.8, battery_pct: 68, slot: P21-06, place: slot, where: "P21 415 IT대학5호관 인근 06번 칸"}
+  - {id: 7, x: 132.824, y: -203.613, yaw_deg: 51.8, battery_pct: 71, slot: P21-07, place: slot, where: "P21 415 IT대학5호관 인근 07번 칸"}
+  - {id: 8, x: 133.375, y: -204.045, yaw_deg: 51.8, battery_pct: 74, slot: P21-08, place: slot, where: "P21 415 IT대학5호관 인근 08번 칸"}
+  - {id: 9, x: 82.69, y: -281.0, yaw_deg: 55.0, battery_pct: 63, place: walkway, where: "IT대학5호관 앞 보행로"}
+  - {id: 10, x: 8.02, y: -232.33, yaw_deg: -134.5, battery_pct: 71, place: walkway, where: "IT대학4호관 앞 보행로"}

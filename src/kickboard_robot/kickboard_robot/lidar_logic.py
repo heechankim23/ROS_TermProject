@@ -60,7 +60,9 @@ class LidarSim:
 
     def add_noise(self, rng_m, noise, rng=random):
         """거리값에 가우시안 노이즈 (inf 는 그대로, range_min 아래로는 안 내려감) -> float 리스트"""
-        return [float(r) if math.isinf(r) else float(max(self.range_min, r + rng.gauss(0, noise))) for r in rng_m]
+        # 잡음이 센서 범위(range_min~range_max) 밖 유한값을 만들지 않게 (C: sim_lidar 와 같게)
+        return [float(r) if math.isinf(r) else float(min(self.range_max, max(self.range_min, r + rng.gauss(0, noise))))
+                for r in rng_m]
 
     def scan(self, robot_pose, offset_x, scooters, tilts, noise, rng=random):
         """로봇 pose (x, y, yaw) 에서 본 한 바퀴 스캔 (거리 리스트, 빔 순서 = self.angles)."""

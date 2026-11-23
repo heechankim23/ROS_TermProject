@@ -163,7 +163,7 @@ class ArmLoader(Node):
         self.declare_parameter('time_scale', 1.0)          # >1 이면 동작이 느려짐 (발표 녹화용)
         self.declare_parameter('rate_hz', 25.0)
         self.declare_parameter('tilt_threshold_deg', 45.0)       # 킥보드 색 (scooter_fleet_sim 과 같은 기준)
-        self.declare_parameter('battery_threshold_pct', 15.0)
+        self.declare_parameter('battery_threshold_pct', 20.0)
         self.world = self.get_parameter('world_name').value
         self.robot = self.get_parameter('robot_name').value
 
@@ -258,8 +258,8 @@ class ArmLoader(Node):
             return {}
         bt = self.get_parameter('battery_threshold_pct').value
         st = scooter_state(s.tilt_deg, s.in_parking_zone, s.battery_pct,
-                           self.get_parameter('tilt_threshold_deg').value, bt)
-        deck, stem = scooter_colors(st, s.battery_pct < bt)
+                           self.get_parameter('tilt_threshold_deg').value, bt, fault=s.fault, misaligned=s.in_slot_area)
+        deck, stem = scooter_colors(st, s.battery_pct < bt, broken=bool(s.fault))
         return {'deck': deck, 'stem': stem}
 
     def create_visual_copy(self, name, p, rm, collide=False, colors=None):

@@ -35,7 +35,8 @@ class GoToController:
         self.v_max, self.w_max = v_max, w_max
         self.pos_tol, self.yaw_tol = pos_tol, yaw_tol
         # 히스테리시스: 한 번 pos_tol 안에 들어오면 pos_tol_exit 를 넘을 때까지 '도착'으로 본다
-        # (도착 후 1~2 cm 흔들림에 임의 방향으로 크게 도는 진동 방지)
+        # (도착 후 1~2 cm 흔들림에 임의 방향으로 크게 도는 진동 방지. A 도 같은 문제를 따로 고쳤었음:
+        #  제자리 회전 중 위치가 pos_tol 경계를 넘나들며 '위치 맞춤 <-> 방향 맞춤'을 오가 Gazebo 도킹 타임아웃)
         self.pos_tol_exit = 2.5 * pos_tol if pos_tol_exit is None else pos_tol_exit
         self.arrived = False
         self.heading_gate = heading_gate

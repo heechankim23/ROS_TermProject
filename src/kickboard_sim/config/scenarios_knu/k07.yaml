@@ -1,0 +1,20 @@
+# K07. 고장 킥보드 분류   [A 상태별 기본]   발전시킨 기존 시나리오: s6_verify_fail
+# scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
+name: "K07. 고장 킥보드 분류"
+id: k07
+category: "A 상태별 기본"
+map: knu_campus_flat
+based_on: [s6_verify_fail]
+situation: "자가진단으로 브레이크 고장 1대(사범대 쪽 보행로), 타이어 펑크 1대(경상대 앞, 일반 구역 슬롯)가 보고된다."
+mission: "고장 킥보드는 정상 킥보드와 섞이지 않게 일반 주차구역의 고장 분류 칸에 반대 방향으로 세운다."
+expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
+  - {id: 1, order: 1, dest: broken, zone: P11, reasons: ["고장", "불법 주차"], hint: "P11 110 정보화본부 인근 (86 m)"}
+  - {id: 2, order: 2, dest: broken, zone: P17, reasons: ["고장"], hint: "P17 304 제4합동강의동 인근 (2 m)"}
+pass_criteria:
+  - "고장 분류 칸 (반대 방향): #1,2 → 고장 분류 칸에 반대 방향으로 섬"
+  - "충돌 0회, 계단·건물·운동장 진입 0회"
+  - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
+robot: {initial_battery_pct: 100, capacity: 4}
+scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
+  - {id: 1, x: 320.15, y: -28.75, yaw_deg: -159.1, battery_pct: 64, fault: brake, place: walkway, where: "사범대 쪽 보행로"}
+  - {id: 2, x: 470.359, y: -67.043, yaw_deg: 59.8, battery_pct: 71, fault: tire, slot: P17-03, place: slot, where: "P17 304 제4합동강의동 인근 03번 칸"}

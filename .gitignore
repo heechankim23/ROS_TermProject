@@ -1,6 +1,8 @@
+# colcon 빌드·실행 결과 (각자 PC 에서 생성)
 build/
 install/
 log/
+results/
 bags/
 __pycache__/
 *.pyc

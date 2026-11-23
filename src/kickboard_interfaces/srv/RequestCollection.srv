@@ -1,6 +1,10 @@
 uint8 FALLEN=1
 uint8 OUT_OF_ZONE=2
 uint8 LOW_BATTERY=3
+uint8 BROKEN=4
+uint8 OBSTRUCTION=5
+uint8 REPORTED=6
+uint8 MISALIGNED=7
 
 string scooter_id
 float64 lat

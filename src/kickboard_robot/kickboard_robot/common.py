@@ -27,6 +27,25 @@ class PoseTracker:
         tr = t.transform
         return tr.translation.x, tr.translation.y, yaw_from_quat(tr.rotation)
 
+    def get_stamped(self):
+        """(x, y, yaw, 그 pose 의 시각 msg). 없으면 None"""
+        try:
+            t = self.buf.lookup_transform(self.map_frame, self.base_frame, Time())
+        except Exception:  # noqa: BLE001
+            return None
+        tr = t.transform
+        return tr.translation.x, tr.translation.y, yaw_from_quat(tr.rotation), t.header.stamp
+
+    def get_at(self, stamp):
+        """stamp(builtin_interfaces/Time) 시각의 (x, y, yaw). 그 시각의 TF 가 아직 없으면 None.
+        센서 데이터를 지도에 넣을 때 쓴다: 최신 pose 로 넣으면 회전 중에는 처리 지연만큼 각도가 어긋난다."""
+        try:
+            t = self.buf.lookup_transform(self.map_frame, self.base_frame, Time.from_msg(stamp))
+        except Exception:  # noqa: BLE001
+            return None
+        tr = t.transform
+        return tr.translation.x, tr.translation.y, yaw_from_quat(tr.rotation)
+
 
 class EventLog:
     """/mission_events (std_msgs/String, JSON) — rosbag 으로 기록해 tools/analyze 로 지표 계산."""

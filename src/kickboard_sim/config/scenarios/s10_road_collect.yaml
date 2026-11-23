@@ -1,0 +1,14 @@
+name: "10. 눕은 킥보드 + 나란히 세워진 킥보드"
+map: street
+description: >
+  처음부터 놓여 있는 5대: 간선도로 옆에 넘어진 1대, 샛길 옆에 나란히 세워진 3대(배터리 부족), 연결로 옆에 넘어진 1대.
+  통과: 진입로 -> 간선도로 -> 샛길·연결로에서 수거 -> 배터리 정상 2대는 주차구역 -> 충전소에 3대 하역 -> 로봇 80% 충전
+# 도로 맵 배치 규칙: 킥보드는 연석에서 0.4 m 안쪽 인도에, 연석과 나란히 둔다.
+# yaw 는 넘어질 때 기둥이 인도 안쪽으로 눕는 방향 (북쪽 인도 180, 남쪽 인도 0, 샛길 서쪽 -90, 동쪽 연석 90).
+robot: {initial_battery_pct: 55, capacity: 4}
+scooters:
+  - {id: 1, x: -8.0, y: 5.4, yaw_deg: 180, tilt_deg: 90, battery_pct: 70}
+  - {id: 2, x: -3.4, y: 7.2, yaw_deg: 90, battery_pct: 8}
+  - {id: 3, x: -3.4, y: 8.1, yaw_deg: 90, battery_pct: 10}
+  - {id: 4, x: -3.4, y: 9.0, yaw_deg: 90, battery_pct: 12}
+  - {id: 5, x: 17.4, y: 9.0, yaw_deg: 90, tilt_deg: 90, battery_pct: 65}

@@ -1,0 +1,81 @@
+--- a/README.md
++++ b/README.md
+@@ -218,24 +218,73 @@
+ | `s1_single` | 1대, 10초에 넘어져 같은 ID로 **병합** | 접근 → 확인 → 적재 → 주차구역에 세움 → 충전소 대기 |
+ | `s2_new_request` | 2건 처리 중 20초에 1건 추가 | 현재 대상 완료 후 재평가, 3건 모두 수거 |
+ | `s3_full_load` | 용량 4, 요청 5건 | 4대 후 하역·충전, 남은 1건 처리 |
+-| `s4_low_battery` | 초기 배터리 25% | 20%에서 대상 반납·복귀, 80% 충전 후 재개 |
+-| `s5_aging` | 먼 곳 1건 + 가까운 요청 25초마다 | 먼 항목이 t_max 안에 선택 |
++| `s4_low_battery` | 초기 배터리 23% | 주행 중 20% -> 대상 반납(REQUEUE)·복귀, 80% 충전 후 재개 |
++| `s5_aging` | 먼 곳 1건 + 가까운 요청 15초마다 | 먼 항목이 다른 후보가 대기 중인데도 선택됨 (aging 역전) |
+ | `s6_verify_fail` | 1번은 실물 없음 | 회전 탐색 후 실패, 다음 대상으로 |
+-| `s7_obstacle` | 경로에 장애물 투입 | 충돌 없이 도착 — **`nav:=nav2` 필요** |
++| `s7_obstacle` | 경로에 장애물 투입 | 라이다에 잡혀 다시 계획, 충돌 없이 도착 (`nav:=simple` 도 가능) |
+ | `s8_auto_cancel` | 대기 중인 킥보드가 다시 세워짐 (P1) | 대기열에서 자동 제거 |
+ | `s9_drop_sites` | 넘어짐·구역 밖(배터리 정상) 2대 + 배터리 부족 2대 | 주차구역에 2대 세움(재요청 없음) → 충전소 하역 2대 |
+ 
++추가 시나리오 (2026-11-16) — 전부 `sim:=kinematic` 으로 검증. 맵은 시나리오 YAML 의 `map:` 이 정한다.
++
++| 파일 | 맵 | 내용 |
++|---|---|---|
++| `s10_rent_waiting` | 실내 | 대기 중 대여됨 -> 보고 끊김 8초 뒤 자동 취소 -> 반납 후 재요청 |
++| `s11_rent_in_progress` | 실내 | 가는 도중 대여됨 -> verify_failed + 알림 -> 다음 대상 |
++| `s12_moved_waiting` | 실내 | 대기 중 3 m 넘게 옮겨짐 -> 재요청 병합으로 위치 갱신 |
++| `s13_refall_after_drop` | 실내 | 주차구역에 세운 킥보드가 다시 넘어짐 -> 두 번째 수거 |
++| `s14_charger_overflow` | 실내 | 배터리 부족 5대, 충전 자리 4곳 -> 오래된 것부터 '충전 끝' 처리 |
++| `s15_priority_reason` | 실내 | 같은 거리의 FALLEN / OUT_OF_ZONE / LOW_BATTERY -> 사유 순서대로 |
++| `s16_gps_bad` | 실내 | GPS sigma 2.5 m, 벽·모서리 근처 |
++| `s17_peak_stream` | 실내 | 12초마다 1건씩 8건 (대기열이 쌓이는 상황) |
++| `st1_basic` … `st6_night_sweep` | street | 횡단보도 건너기, 횡단보도 막힘, 보행자, 버스정류장 피크, 주차 차량 사이, 야간 배터리 수거 |
++| `cp1_class_change` … `cp6_festival` | campus | 수업 직후, 잔디광장(진입 금지), 볼라드 통로, GPS 음영, 로봇 배터리 부족, 축제 부스 |
++
+ 시나리오 YAML 형식 (새 시나리오는 파일만 추가하면 된다):
+ 
+ ```yaml
+ name: "이름"
++map: street          # (선택) kickboard_world(기본) | street | campus
++gps_noise_sigma: 1.0 # (선택) GPS 오차 표준편차 (m)
+ robot: {initial_battery_pct: 100, capacity: 4}
++params:              # (선택) 이 시나리오에서만 덮어쓸 노드 파라미터
++  queue_manager: {w_t: 2.0}
+ scooters:            # id = AprilTag id, model: false 면 요청만 오고 실물 없음, spawn_at: 등장 시각(s)
+   - {id: 1, x: 1.5, y: -1.0, yaw_deg: 30, tilt_deg: 0, battery_pct: 80}
+-events:              # type: fall | stand | battery(pct) | move(x,y) | obstacle(name,x,y,size)
+-  - {t: 10, id: 1, type: fall}
++events:
++  - {t: 10, id: 1, type: fall}                 # fall | stand | battery(pct) | move(x, y)
++  - {t: 20, id: 1, type: rent}                 # 누가 빌려 감 (보고 끊김, 실물 사라짐)
++  - {t: 60, id: 1, type: return, x: 2, y: -1, tilt_deg: 90, battery_pct: 50}
++  - {t: 5, type: obstacle, name: truck, x: -8, y: 2, size: [4.4, 2.2, 2.0]}   # 고정 장애물
++  - {t: 90, type: remove_obstacle, name: truck}
++  - {t: 0, type: pedestrian, name: ped_1, path: [[-18, 7], [18, 7]], speed: 1.0}   # 왕복하는 보행자
++```
++
++장애물·보행자는 `/sim/obstacles` 로 나가고 `sim_lidar` 가 `/scan` 에 넣는다 (kinematic 모드에서도 회피가 동작).
++
++### 3-4. 맵 (환경) 고르기
++
++| 맵 | 크기 | 내용 |
++|---|---|---|
++| `kickboard_world` (기본) | 10 x 8 m | 실내 시험장. 로직 검증용 |
++| `street` | 40 x 30 m | 2차로 차도(진입 금지) + 횡단보도 2곳 + 남·북 보도 + 공영 주차장(충전소) + 주차구역 4곳 |
++| `campus` | 50 x 40 m | 건물 5동 + 잔디광장·계단(진입 금지) + 볼라드 통로 + 주차구역 5곳 |
++
++```bash
++ros2 launch kickboard_sim bringup.launch.py scenario:=st1_basic
+ ```
+ 
++```bash
++ros2 launch kickboard_sim bringup.launch.py map:=campus scenario:=cp1_class_change sim:=kinematic rviz:=true
++```
++
++- 맵 하나 = `worlds/<맵>.sdf` + `maps/<맵>.yaml`(주행 지도, 진입 금지 포함) + `maps/<맵>_lidar.yaml`(물리 지도) + `config/maps/<맵>.yaml`.
++- street·campus 는 `scripts/build_env.py` 가 배치 한 곳에서 전부 만든다. 배치를 바꾸면 `python3 src/kickboard_sim/scripts/build_env.py` 후 `colcon build`.
++  배치도는 `maps/<맵>_layout.svg`.
++- `config/maps/<맵>.yaml` 의 `params:` 가 맵에 맞게 노드 파라미터를 덮어쓴다 (실외: 속도 0.8 m/s, 배터리 0.12 %/m, w_d 1.0, 라이다 8 m, 격자 0.2 m).
++- 시뮬레이션 전에 배치·시나리오 점검: `python3 src/kickboard_sim/scripts/check_env.py --all` (주차구역에 로봇이 설 자리가 있는지, 킥보드에 팔이 닿는지, 길이 있는지).
++- street·campus 는 kinematic 모드로만 검증했다. Gazebo(`sim:=gz`)·Nav2 모드는 아직 돌려 보지 않았다 (`nav2_params.yaml` 의 초기 위치는 실내 맵 값).
++
+ 요청 조건(펌웨어 판정): 기울기 > 45° → `FALLEN`, 주차구역 밖 → `OUT_OF_ZONE`, 배터리 < 15% → `LOW_BATTERY`.
+ 
+ ---

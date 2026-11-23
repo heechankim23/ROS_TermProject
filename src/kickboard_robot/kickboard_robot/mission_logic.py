@@ -33,7 +33,7 @@ class MissionParams:
     capacity: int = 3
     return_battery_pct: float = 20.0
     charge_target_pct: float = 80.0
-    scooter_battery_threshold_pct: float = 15.0
+    scooter_battery_threshold_pct: float = 20.0
     admin_alerts: bool = True
     max_dock_retries: int = 3
     drop_next_weight: float = 1.0      # 하역 자리 고를 때 '하역 후 갈 곳' 거리 가중치 (0 = 가장 가까운 곳, 예전 방식)

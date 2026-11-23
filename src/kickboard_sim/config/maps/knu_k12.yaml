@@ -1,0 +1,88 @@
+# 시나리오 k12 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
+# 구역은 이 시나리오에 필요한 3곳만, 로봇 도크는 시나리오 근처 길가.
+mission_variant: campus
+map_json: knu_campus.json
+gps_origin: {lat: 35.8904, lon: 128.6103}
+terrain: {flat: true}
+robot_spawn: {x: 235.845, y: 98.34, yaw_deg: 268.8}
+charger:
+  station_id: station_1
+  tag_id: 100
+  tag_pose: {x: 235.825, y: 97.341, yaw_deg: 88.8}
+  dock_distance: 1.0
+  pre_dock_distance: 2.0
+parking_zones:
+- name: P06
+  site: 111 중앙도서관 인근
+  origin: image
+  polygon:
+  - [171.3, 244.0]
+  - [171.5, 191.0]
+  - [244.4, 190.3]
+  - [242.9, 238.0]
+  rack: {x: 207.3, y: 212.69, yaw_deg: -3.1, length: 7.0, road: service}
+  robot_access: {x: 207.39, y: 214.43, yaw_deg: -3.1}
+  slots:
+  - {id: P06-01, x: 204.15, y: 212.85, z: -3.99, yaw_deg: -93.1, role: normal}
+  - {id: P06-02, x: 204.85, y: 212.82, z: -4.01, yaw_deg: -93.1, role: normal}
+  - {id: P06-03, x: 205.55, y: 212.78, z: -4.04, yaw_deg: -93.1, role: normal}
+  - {id: P06-04, x: 206.25, y: 212.74, z: -4.06, yaw_deg: -93.1, role: normal}
+  - {id: P06-05, x: 206.95, y: 212.7, z: -4.08, yaw_deg: -93.1, role: normal}
+  - {id: P06-06, x: 207.65, y: 212.67, z: -4.11, yaw_deg: -93.1, role: normal}
+  - {id: P06-07, x: 208.35, y: 212.63, z: -4.13, yaw_deg: -93.1, role: normal}
+  - {id: P06-08, x: 209.04, y: 212.59, z: -4.16, yaw_deg: -93.1, role: normal}
+  - {id: P06-09, x: 209.74, y: 212.55, z: -4.19, yaw_deg: 86.9, role: broken}
+  - {id: P06-10, x: 210.44, y: 212.52, z: -4.22, yaw_deg: 86.9, role: broken}
+- name: P08
+  site: 110 정보화본부 인근
+  origin: image
+  polygon:
+  - [202.9, 172.7]
+  - [203.2, 85.3]
+  - [263.1, 84.4]
+  - [261.5, 154.6]
+  - [245.8, 173.1]
+  rack: {x: 262.51, y: 127.87, yaw_deg: -89.5, length: 7.0, road: service}
+  robot_access: {x: 264.26, y: 127.89, yaw_deg: -89.5}
+  slots:
+  - {id: P08-01, x: 262.48, y: 131.02, z: -0.13, yaw_deg: -179.5, role: normal}
+  - {id: P08-02, x: 262.49, y: 130.32, z: -0.08, yaw_deg: -179.5, role: normal}
+  - {id: P08-03, x: 262.49, y: 129.62, z: -0.03, yaw_deg: -179.5, role: normal}
+  - {id: P08-04, x: 262.5, y: 128.92, z: 0.02, yaw_deg: -179.5, role: normal}
+  - {id: P08-05, x: 262.5, y: 128.22, z: 0.07, yaw_deg: -179.5, role: normal}
+  - {id: P08-06, x: 262.51, y: 127.52, z: 0.12, yaw_deg: -179.5, role: normal}
+  - {id: P08-07, x: 262.52, y: 126.82, z: 0.18, yaw_deg: -179.5, role: normal}
+  - {id: P08-08, x: 262.52, y: 126.12, z: 0.23, yaw_deg: -179.5, role: normal}
+  - {id: P08-09, x: 262.53, y: 125.42, z: 0.29, yaw_deg: 0.5, role: broken}
+  - {id: P08-10, x: 262.53, y: 124.72, z: 0.34, yaw_deg: 0.5, role: broken}
+charging_zones:
+- name: C1
+  site: 중앙도서관 앞
+  origin: image
+  polygon:
+  - [132.6, 178.8]
+  - [130.3, 111.2]
+  - [139.4, 109.9]
+  - [148.5, 102.0]
+  - [198.0, 98.5]
+  - [197.6, 176.7]
+  rack: {x: 200.69, y: 134.71, yaw_deg: 86.5, length: 6.8, road: footway}
+  robot_access: {x: 202.44, y: 134.61, yaw_deg: 86.5}
+  slots:
+  - {id: C1-01, x: 200.51, y: 131.74, z: 2.34, yaw_deg: 176.5, role: charge}
+  - {id: C1-02, x: 200.56, y: 132.59, z: 2.31, yaw_deg: 176.5, role: charge}
+  - {id: C1-03, x: 200.62, y: 133.44, z: 2.28, yaw_deg: 176.5, role: charge}
+  - {id: C1-04, x: 200.67, y: 134.29, z: 2.25, yaw_deg: 176.5, role: charge}
+  - {id: C1-05, x: 200.72, y: 135.14, z: 2.22, yaw_deg: 176.5, role: charge}
+  - {id: C1-06, x: 200.77, y: 135.99, z: 2.19, yaw_deg: 176.5, role: charge}
+  - {id: C1-07, x: 200.82, y: 136.84, z: 2.16, yaw_deg: 176.5, role: charge}
+  - {id: C1-08, x: 200.88, y: 137.68, z: 2.13, yaw_deg: 176.5, role: charge}
+params:
+  request_gateway: {max_range_m: 1200.0}
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
+  queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
+  sim_lidar: {range_max: 12.0}
+  collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
+  mission_manager: {return_battery_pct: 20.0}
+  scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

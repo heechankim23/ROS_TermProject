@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" font-family="sans-serif">
+<rect width="640" height="480" fill="rgb(158,158,153)"/>
+<rect x="3.2" y="160.0" width="633.6" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="272.0" y="64.0" width="80.0" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="528.0" y="64.0" width="64.0" height="96.0" fill="rgb(56,56,61)"/>
+<rect x="3.2" y="3.2" width="633.6" height="60.8" fill="rgb(56,56,61)"/>
+<rect x="176.0" y="256.0" width="80.0" height="32.0" fill="rgb(56,56,61)"/>
+<rect x="3.2" y="288.0" width="400.0" height="188.8" fill="rgb(91,91,96)"/>
+<rect x="3.2" y="64.0" width="268.8" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="352.0" y="64.0" width="176.0" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="592.0" y="64.0" width="44.8" height="96.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="3.2" y="256.0" width="172.8" height="32.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="256.0" y="256.0" width="380.8" height="32.0" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="403.2" y="288.0" width="233.6" height="188.8" fill="rgb(188,183,173)" stroke="#f2f2f2" stroke-width="2.5"/>
+<rect x="3.2" y="207.2" width="633.6" height="1.6" fill="rgb(242,216,51)"/>
+<rect x="75.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="115.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="155.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="195.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="235.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="275.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="315.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="355.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="395.2" y="400.0" width="1.6" height="76.8" fill="rgb(242,242,242)"/>
+<rect x="96.0" y="137.6" width="48.0" height="22.4" fill="rgb(51,178,76)"/>
+<rect x="505.6" y="88.0" width="22.4" height="48.0" fill="rgb(51,178,76)"/>
+<rect x="464.0" y="256.0" width="48.0" height="22.4" fill="rgb(51,178,76)"/>
+<rect x="64.0" y="64.0" width="48.0" height="16.0" fill="rgb(114,165,204)"/>
+<rect x="0.0" y="0.0" width="640.0" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="0.0" y="476.8" width="640.0" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="636.8" y="0.0" width="3.2" height="480.0" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="0.0" y="0.0" width="3.2" height="480.0" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="24.0" y="80.0" width="200.0" height="44.8" fill="rgb(183,132,102)" stroke="#222" stroke-width="0.8"/>
+<text x="124.0" y="107.4" font-size="14" text-anchor="middle" fill="#111">상가</text>
+<rect x="384.0" y="92.8" width="112.0" height="38.4" fill="rgb(204,188,153)" stroke="#222" stroke-width="0.8"/>
+<text x="440.0" y="117.0" font-size="14" text-anchor="middle" fill="#111">카페·편의점</text>
+<rect x="448.0" y="328.0" width="176.0" height="128.0" fill="rgb(140,158,183)" stroke="#222" stroke-width="0.8"/>
+<text x="536.0" y="397.0" font-size="14" text-anchor="middle" fill="#111">오피스</text>
+<rect x="544.0" y="275.2" width="48.0" height="9.6" fill="rgb(76,127,153)" stroke="#222" stroke-width="0.8"/>
+<text x="568.0" y="285.0" font-size="10" text-anchor="middle" fill="#111">버스정류장</text>
+<circle cx="56.0" cy="139.2" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="620.8" cy="144.0" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<circle cx="368.0" cy="281.6" r="3.2" fill="rgb(51,114,51)" stroke="#222" stroke-width="0.8"/>
+<rect x="3.2" y="286.4" width="172.8" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="256.0" y="286.4" width="147.2" height="3.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="401.6" y="289.6" width="3.2" height="187.2" fill="rgb(127,127,127)" stroke="#222" stroke-width="0.8"/>
+<rect x="80.8" y="400.8" width="30.4" height="72.0" fill="rgb(51,76,140)" stroke="#222" stroke-width="0.8"/>
+<rect x="120.8" y="400.8" width="30.4" height="72.0" fill="rgb(216,216,224)" stroke="#222" stroke-width="0.8"/>
+<rect x="200.8" y="400.8" width="30.4" height="72.0" fill="rgb(153,38,38)" stroke="#222" stroke-width="0.8"/>
+<rect x="280.8" y="400.8" width="30.4" height="72.0" fill="rgb(51,76,140)" stroke="#222" stroke-width="0.8"/>
+<rect x="320.8" y="400.8" width="30.4" height="72.0" fill="rgb(216,216,224)" stroke="#222" stroke-width="0.8"/>
+<rect x="360.8" y="400.8" width="30.4" height="72.0" fill="rgb(153,38,38)" stroke="#222" stroke-width="0.8"/>
+<rect x="64.0" y="76.8" width="48.0" height="3.2" fill="rgb(76,127,153)" stroke="#222" stroke-width="0.8"/>
+<rect x="96.0" y="137.6" width="48.0" height="22.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="120.0" y="152.8" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">N1</text>
+<rect x="505.6" y="88.0" width="22.4" height="48.0" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="516.8" y="116.0" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">E1</text>
+<rect x="464.0" y="256.0" width="48.0" height="22.4" fill="none" stroke="#0a5" stroke-width="2"/>
+<text x="488.0" y="271.2" font-size="12" text-anchor="middle" font-weight="bold" fill="#031">S1</text>
+<rect x="64.0" y="64.0" width="48.0" height="16.0" fill="none" stroke="#1a4fd0" stroke-width="3"/>
+<text x="88.0" y="58.0" font-size="13" text-anchor="middle" font-weight="bold" fill="#fff" stroke="#0b2a7a" stroke-width="3" paint-order="stroke">킥보드 충전소 CS</text>
+<text x="144.0" y="212.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">간선도로</text>
+<text x="312.0" y="116.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">샛길</text>
+<text x="560.0" y="116.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">연결로</text>
+<text x="448.0" y="37.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">뒷길</text>
+<text x="216.0" y="276.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">진입로</text>
+<text x="192.0" y="340.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">공영 주차장</text>
+<text x="136.0" y="148.0" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">인도 (진입 금지)</text>
+<text x="24.8" y="349.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">로봇 도크</text>
+<text x="88.0" y="37.6" font-size="12" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">뒷길</text>
+<circle cx="6.4" cy="376.0" r="7" fill="#1a4fd0" stroke="#fff" stroke-width="1.5"/>
+<rect x="11.2" y="368.8" width="27.2" height="14.4" fill="#f5c400" stroke="#222" stroke-width="1"/>
+<text x="24.8" y="364.0" font-size="12" text-anchor="middle" font-weight="bold" fill="#fff" stroke="#000" stroke-width="2.5" paint-order="stroke">충전소·로봇</text>
+<text x="2" y="476" font-size="10" fill="#fff">-20</text>
+<text x="162" y="476" font-size="10" fill="#fff">-10</text>
+<text x="322" y="476" font-size="10" fill="#fff">0</text>
+<text x="482" y="476" font-size="10" fill="#fff">10</text>
+<text x="642" y="476" font-size="10" fill="#fff">20</text>
+<text x="2" y="478" font-size="10" fill="#fff">-15</text>
+<text x="2" y="318" font-size="10" fill="#fff">-5</text>
+<text x="2" y="158" font-size="10" fill="#fff">5</text>
+<text x="2" y="-2" font-size="10" fill="#fff">15</text>
+</svg>
