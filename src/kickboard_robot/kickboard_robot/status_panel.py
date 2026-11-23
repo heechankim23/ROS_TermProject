@@ -36,7 +36,7 @@ class StatusPanel(Node):
         super().__init__('status_panel')
         self.declare_parameter('topic', '/echo')
         self.declare_parameter('tilt_threshold_deg', 45.0)
-        self.declare_parameter('battery_threshold_pct', 15.0)
+        self.declare_parameter('battery_threshold_pct', 20.0)
         self.states = {}         # id -> ScooterState
         self.on_ground = set()   # 바닥에 있는(실리지 않은) 킥보드
         self.queue = {}          # id -> 대기열 상태

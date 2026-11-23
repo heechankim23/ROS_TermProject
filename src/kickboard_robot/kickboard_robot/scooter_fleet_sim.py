@@ -61,7 +61,7 @@ class ScooterFleetSim(Node):
         self.declare_parameter('gz_enabled', True)
         self.declare_parameter('gps_noise_sigma', 1.0)
         self.declare_parameter('tilt_threshold_deg', 45.0)
-        self.declare_parameter('battery_threshold_pct', 15.0)
+        self.declare_parameter('battery_threshold_pct', 20.0)
         self.declare_parameter('remove_on_load', True)
         self.declare_parameter('seed', 0)
 

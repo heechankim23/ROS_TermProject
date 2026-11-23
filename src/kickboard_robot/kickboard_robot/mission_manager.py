@@ -66,7 +66,7 @@ class MissionManager(Node):
         self.declare_parameter('station_id', 'station_1')
         self.declare_parameter('admin_alerts', True)        # F14 (P1)
         self.declare_parameter('max_dock_retries', 3)
-        self.declare_parameter('scooter_battery_threshold_pct', 15.0)   # 이보다 낮으면 충전소에 하역
+        self.declare_parameter('scooter_battery_threshold_pct', 20.0)   # 이보다 낮으면 충전소에 하역
         self.declare_parameter('map_config_file', '')      # 주차구역 (없으면 주차구역 하역 안 함)
         self.declare_parameter('map_yaml', '')             # 로봇이 설 자리 빈 공간 판정
         self.declare_parameter('drop_clearance', 1.05)

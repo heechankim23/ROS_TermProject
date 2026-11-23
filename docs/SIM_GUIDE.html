@@ -292,7 +292,7 @@ events:                  # fall | stand | battery | move | rent | return | obsta
 <tr><th>우선</th><th>사유</th><th>조건</th><th>가중치 R</th></tr>
 <tr><td class="n">1</td><td>FALLEN 넘어짐</td><td>기울기 &gt; 45°</td><td class="n">3</td></tr>
 <tr><td class="n">2</td><td>OUT_OF_ZONE 구역 밖</td><td>주차구역 다각형 밖 (point-in-polygon)</td><td class="n">2</td></tr>
-<tr><td class="n">3</td><td>LOW_BATTERY 배터리 부족</td><td>배터리 &lt; 15% (서 있고 구역 안일 때)</td><td class="n">1</td></tr>
+<tr><td class="n">3</td><td>LOW_BATTERY 배터리 부족</td><td>배터리 &lt; 20% (서 있고 구역 안일 때)</td><td class="n">1</td></tr>
 </table></div>
 <p>사유가 바뀔 때만 다시 보냅니다. 같은 ID 의 요청이 이미 대기열에 있으면 새 항목을 만들지 않고 <strong>병합</strong>합니다(사유만 갱신, 접수 시각은 유지). GPS 에는 표준편차 1 m 의 오차를 섞습니다.</p>
 
@@ -351,7 +351,7 @@ stateDiagram-v2
 
 <h3>5-7. 어디에 내려놓나, 배터리, 도킹</h3>
 <ul>
-  <li><strong>하역 장소</strong>: 실을 때 킥보드 배터리를 보고 정합니다. 15% 미만이면 충전소(충전 자리 4곳, 가득 차면 가장 오래된 것부터 "충전 끝" 처리), 아니면 가장 가까운 주차구역. 주차구역 변 밖 0.95 m 에 서서 0.45 m 간격으로 나란히 세웁니다.</li>
+  <li><strong>하역 장소</strong>: 실을 때 킥보드 배터리를 보고 정합니다. 20% 미만이면 충전소(충전 자리 4곳, 가득 차면 가장 오래된 것부터 "충전 끝" 처리), 아니면 가장 가까운 주차구역. 주차구역 변 밖 0.95 m 에 서서 0.45 m 간격으로 나란히 세웁니다.</li>
   <li><strong>로봇 배터리</strong>: 소모 = 이동 거리 × k1 + 시간 × k2. 실내 맵은 1 %/m 로 일부러 빨리 닳게 했고, 실외 맵은 0.12 %/m 입니다. 20% 이하면 복귀, 80% 까지 충전합니다.</li>
   <li><strong>도킹</strong>: 충전소 2 m 앞(pre-dock)까지는 경로 주행, 그 뒤 1 m 는 충전소 태그를 보며 저속(0.08 m/s) P 제어. 태그 위치를 저역 통과해 흔들림을 줄입니다. 목표는 5 cm, 5° 이내이고 이번 실행들에서는 최대 5.0 cm, 4.4° 였습니다(기준에 딱 걸린 실행이 1회).</li>
 </ul>

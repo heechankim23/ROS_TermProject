@@ -7,7 +7,7 @@ queue_manager:
     d_max: 12.8        # 방 대각선 (10 x 8 m)
     auto_cancel: true
     tilt_threshold_deg: 45.0
-    battery_threshold_pct: 15.0
+    battery_threshold_pct: 20.0
 
 mission_manager:
   ros__parameters:
@@ -17,7 +17,7 @@ mission_manager:
     start_docked: true
     admin_alerts: true
     drop_clearance: 1.05       # 주차구역 하역 때 로봇이 서는 자리의 벽 여유 (제자리 회전 반경 0.98)
-    scooter_battery_threshold_pct: 15.0   # 실은 킥보드 배터리가 이보다 낮으면 충전소, 아니면 주차구역에 하역
+    scooter_battery_threshold_pct: 20.0   # 실은 킥보드 배터리가 이보다 낮으면 충전소, 아니면 주차구역에 하역
     opportunistic_drop_dist: 2.0  # 하역 자리가 이 거리(m) 안이면 다음 대상 전에 들러서 내림. 0 = 끔 (예전 동작)
 
 battery_manager:
@@ -51,7 +51,7 @@ scooter_fleet_sim:
   ros__parameters:
     gps_noise_sigma: 1.0
     tilt_threshold_deg: 45.0
-    battery_threshold_pct: 15.0
+    battery_threshold_pct: 20.0
     remove_on_load: true
 
 sim_tag_detector:

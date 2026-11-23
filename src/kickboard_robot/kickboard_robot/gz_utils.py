@@ -19,7 +19,7 @@ DECK_COLORS = {
 STEM_NORMAL, STEM_LOW_BATTERY = '0.75 0.75 0.78', '0.6 0.2 0.9'   # 회색 / 보라 (배터리 부족이면 사유와 무관하게)
 
 
-def scooter_state(tilt_deg, in_zone, battery_pct, tilt_th=45.0, batt_th=15.0):
+def scooter_state(tilt_deg, in_zone, battery_pct, tilt_th=45.0, batt_th=20.0):
     """요청 사유와 같은 우선순위: 넘어짐 > 구역 밖 > 배터리 부족 > 정상"""
     if tilt_deg > tilt_th:
         return 'FALLEN'

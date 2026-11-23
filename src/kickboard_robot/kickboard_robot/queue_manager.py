@@ -32,7 +32,7 @@ class QueueManager(Node):
         self.declare_parameter('d_max', 15.0)            # 맵 대각선 길이 (기아 방지 상한 계산용)
         self.declare_parameter('auto_cancel', True)      # F13
         self.declare_parameter('tilt_threshold_deg', 45.0)
-        self.declare_parameter('battery_threshold_pct', 15.0)
+        self.declare_parameter('battery_threshold_pct', 20.0)
 
         self.items = {}            # id -> ql.Item
         self.robot_xy = (0.0, 0.0)
