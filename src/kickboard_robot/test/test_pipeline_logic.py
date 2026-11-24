@@ -314,6 +314,25 @@ def test_resolve_watch_low_battery_needs_charging_trend():
     assert not r
 
 
+def test_rear_clear_checks_corridor_behind_body():
+    """도크 후진: 차체 뒤끝(-0.92)에서 남은 거리 + 여유 안, 차체 폭 안에 점이 있으면 막힘."""
+    assert ml.rear_clear([], 1.0)
+    assert not ml.rear_clear([(-1.5, 0.0)], 1.0)                 # 바로 뒤 0.6 m
+    assert ml.rear_clear([(-1.5, 0.8)], 1.0)                     # 옆으로 비껴 있음
+    assert ml.rear_clear([(-2.5, 0.0)], 1.0, margin=0.3)          # 통로(-2.22) 밖
+    assert ml.rear_clear([(-1.5, 0.0)], 0.0, margin=0.3)          # 다 물러났으면 -1.22 까지만 봄
+    assert ml.rear_clear([(1.0, 0.0)], 1.0)                      # 앞쪽 점(충전소)은 상관없음
+
+
+def test_scan_to_body_points_drops_own_body_and_max_range():
+    """라이다(앞 0.8 m) 기준 거리 -> 로봇 기준 점. 측정 끝값과 차체 안 점은 뺀다."""
+    import math as m
+    pts = ml.scan_to_body_points([2.0, 3.5, 0.3], -m.pi / 2, m.pi / 2, 0.1, 3.5, off_x=0.8)
+    assert len(pts) == 1                                         # 3.5 = 끝값, (0.8, 0.3) = 차체 안 -> 뺌
+    x, y = pts[0]
+    assert abs(x - 0.8) < 1e-9 and abs(y + 2.0) < 1e-9           # -90° 방향 2 m
+
+
 # ---------------- 노드 모듈 import ----------------
 def test_mission_manager_variants_import():
     """mission_manager 에서 이름을 가져가는 변형 노드들이 import 된다 (IDLE 이 빠져 KNU 가 시작부터 죽은 적이 있음)."""

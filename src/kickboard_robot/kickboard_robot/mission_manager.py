@@ -28,12 +28,13 @@ import math
 
 import rclpy
 import yaml
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Twist
 from rcl_interfaces.msg import SetParametersResult
 from rcl_interfaces.srv import GetParameters
 from rclpy.action import ActionClient
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
 from kickboard_interfaces.action import CollectScooter, DockToCharger, GoToPose, UnloadScooter
@@ -49,7 +50,8 @@ from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, 
                             EnergyModel, MissionParams, ResolveWatch, WaitGuard, affordable, charge_needed,
                             classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
-                            drop_cost, drop_destination, drop_next_points, must_head_home, parking_jobs)
+                            drop_cost, drop_destination, drop_next_points, must_head_home, parking_jobs, rear_clear,
+                            scan_to_body_points)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 from .profiling import Profiler
@@ -101,6 +103,15 @@ class MissionManager(Node):
         self.declare_parameter('recheck_resolved', True)
         self.declare_parameter('recheck_confirm_reports', 2)
         self.declare_parameter('recheck_tilt_deg', 45.0)                # 넘어짐 기준 (scooter_fleet_sim 과 같게)
+        # 도크에서 출발할 때: 충전소를 앞에 두고 선 도킹 자세이므로 먼저 뒤로 빠져나온다. 라이다로 뒤쪽 통로
+        # (차체 뒤끝에서 남은 거리 + 여유, 차체 폭)를 계속 확인하며 막히면 멈춰 기다리고, undock_wait_sec 넘게 막히면 후진을 접고 출발.
+        # 0 = 예전처럼 바로 출발
+        self.declare_parameter('undock_distance', 1.0)
+        self.declare_parameter('undock_speed', 0.2)
+        self.declare_parameter('undock_margin', 0.3)
+        self.declare_parameter('undock_wait_sec', 10.0)
+        self.declare_parameter('undock_near_dock_m', 0.6)               # 도크 자리에서 이만큼 안이면 '도크에서 출발'
+        self.declare_parameter('scan_offset_x', 0.80)                   # 라이다(base_scan) 위치, nav_bridge 와 같게
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
         # 근처 주차구역: 대상을 고르기 전에 이 거리(m) 안에 하역 위치가 있으면 들러서 내림. 0 = 끔 (main 5c92abe)
@@ -146,6 +157,8 @@ class MissionManager(Node):
         self.abort_for_battery = False
         self.watch = None              # 수거 중인 대상의 사유 해소 감시 (ResolveWatch)
         self.target_xy = None
+        self.last_scan = None          # (받은 시각, LaserScan) — 도크 후진 때 뒤쪽 확인
+        self.undock = None             # 진행 중인 도크 후진 (dict)
         self.abort_resolved = None     # 사유가 사라져 수거를 멈춘 이유 (취소를 보냈으면 문자열)
         self.collect_phase = ''
         self.dock_fail = 0
@@ -157,6 +170,9 @@ class MissionManager(Node):
         self.create_subscription(QueueStatus, '/queue_status', self.on_queue, 10, callback_group=self.cb)
         self.create_subscription(ScooterState, '/scooter_states', self.on_scooter_state, 20,
                                  callback_group=self.cb)
+        self.create_subscription(LaserScan, '/scan', lambda m: setattr(self, 'last_scan', (now_sec(self), m)), 5,
+                                 callback_group=self.cb)
+        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.dropped_pub = self.create_publisher(ScooterTruthArray, '/scooter_dropped', 10)
         self.status_pub = self.create_publisher(RobotStatus, '/robot_status', 10)
         self.alert_pub = self.create_publisher(AdminAlert, '/admin_alerts', 10)
@@ -484,6 +500,77 @@ class MissionManager(Node):
             return
         self.start_collect(r.scooter_id, r.target_pose)
 
+    # ---------------- 도크에서 출발 ----------------
+    def depart(self, send):
+        """도크 자리에서 출발하면 먼저 뒤쪽을 확인하며 undock_distance 만큼 후진한 뒤 send() (목표 전송). 아니면 바로 send()."""
+        pose = self.pose.get()
+        d = self.p('undock_distance')
+        dock = self.dock_position()
+        if (d <= 0.0 or pose is None or dock is None
+                or math.dist(pose[:2], dock) > self.p('undock_near_dock_m')):
+            send()
+            return
+        self.pending = True
+        self.undock = {'send': send, 'start': pose[:2], 't0': now_sec(self), 'blocked': None, 'waited': 0.0}
+        self.get_logger().info(f'도크에서 출발: 뒤쪽을 확인하며 {d:.1f} m 후진')
+        self.undock['timer'] = self.create_timer(0.1, self.undock_step, callback_group=self.cb)
+
+    def dock_position(self):
+        """도킹 위치 (x, y) — 도크 후진 판단용. 상속 노드(campus 등)가 load_drop_plans 를 바꿔 dock_xy 를 안 채우면
+        map_config 의 robot_spawn 을 직접 읽는다 (dock_xy 는 건드리지 않음: 배터리 예측의 충전소 목록이 바뀌지 않게)."""
+        if self.dock_xy is not None:
+            return self.dock_xy
+        if not hasattr(self, '_undock_dock'):
+            self._undock_dock = None
+            try:
+                with open(self.p('map_config_file')) as f:
+                    sp = (yaml.safe_load(f) or {}).get('robot_spawn')
+                if sp:
+                    self._undock_dock = (float(sp['x']), float(sp['y']))
+            except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError):
+                pass
+        return self._undock_dock
+
+    def undock_step(self):
+        u = self.undock
+        if u is None:
+            return
+        now, pose = now_sec(self), self.pose.get()
+        d = self.p('undock_distance')
+        moved = 0.0 if pose is None else math.dist(pose[:2], u['start'])
+        if moved >= d:
+            return self.undock_end('done', moved)
+        if now - u['t0'] > d / max(0.05, self.p('undock_speed')) * 3.0 + self.p('undock_wait_sec'):
+            return self.undock_end('timeout', moved)
+        clear = False
+        if self.last_scan is not None and now - self.last_scan[0] < 0.5:
+            m = self.last_scan[1]
+            pts = scan_to_body_points(m.ranges, m.angle_min, m.angle_increment, m.range_min, m.range_max,
+                                      self.p('scan_offset_x'))
+            clear = rear_clear(pts, d - moved, self.p('undock_margin'))
+        cmd = Twist()
+        if clear:
+            cmd.linear.x = -abs(self.p('undock_speed'))
+            u['blocked'] = None
+        elif u['blocked'] is None:
+            u['blocked'] = now
+            why = '라이다 없음' if self.last_scan is None or now - self.last_scan[0] >= 0.5 else '뒤에 장애물'
+            self.get_logger().warn(f'도크 후진 멈춤 ({why}) -> 비켜나길 기다림 (최대 {self.p("undock_wait_sec"):.0f}초)')
+            self.ev.emit('undock_blocked', why=why, moved=round(moved, 2))
+        elif now - u['blocked'] > self.p('undock_wait_sec'):
+            return self.undock_end('blocked', moved)
+        self.cmd_pub.publish(cmd)
+
+    def undock_end(self, how, moved):
+        u, self.undock = self.undock, None
+        u['timer'].cancel()
+        self.destroy_timer(u['timer'])
+        self.cmd_pub.publish(Twist())
+        msg = {'done': '후진 끝', 'timeout': '후진 시간 초과', 'blocked': '뒤가 계속 막혀 후진을 접음'}[how]
+        (self.get_logger().info if how == 'done' else self.get_logger().warn)(f'도크 출발: {msg} ({moved:.2f} m) -> 목표로 출발')
+        self.ev.emit('undock', how=how, moved=round(moved, 2), sec=round(now_sec(self) - u['t0'], 1))
+        u['send']()
+
     # ---------------- collect ----------------
     def start_collect(self, sid, target_pose):
         self.target = sid
@@ -497,8 +584,11 @@ class MissionManager(Node):
         self.set_state(NAVIGATING, f'-> 킥보드 {sid}')
         self.pending = True
         goal = CollectScooter.Goal(scooter_id=sid, target_pose=target_pose)
-        f = self.collect_ac.send_goal_async(goal, feedback_callback=self.on_collect_fb)
-        f.add_done_callback(self.guarded(self.begin_wait('collect_accept'), self.on_collect_accepted))
+
+        def send():
+            f = self.collect_ac.send_goal_async(goal, feedback_callback=self.on_collect_fb)
+            f.add_done_callback(self.guarded(self.begin_wait('collect_accept'), self.on_collect_accepted))
+        self.depart(send)
 
     def on_collect_fb(self, m):
         self.collect_phase = m.feedback.phase
@@ -664,9 +754,13 @@ class MissionManager(Node):
         o.x, o.y, o.z, o.w = quat_from_yaw(ryaw)
         self.pending = True
         self.drop_progress_t, self.drop_stall_sent = now_sec(self), False
-        f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0),
-                                        feedback_callback=self.on_drop_fb)
-        f.add_done_callback(self.guarded(self.begin_wait('drop_accept'), self.on_drop_nav_accepted))
+
+        def send():
+            self.drop_progress_t = now_sec(self)
+            f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0),
+                                            feedback_callback=self.on_drop_fb)
+            f.add_done_callback(self.guarded(self.begin_wait('drop_accept'), self.on_drop_nav_accepted))
+        self.depart(send)
         return True
 
     def on_drop_nav_accepted(self, f):

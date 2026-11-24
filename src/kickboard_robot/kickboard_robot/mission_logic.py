@@ -340,3 +340,29 @@ class ResolveWatch:
     @property
     def resolved(self):
         return self.streak >= self.confirm
+
+
+# ---------------- 도크에서 출발: 확인하며 후진 ----------------
+UNDOCK_BODY_X0 = -0.92          # 차체 뒤끝 (base_footprint 기준, collector_logic.BODY_X 와 같게)
+UNDOCK_HALF_W = 0.47            # 차체 반폭 + 여유
+
+
+def scan_to_body_points(ranges, angle_min, angle_inc, range_min, range_max, off_x=0.80,
+                        body=(-0.92, 0.89, 0.47)):
+    """LaserScan 거리값 -> 로봇 기준(base_footprint) 점 [(x, y)]. 측정 끝값·차체 안 점(자기 몸)은 뺀다."""
+    pts = []
+    for k, r in enumerate(ranges):
+        if not (range_min <= r < range_max - 0.05) or r != r:
+            continue
+        a = angle_min + angle_inc * k
+        x, y = off_x + r * math.cos(a), r * math.sin(a)
+        if body[0] < x < body[1] and abs(y) < body[2]:
+            continue
+        pts.append((x, y))
+    return pts
+
+
+def rear_clear(points, dist, margin=0.3, body_x0=UNDOCK_BODY_X0, half_w=UNDOCK_HALF_W):
+    """뒤로 dist m 물러날 통로(차체 뒤끝에서 dist + margin, 폭 ±half_w)에 점이 하나도 없으면 True."""
+    x_lo = body_x0 - max(0.0, dist) - margin
+    return not any(x_lo <= x < body_x0 and abs(y) < half_w for x, y in points)

@@ -98,7 +98,7 @@
   "kickboard_robot/kickboard_robot/fake_base.py": "58885f6c52a09d37e6ef4fff64a2da5dfd6ed56c4001ad7dfb40e3bd50b52edc",
   "kickboard_robot/kickboard_robot/geo.py": "2640f4f078e0830f4aa436d81d782438086fb0556f67a17366f62a8a8086c0a1",
   "kickboard_robot/kickboard_robot/gz_utils.py": "0ef23fd205cf7612557c2957ccdb38f2ae82637ee5a1da241a72ed1142d5218a",
-  "kickboard_robot/kickboard_robot/mission_manager.py": "ddec813b6b4264c64567fbff9a2c759cdd6d3463a857079487e11a100fb3f551",
+  "kickboard_robot/kickboard_robot/mission_manager.py": "801f2a533abbb685d8c8a07c6f32f2b3963831f7468dcc26991d7488e331d074",
   "kickboard_robot/kickboard_robot/motion.py": "1c8cc9334f6441c815809b84e8bb0559f57b8d3310ce42b3304018e4d6e3c81b",
   "kickboard_robot/kickboard_robot/nav_bridge.py": "9ac323c12d113db15c94073aed3ecce138a4db1b502ecefc12f9b9d362269d0d",
   "kickboard_robot/kickboard_robot/occupancy.py": "16bbdf9fd55693a7aca333967c6c29e80a3498f4c885df88254c01045d02bfd4",
