@@ -479,11 +479,11 @@ t_max 가 보장하는 것은 "1번보다 t_max 이상 늦게 들어온 요청�
 
 추가 병합·수정 (11-23 저녁, role_E 에 반영):
 - role_D `43cb2b1`(정렬 실패 시 기다렸다 같은 자리로) · `role_D_align_wait_knu`(같은 코드의 KNU 적용판) 병합
-- **D 의 `MissionManager` 구조 변경에 상속 클래스 3개를 맞춤** — 맞추지 않으면 경북대 시나리오가 시작하자마자 죽었음
-  - `mission_manager_campus.py`(경북대) · `mission_manager_station.py`(충전소 별도 도로맵): 상태 이름(`IDLE` 등)을
-    `mission_logic` 에서 가져오도록, 적재함을 `Cargo` 객체 방식(`cargo.load`, `cargo.add`, `cargo.items`, `cargo.for_dest`)으로
-  - station: 충전 자리를 `ChargerSlots` 로 (예전 `charger_spots/occ/fifo` 는 base 에서 없어짐)
-  - `extended_runtime.py` 와 그 테스트도 같은 방식으로
+- 11-24: role_D `9b5efe9` 까지 병합 — 정렬 자리 채점(`align_spot_mode: scan`), 시작 때 배터리 계수 받은 뒤 대상 고르기, 위 호환 장치
+- **D 의 `MissionManager` 구조 변경과 상속 클래스 3개(campus·station·extended) 호환** — 맞추지 않으면 경북대 시나리오가 시작하자마자 죽었음
+  - 11-24: D 가 base 쪽에 호환 장치를 넣음 (`Cargo` 가 list 상속, `self.load`·`cargo_for`·`IDLE` 복구, 통째 교체 시 `Cargo` 로 감쌈).
+    **base 는 D 방식을 기준으로 함** — 상속 클래스는 리스트처럼 써도 되고 `cargo.load`·`cargo.add`·`cargo.for_dest` 를 써도 됨
+  - station: 충전 자리를 `ChargerSlots` 로 (예전 `charger_spots/occ/fifo` 는 base 가 안 씀 → 안 고치면 오류 없이 도크 옆 자리에 내리려 함)
   - 가짜 ROS 환경에서 경북대 하역 한 바퀴(일반·고장·충전 칸 3대), 충전소 하역·도크 비우기 동작 확인
 - CI: `package.xml` 에 `python3-scipy` 추가, `test_navigation` 의 가짜 `free_spot` 을 A 의 인자에 맞춤
 - 확장 프로필 해시 목록: 기본 파일을 일부러 고쳤으면 `python3 tools/update_legacy_hashes.py` 로 갱신하고 같이 커밋

@@ -42,8 +42,9 @@ from kickboard_interfaces.srv import SelectNextTarget, UpdateRequestStatus
 
 from .common import EventLog, PoseTracker, now_sec, spin_single
 from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans, nearby_drop
-from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, LOADING,
-                            LYING_STATUSES,
+# IDLE 은 여기서 쓰지 않지만 mission_manager_campus / _station 이 이 모듈에서 가져가므로 남겨 둔다
+from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, IDLE,  # noqa: F401
+                            LOADING, LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
                             EnergyModel, MissionParams, WaitGuard, affordable, charge_needed, classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
@@ -86,6 +87,8 @@ class MissionManager(Node):
         # 배터리 판단: '갔다가 가장 가까운 충전소까지 돌아올 수 있나'. false 면 예전처럼 20% 기준만 쓴다
         # 소모 계수 k1·k2 는 battery_manager 파라미터를 읽어 온다 (못 읽으면 EnergyModel 기본값 = battery_manager 기본값)
         self.declare_parameter('energy_check', True)
+        # 시작 때 소모 계수를 받을 때까지 판단을 미룬다 (기본값 k1 1.0 %/m 로 첫 대상을 '못 감' 오판하던 경합). 0 = 안 기다림
+        self.declare_parameter('battery_param_wait_sec', 5.0)
         self.declare_parameter('energy_reserve_pct', 5.0)       # 충전소 도착 때 남길 배터리
         self.declare_parameter('energy_detour', 1.2)            # 직선거리 -> 경로 길이 배율
         self.declare_parameter('energy_speed_mps', 0.2)
@@ -130,6 +133,8 @@ class MissionManager(Node):
         self.missing_servers = set()   # 사라진 서버 (알림을 한 번만 보내려고)
         self.battery_k = None          # battery_manager 의 (k1, k2)
         self.battery_k_asked = False
+        self.battery_k_failed = False   # 읽기 실패 -> 기본값으로 진행
+        self.ready_at = None
         self.charge_goal = None        # 다음 일에 80% 보다 더 필요하면 그만큼 충전 (CHARGING 을 나가면 지움)
         self.abort_for_battery = False
         self.dock_fail = 0
@@ -167,6 +172,23 @@ class MissionManager(Node):
         if self._mp is None:
             self._mp = MissionParams(**{n: self.p(n) for n in MISSION_PARAM_NAMES})
         return self._mp
+
+    # 변형 노드(mission_manager_campus / _station, extended_runtime) 가 예전 이름으로 쓰는 적재함 접근.
+    # campus 는 self.cargo = [...] 로 통째로 바꾸기도 하므로 들어온 리스트를 Cargo 로 감싼다.
+    @property
+    def cargo(self):
+        return self._cargo
+
+    @cargo.setter
+    def cargo(self, items):
+        self._cargo = items if isinstance(items, Cargo) else Cargo(items)
+
+    @property
+    def load(self):
+        return self._cargo.load
+
+    def cargo_for(self, dest):
+        return self._cargo.for_dest(dest)
 
     def on_set_params(self, params):
         # 값이 실제로 적용되기 전에 불린다 -> 여기서는 캐시만 비우고, 다음에 읽을 때 적용된 값을 가져온다
@@ -249,6 +271,7 @@ class MissionManager(Node):
         def done(f):
             r = f.result()
             if r is None or len(r.values) != 2:
+                self.battery_k_failed = True
                 self.get_logger().warn('battery_manager 소모 계수를 못 읽음 -> 기본값 사용')
                 return
             self.battery_k = (r.values[0].double_value, r.values[1].double_value)
@@ -354,9 +377,12 @@ class MissionManager(Node):
                 return
             self.ready = True
             self.get_logger().info('모든 서버 준비 완료, 미션 시작')
-            self.state_since = now_sec(self)
+            self.state_since = self.ready_at = now_sec(self)
         if self.battery_k is None:
             self.ask_battery_params()
+            if (self.p('energy_check') and not self.battery_k_failed
+                    and now_sec(self) - self.ready_at < self.p('battery_param_wait_sec')):
+                return                  # 소모 계수를 받기 전에는 대상 고르기·배터리 판단을 하지 않음
         self.check_drop_stall()
         kind = self.wait.expired(now_sec(self))
         if kind is not None:

@@ -273,3 +273,100 @@ def test_cargo_and_charger_slots():
     s.release('z')
     assert s.occ == [None, 'x'] and s.fifo == [1]
     assert ml.ChargerSlots([]).plan_unload(['q']) == [('q', None, 'remove')]
+
+
+def test_cargo_is_list_for_variant_nodes():
+    """campus/station/extended 노드는 cargo 를 리스트로 다룬다: append, 반복, 빈 판정, 통째 교체."""
+    c = ml.Cargo()
+    assert not c and c.load == 0
+    c.append(('1', 'normal'))                                    # campus: self.cargo.append((sid, kind))
+    c.add('2', ml.PARKING)
+    assert c and c.load == 2 and [s for s, _ in c] == ['1', '2'] and c.for_dest('normal') == ['1']
+    c.remove('1')                                                # id 로 지움
+    assert c == [('2', ml.PARKING)]
+    c2 = ml.Cargo([(s, ml.CHARGER) for s, _ in c])               # 통째 교체 -> setter 가 Cargo 로 감쌈
+    assert c2.for_dest(ml.CHARGER) == ['2']
+
+
+# ---------------- 노드 모듈 import ----------------
+def test_mission_manager_variants_import():
+    """mission_manager 에서 이름을 가져가는 변형 노드들이 import 된다 (IDLE 이 빠져 KNU 가 시작부터 죽은 적이 있음)."""
+    import importlib
+
+    import pytest
+    pytest.importorskip('rclpy')                 # ROS 없이 돌릴 때는 건너뜀
+    for name in ('mission_manager', 'mission_manager_campus', 'mission_manager_station', 'extended_runtime'):
+        importlib.import_module(f'kickboard_robot.{name}')
+
+
+# ---------------- collector 정렬 자리 채점 ----------------
+RADII = [1.15, 1.30, 1.45, 1.60]
+
+
+def _spot_grid(scooter_yaw=0.0):
+    g = collector_logic.SpotGrid(0.0, 0.0, half=6.0, res=0.1)
+    g.add_box(0.0, 0.0, 1.1, 0.3, scooter_yaw, layer='scan')   # 넘어진 킥보드 자신 (라이다에 보임)
+    return g
+
+
+def test_spot_open_space_prefers_robot_side_nominal_radius():
+    g = _spot_grid(math.pi / 2)                       # 로봇 쪽에서 보면 가로로 누운 킥보드
+    cands, why = collector_logic.plan_align_spots(g, 0.0, 0.0, (-2.6, 0.0), 1.35, RADII)
+    best = cands[0]
+    assert abs(collector_logic.wrap_angle(best['a'] - math.pi)) <= math.radians(25)   # 로봇 쪽
+    assert abs(best['r'] - 1.35) <= 0.16
+    # 로봇 쪽으로 길게 누운 킥보드: 기본 반경이면 앞 범퍼가 킥보드 끝에 걸리므로 조금 물러난 자리 (팔은 닿음)
+    cands, _ = collector_logic.plan_align_spots(_spot_grid(0.0), 0.0, 0.0, (-2.6, 0.0), 1.35, RADII)
+    assert abs(collector_logic.wrap_angle(cands[0]['a'] - math.pi)) <= math.radians(25)
+    assert 1.35 < cands[0]['r'] <= 1.80
+
+
+def test_spot_tree_between_is_avoided():
+    g = _spot_grid()
+    g.add_box(-0.75, 0.0, 0.8, 0.8, layer='scan')     # 로봇 쪽 킥보드 바로 옆 나무
+    cands, why = collector_logic.plan_align_spots(g, 0.0, 0.0, (-2.6, 0.0), 1.35, RADII)
+    assert cands, why
+    for c in cands:                                   # 어떤 후보도 나무 쪽(±30°)이 아니고, 몸체·팔이 안 걸림
+        assert abs(collector_logic.wrap_angle(c['a'] - math.pi)) > math.radians(30)
+    assert why['body'] + why['arm'] + why['too_close'] > 0
+
+
+def test_spot_enclosed_robot_has_no_candidate():
+    g = _spot_grid()
+    for k in range(4):                                # 로봇 둘레 사방 벽
+        a = k * math.pi / 2
+        g.add_box(-2.6 + 1.45 * math.cos(a), 1.45 * math.sin(a), 0.3, 3.2, a, layer='scan')
+    cands, why = collector_logic.plan_align_spots(g, 0.0, 0.0, (-2.6, 0.0), 1.35, RADII)
+    assert cands == [] and why['unreachable'] > 0
+
+
+def test_spot_sidewalk_keepout_stands_on_road_edge():
+    g = _spot_grid()
+    g.add_box(0.0, 1.6, 12.0, 4.0, layer='keep')      # y -0.4 ~ 3.6 = 인도 (킥보드는 연석에서 0.4 m 안쪽)
+    cands, _ = collector_logic.plan_align_spots(g, 0.0, 0.0, (-1.0, -2.2), 1.35, RADII, keep_clear=0.8)
+    assert cands and all(c['y'] <= -0.4 - 0.8 + 0.1 for c in cands)
+    assert math.hypot(cands[0]['x'], cands[0]['y']) <= 1.80
+    # keep_clear 없음 = 진입 금지 구역을 벽처럼: 몸체가 인도에 걸치는 자리는 빠짐
+    cands2, _ = collector_logic.plan_align_spots(g, 0.0, 0.0, (-1.0, -2.2), 1.35, RADII)
+    assert all(c['y'] <= -0.4 - 0.47 for c in cands2)
+
+
+def test_spot_next_skips_failed_spots():
+    cands = [{'x': 1.0, 'y': 0.0, 'score': 1}, {'x': 1.3, 'y': 0.0, 'score': 2},
+             {'x': 0.94, 'y': 0.34, 'score': 3}, {'x': 0.0, 'y': 1.0, 'score': 4}]
+    assert collector_logic.next_spot(cands, [], 0.6)['score'] == 1
+    # 실패한 자리 (1, 0) 에서 min_dist 안은 뺀다. 각도는 따지지 않음: 20° 차이(0.34 m)라도 min_dist 를 넘으면 후보
+    assert collector_logic.next_spot(cands, [(1.0, 0.0)], 0.32)['score'] == 3
+    assert collector_logic.next_spot(cands, [(1.0, 0.0)], 0.6)['score'] == 4
+    assert collector_logic.next_spot(cands, [(1.0, 0.0), (0.0, 1.0)], 0.6) is None
+    # 팔이 조금 안 닿은 자리: 그 자리만의 작은 거리(0.25)로 빼면 같은 방향 0.3 m 안쪽 자리는 남는다
+    assert collector_logic.next_spot(cands, [(1.0, 0.0, 0.25)], 0.6)['score'] == 2
+
+
+def test_crop_occupancy_reads_map_rows_top_down():
+    import numpy as np
+    m = np.zeros((40, 40), dtype=bool)                # 4 x 4 m, 0.1 m, 원점 (-2, -2). 위쪽 행 = y 큰 쪽
+    m[0:10, :] = True                                 # y 1 ~ 2 m 가 벽
+    g = collector_logic.SpotGrid(0.0, 0.0, half=3.0, res=0.1)
+    w = collector_logic.crop_occupancy(m, -2.0, -2.0, 0.1, g)
+    assert w[g.cell(0.0, 1.5)] and not w[g.cell(0.0, 0.5)] and w[g.cell(0.0, 2.5)]   # 지도 밖 = 장애물

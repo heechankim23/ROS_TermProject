@@ -34,7 +34,7 @@ class ExtendedMission(MissionManager):
         self.create_subscription(String, '/extended/cancel', self.on_cancel, 10, callback_group=self.cb)
 
     def start_collect(self, sid, target_pose):
-        decision = admission(self.specs.get(sid, {}), [c[0] for c in self.cargo.items], self.weights, self.weight_limit)
+        decision = admission(self.specs.get(sid, {}), [c[0] for c in self.cargo], self.weights, self.weight_limit)
         if decision == 'NEEDS_HUMAN':
             self.report(sid, 'NEEDS_HUMAN', 'damaged_or_individually_overweight')
             self.alert(sid, 'manual_collection', '파손 또는 개별 중량 초과: 자동 적재 금지')
@@ -43,7 +43,7 @@ class ExtendedMission(MissionManager):
             return
         if decision == 'UNLOAD_FIRST':
             self.report(sid, 'REQUEUE', 'weight_limit: unload before collection')
-            self.ev.emit('weight_limit', id=sid, load_kg=sum(self.weights.get(c[0], 18) for c in self.cargo.items))
+            self.ev.emit('weight_limit', id=sid, load_kg=sum(self.weights.get(c[0], 18) for c in self.cargo))
             if self.cargo.for_dest('parking') and self.start_drop('(중량 제한)'):
                 return
             self.start_dock('(중량 제한: 우선 하역)')

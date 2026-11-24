@@ -247,7 +247,7 @@ class CampusMissionManager(MissionManager):
             return False
         here = pose[:2]
         plan = {}
-        for sid, _ in self.cargo.items:
+        for sid, _ in self.cargo:
             kind = self.kind.get(sid, 'normal')
             pick = self.pick_slot(kind, here)
             if pick is None and kind == 'charge':          # 충전 칸이 모두 참 -> 일반 슬롯에 충전 대기
@@ -335,12 +335,12 @@ class CampusMissionManager(MissionManager):
         def then(n):
             for sid, s in grp:
                 self.reserved.pop(s['id'], None)
-                if not any(c[0] == sid for c in self.cargo.items):      # 하역 성공
+                if not any(c[0] == sid for c in self.cargo):      # 하역 성공
                     self.occ[s['id']] = sid
                     self.ev.emit('slot_filled', id=sid, zone=zid, slot=s['id'], kind=self.kind.pop(sid, ''))
                 else:                                              # 실패: 그 칸은 쓰지 않고 다음 하역 때 다시 배정
                     self.dead.add(s['id'])
-                    self.cargo.items = [(c, self.kind.get(c, 'normal')) if c == sid else (c, d) for c, d in self.cargo.items]
+                    self.cargo = [(c, self.kind.get(c, 'normal')) if c == sid else (c, d) for c, d in self.cargo]
             self.get_logger().info(f'{zid} 하역 {n}대')
             self.next_stop()
         self.run_unloads(jobs, then)
