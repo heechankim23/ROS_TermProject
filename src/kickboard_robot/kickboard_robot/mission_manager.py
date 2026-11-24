@@ -46,7 +46,8 @@ from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans, nea
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, IDLE,  # noqa: F401
                             LOADING, LYING_STATUSES,
                             NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
-                            EnergyModel, MissionParams, WaitGuard, affordable, charge_needed, classify_failure,
+                            EnergyModel, MissionParams, ResolveWatch, WaitGuard, affordable, charge_needed,
+                            classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
                             drop_cost, drop_destination, drop_next_points, must_head_home, parking_jobs)
 from .motion import quat_from_yaw
@@ -94,6 +95,12 @@ class MissionManager(Node):
         self.declare_parameter('energy_speed_mps', 0.2)
         self.declare_parameter('energy_collect_sec', 40.0)
         self.declare_parameter('energy_unload_sec', 25.0)
+        # 출발한 요청도 다시 확인: 수거하러 가는 동안 대상 킥보드의 펌웨어 보고가 연속 recheck_confirm_reports 번
+        # "정상(바르게 서 있고 구역 안, 배터리 기준 이상 또는 충전 중, 고장 없음)"이면 수거를 멈추고 CANCELLED(현장 해소).
+        # 팔이 잡기 시작한 뒤에는 collector 가 취소를 받지 않고 그대로 싣는다. false = 예전처럼 끝까지 수거
+        self.declare_parameter('recheck_resolved', True)
+        self.declare_parameter('recheck_confirm_reports', 2)
+        self.declare_parameter('recheck_tilt_deg', 45.0)                # 넘어짐 기준 (scooter_fleet_sim 과 같게)
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
         # 근처 주차구역: 대상을 고르기 전에 이 거리(m) 안에 하역 위치가 있으면 들러서 내림. 0 = 끔 (main 5c92abe)
@@ -137,6 +144,10 @@ class MissionManager(Node):
         self.ready_at = None
         self.charge_goal = None        # 다음 일에 80% 보다 더 필요하면 그만큼 충전 (CHARGING 을 나가면 지움)
         self.abort_for_battery = False
+        self.watch = None              # 수거 중인 대상의 사유 해소 감시 (ResolveWatch)
+        self.target_xy = None
+        self.abort_resolved = None     # 사유가 사라져 수거를 멈춘 이유 (취소를 보냈으면 문자열)
+        self.collect_phase = ''
         self.dock_fail = 0
         self.ready = False
         self.state_since = 0.0
@@ -144,8 +155,7 @@ class MissionManager(Node):
         self.create_subscription(Float32, '/battery_pct', lambda m: setattr(self, 'battery', m.data), 10,
                                  callback_group=self.cb)
         self.create_subscription(QueueStatus, '/queue_status', self.on_queue, 10, callback_group=self.cb)
-        self.create_subscription(ScooterState, '/scooter_states',
-                                 lambda m: self.scooter_batt.__setitem__(m.id, m.battery_pct), 20,
+        self.create_subscription(ScooterState, '/scooter_states', self.on_scooter_state, 20,
                                  callback_group=self.cb)
         self.dropped_pub = self.create_publisher(ScooterTruthArray, '/scooter_dropped', 10)
         self.status_pub = self.create_publisher(RobotStatus, '/robot_status', 10)
@@ -235,6 +245,25 @@ class MissionManager(Node):
         self.waiting_xy = [(i.x, i.y) for i in m.items if i.status == 'WAITING']
         self.waiting_items = len(self.waiting_xy)
         self.lying_xy = [(i.x, i.y) for i in m.items if i.status in LYING_STATUSES]
+
+    def on_scooter_state(self, m):
+        self.scooter_batt[m.id] = m.battery_pct
+        w = self.watch
+        if w is None or m.id != self.target or not self.p('recheck_resolved'):
+            return
+        if not w.update(now_sec(self), m.tilt_deg, m.in_parking_zone, m.battery_pct, m.fault):
+            return
+        if self.collect_handle is None or self.abort_resolved is not None or self.abort_for_battery:
+            return                      # 아직 수거 명령이 안 받아졌거나 이미 멈추는 중
+        pose = self.pose.get()
+        dist = None if pose is None or self.target_xy is None else math.dist(pose[:2], self.target_xy)
+        self.abort_resolved = w.why
+        dist_s = '?' if dist is None else f'{dist:.1f} m'
+        self.get_logger().warn(f'킥보드 {m.id}: 요청 사유가 사라짐 ({w.why}, 보고 {w.streak}회 연속) '
+                               f'-> 수거 멈춤 (단계 {self.collect_phase}, 남은 거리 {dist_s})')
+        self.ev.emit('resolved_abort', id=m.id, why=w.why, phase=self.collect_phase,
+                     dist=None if dist is None else round(dist, 2))
+        self.collect_handle.cancel_goal_async()
 
     def report(self, sid, status, note='', corrected=None):
         req = UpdateRequestStatus.Request(scooter_id=sid, status=status, note=note)
@@ -458,8 +487,13 @@ class MissionManager(Node):
     # ---------------- collect ----------------
     def start_collect(self, sid, target_pose):
         self.target = sid
+        self.target_xy = (target_pose.pose.position.x, target_pose.pose.position.y)
         self.at_dock = False
         self.abort_for_battery = False
+        self.abort_resolved = None
+        self.collect_phase = 'NAVIGATING'
+        self.watch = ResolveWatch(tilt_th=self.p('recheck_tilt_deg'), batt_th=self.mp.scooter_battery_threshold_pct,
+                                  confirm=self.p('recheck_confirm_reports'))
         self.set_state(NAVIGATING, f'-> 킥보드 {sid}')
         self.pending = True
         goal = CollectScooter.Goal(scooter_id=sid, target_pose=target_pose)
@@ -467,6 +501,7 @@ class MissionManager(Node):
         f.add_done_callback(self.guarded(self.begin_wait('collect_accept'), self.on_collect_accepted))
 
     def on_collect_fb(self, m):
+        self.collect_phase = m.feedback.phase
         st = COLLECT_PHASE_TO_STATE.get(m.feedback.phase)
         if st and st != self.state and self.state in (NAVIGATING, VERIFYING, LOADING):
             self.set_state(st)
@@ -485,6 +520,10 @@ class MissionManager(Node):
     def on_collect_done(self, f):
         res = f.result().result
         sid, self.collect_handle = self.target, None
+        self.watch, resolved, self.abort_resolved = None, self.abort_resolved, None
+        if res.success and resolved is not None:
+            self.get_logger().info(f'킥보드 {sid}: 팔이 이미 잡기 시작해 그대로 적재 (사유 해소: {resolved})')
+            self.ev.emit('resolved_too_late', id=sid, why=resolved)
         if res.success:
             batt = self.scooter_batt.get(sid)
             dest = drop_destination(batt, self.mp.scooter_battery_threshold_pct)
@@ -498,6 +537,11 @@ class MissionManager(Node):
             batt_s = '?' if batt is None else f'{batt:.0f}%'
             self.set_state(SELECTING, f'(적재 {self.cargo.load}/{self.mp.capacity}, 킥보드 {sid} 배터리 {batt_s} '
                                       f'-> {where} 하역 예정)')
+        elif resolved is not None and not self.abort_for_battery:
+            self.report(sid, 'CANCELLED', f'resolved on site: {resolved}')
+            self.ev.emit('resolved_cancel', id=sid, why=resolved)
+            self.target = None
+            self.set_state(SELECTING, f'(킥보드 {sid} 현장 해소: {resolved} -> 수거 취소)')
         elif self.abort_for_battery:
             self.report(sid, 'REQUEUE', 'battery low')
             self.target = None

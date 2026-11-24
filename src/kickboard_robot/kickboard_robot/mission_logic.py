@@ -295,3 +295,48 @@ class ChargerSlots:
             idx = self.occ.index(sid)
             self.occ[idx] = None
             self.fifo.remove(idx)
+
+
+# ---------------- 출발한 요청의 사유 해소 (현장 해소) ----------------
+class ResolveWatch:
+    """수거하러 가는 동안 대상 킥보드의 펌웨어 보고(/scooter_states, 1 Hz)를 보고 "요청 사유가 사라졌다"를 판단한다.
+
+    사라짐 = 대기열 자동 취소(B)와 같은 정상 조건: 기울기 <= tilt_th, 구역(슬롯) 안, 고장 없음, 배터리 >= batt_th.
+    배터리가 기준보다 낮아도 충전 중(charge_window 초 동안 charge_rise % 넘게 꾸준히 오름)이면 정상으로 본다.
+    보고 한 번이 튀어 취소하지 않게 연속 confirm 번 정상이어야 확정 (사용자가 잠깐 들었다 놓는 경우, 센서 잡음)."""
+
+    def __init__(self, tilt_th=45.0, batt_th=20.0, confirm=2, charge_window=20.0, charge_rise=0.3):
+        self.tilt_th, self.batt_th, self.confirm = tilt_th, batt_th, max(1, int(confirm))
+        self.charge_window, self.charge_rise = charge_window, charge_rise
+        self.streak = 0
+        self.batt = []                  # [(t, %)] charge_window 동안
+        self.why = ''
+
+    def charging(self):
+        """충전 중인가: 창 길이의 80 % 이상 쌓인 기록에서 처음 -> 마지막이 charge_rise 넘게 오르고, 중간에 내려간 적 없음."""
+        if len(self.batt) < 3 or self.batt[-1][0] - self.batt[0][0] < 0.8 * self.charge_window:
+            return False
+        drops = any(b2 < b1 - 0.05 for (_, b1), (_, b2) in zip(self.batt, self.batt[1:]))
+        return not drops and self.batt[-1][1] - self.batt[0][1] >= self.charge_rise
+
+    def update(self, t, tilt_deg, in_zone, battery_pct, fault=''):
+        """보고 하나를 넣고, 사유가 사라졌다고 확정됐는지 돌려준다."""
+        self.batt = [(tt, b) for tt, b in self.batt if t - tt <= self.charge_window] + [(t, battery_pct)]
+        if fault:
+            ok, why = False, ''
+        elif tilt_deg > self.tilt_th or not in_zone:
+            ok, why = False, ''
+        elif battery_pct >= self.batt_th:
+            ok, why = True, '바르게 서 있고 구역 안'
+        elif self.charging():
+            ok, why = True, f'충전 중 (배터리 {self.batt[0][1]:.1f} -> {battery_pct:.1f} %)'
+        else:
+            ok, why = False, ''
+        self.streak = self.streak + 1 if ok else 0
+        if ok:
+            self.why = why
+        return self.resolved
+
+    @property
+    def resolved(self):
+        return self.streak >= self.confirm

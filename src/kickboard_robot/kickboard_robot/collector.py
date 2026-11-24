@@ -74,6 +74,9 @@ class Collector(Node):
         self.declare_parameter('align_spot_retry_min_dist', 0.6)   # 다음 후보는 실패한 자리에서 이만큼(m) 이상 떨어진 곳
         self.declare_parameter('align_blocked_wait_sec', 20.0)   # 후보가 없을 때 1초마다 다시 채점하며 기다리는 최대 시간
         self.declare_parameter('load_time_sec', 3.0)
+        # 팔 없는 적재(load_time_sec)에서 취소를 받는 앞부분 비율. 실제 팔은 REACH 4 s + DESCEND 2.5 s 뒤 GRIP (전체 21.8 s 중 0.3).
+        # 1.0 = 예전처럼 끝까지 취소 가능
+        self.declare_parameter('load_cancel_frac', 0.3)
         self.declare_parameter('scooter_half_depth', 0.2)    # 태그 면 -> 킥보드 중심 (근사)
         self.declare_parameter('detection_max_age_sec', 0.6)
         self.declare_parameter('arm_timeout_sec', 120.0)
@@ -281,7 +284,9 @@ class Collector(Node):
         o = corrected.pose.orientation
         o.x, o.y, o.z, o.w = q
 
-        # 4) LOADING
+        # 4) LOADING — 팔이 잡기 시작하면(그리퍼가 닫히면) 취소를 받지 않는다
+        if gh.is_cancel_requested:
+            return self.finish(gh, False)
         self.fb(gh, 'LOADING')
         if self.loader.wait_for_server(timeout_sec=0.5):
             err = self.arm_load(gh, sid)
@@ -292,17 +297,18 @@ class Collector(Node):
             self.fb(gh, 'LOADING', 0.0, self.load_count + 1)
             self.get_logger().info(f'킥보드 {sid} 적재 완료 (로봇팔)')
             return self.finish(gh, True, '', corrected, ignore_cancel=True)
-        # 로봇팔 없음 — load_time_sec 정지 = 1대 적재
-        t0 = now_sec(self)
-        while now_sec(self) - t0 < self.get_parameter('load_time_sec').value:
-            if gh.is_cancel_requested:
+        # 로봇팔 없음 — load_time_sec 정지 = 1대 적재. 앞쪽 load_cancel_frac 만큼(팔이 다가가 내려가는 동안)만 취소를 받는다
+        t0, T = now_sec(self), self.get_parameter('load_time_sec').value
+        grip = T * self.get_parameter('load_cancel_frac').value
+        while now_sec(self) - t0 < T:
+            if gh.is_cancel_requested and now_sec(self) - t0 < grip:
                 return self.finish(gh, False)
             self.twist()
             sleep_sim(self, 0.1)
         self.loaded_pub.publish(String(data=sid))
         self.fb(gh, 'LOADING', 0.0, self.load_count + 1)
         self.get_logger().info(f'킥보드 {sid} 적재 완료')
-        return self.finish(gh, True, '', corrected)
+        return self.finish(gh, True, '', corrected, ignore_cancel=True)
 
     # ---------------- 정렬 자리 채점 (align_spot_mode: scan) ----------------
     def load_static_maps(self):

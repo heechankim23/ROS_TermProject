@@ -288,6 +288,32 @@ def test_cargo_is_list_for_variant_nodes():
     assert c2.for_dest(ml.CHARGER) == ['2']
 
 
+def test_resolve_watch_needs_consecutive_normal_reports():
+    """출발한 요청의 사유 해소: 정상 보고가 연속 confirm 번이어야 확정, 중간에 한 번 튀면 처음부터."""
+    w = ml.ResolveWatch(confirm=2)
+    assert not w.update(0, 90, False, 70)                        # 넘어짐
+    assert not w.update(1, 0, True, 70)                          # 세워짐 1회
+    assert w.update(2, 0, True, 70) and '바르게' in w.why        # 2회 연속 -> 확정
+    w = ml.ResolveWatch(confirm=2)
+    w.update(0, 0, True, 70)
+    assert not w.update(1, 0, False, 70)                         # 구역 밖으로 튐 -> 처음부터
+    assert not w.update(2, 0, True, 70)
+    assert not ml.ResolveWatch(confirm=1).update(0, 0, True, 70, fault='brake')   # 고장은 해소 없음
+
+
+def test_resolve_watch_low_battery_needs_charging_trend():
+    """배터리 부족은 충전 칸에서 배터리가 꾸준히 오를 때만 해소 (창 20 s 의 80 % 이상 + 0.3 % 넘게 오름)."""
+    w = ml.ResolveWatch(confirm=1, charge_window=20.0, charge_rise=0.3)
+    assert not w.update(0, 0, True, 15.0)                        # 기준 미만, 아직 추세 모름
+    for t in range(1, 16):
+        assert not w.update(t, 0, True, 15.0 + 0.03 * t)         # 15 s: 창의 80 % 미만
+    assert w.update(17, 0, True, 15.6) and '충전 중' in w.why
+    w = ml.ResolveWatch(confirm=1)
+    for t in range(0, 21):
+        r = w.update(t, 0, True, 15.0 - 0.01 * t)                # 내려가기만 함 -> 충전 아님
+    assert not r
+
+
 # ---------------- 노드 모듈 import ----------------
 def test_mission_manager_variants_import():
     """mission_manager 에서 이름을 가져가는 변형 노드들이 import 된다 (IDLE 이 빠져 KNU 가 시작부터 죽은 적이 있음)."""
