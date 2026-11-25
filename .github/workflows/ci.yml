@@ -2,11 +2,9 @@
 # Gazebo 없이 돈다 (sim:=kinematic). Gazebo·Nav2 시나리오는 각자 PC 에서 tools/run_scenarios.py 로 확인.
 name: ci
 
-# 팀 규칙: 각자 role_A~E 브랜치에 push, role_E 가 매주 main 에 병합 -> 모든 브랜치 push 에서 돈다
+# 2026-11-25: 자동 실행 끔 (push·PR 때 안 돈다). 필요하면 GitHub Actions 탭 -> ci -> 'Run workflow' 로 직접 실행.
+# 다시 켜려면 아래에 push: / pull_request: 를 되살린다.
 on:
-  push:
-    branches: ['**']
-  pull_request:
   workflow_dispatch:
 
 jobs:
