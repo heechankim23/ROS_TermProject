@@ -13,7 +13,7 @@ from launch.substitutions import LaunchConfiguration as LC
 from launch.substitutions import PythonExpression
 
 ARGS = {
-    'scenario': 's1_single', 'sim': 'gz', 'nav': 'simple', 'perception': 'sim',
+    'scenario': 'k08', 'sim': 'gz', 'nav': 'simple', 'perception': 'sim',
     'gui': 'true', 'rviz': 'false', 'sensors': 'true', 'start_delay': '6.0', 'arm': 'true', 'rtf': '1.0',
     'speed': '', 'follow': 'true',
     'map': '',      # 맵 이름 (kickboard_world | street | campus). 비우면 시나리오 YAML 의 map 키 -> 기본 맵

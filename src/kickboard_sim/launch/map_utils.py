@@ -19,11 +19,11 @@ def scenario_path(scenario):
     if os.path.isabs(scenario):
         return scenario
     name = scenario if scenario.endswith('.yaml') else scenario + '.yaml'
-    for d in ('scenarios', 'scenarios_knu'):           # scenarios_knu = 경북대 캠퍼스 시나리오 (k01 ~)
+    for d in ('scenarios_knu',):                       # 경북대 캠퍼스 시나리오 k00~k32 (이전 실내·도로 시나리오는 11-25 삭제)
         path = os.path.join(share, 'config', d, name)
         if os.path.exists(path):
             return path
-    return os.path.join(share, 'config', 'scenarios', name)
+    return os.path.join(share, 'config', 'scenarios_knu', name)
 
 
 def resolve_map(map_arg, scenario=None):

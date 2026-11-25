@@ -1,5 +1,7 @@
 # Gazebo 실행 명령 (Ubuntu 22.04 · ROS 2 Humble · Gazebo Harmonic)
 
+> **2026-11-25: 이 문서의 실내·도로 시나리오(s1~s19)는 삭제됨.** 경북대 시나리오만 쓴다 → `KNU_COMMANDS.md` 참고. 아래 옵션·확인 명령은 그대로 쓸 수 있다.
+
 도로 맵(`street`) 시나리오 19개 기준. 워크스페이스: `~/lecture_2026_2/Ros_TermProject/my_ws`
 
 ## 1. 처음 한 번 (또는 코드를 고친 뒤)

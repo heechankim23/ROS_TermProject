@@ -68,17 +68,18 @@ jobs:
           source /opt/ros/humble/setup.bash
           colcon build --event-handlers console_cohesion+
 
-      - name: kinematic 시나리오 스모크 테스트
+      - name: kinematic 시나리오 스모크 테스트 (경북대)
         run: |
           source install/setup.bash
-          python3 tools/run_scenarios.py s1_single s6_verify_fail s8_auto_cancel \
-            --sim kinematic --out ci_runs --timeout-scale 1.5
+          # 이전 실내·도로 시나리오(s1~s19)는 11-25 삭제 -> 경북대 시나리오 중 짧은 3개
+          python3 src/kickboard_sim/scripts/run_knu_scenarios.py --kinematic --limit 1200 k03 k04 k07
+          S="$(ls -td results/knu_*/ | head -1)summary.txt"
+          cat "$S"
+          grep -q "통과 3 / 기록 3" "$S"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: scenario-runs
           path: |
-            ci_runs/summary.md
-            ci_runs/*.log
-            ci_runs/*.jsonl
+            results/knu_*/

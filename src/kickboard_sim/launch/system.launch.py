@@ -1,6 +1,6 @@
 """직접 구현한 9개 노드 + 시뮬레이션 보조 노드를 띄운다.
 
-  scenario:=s1_single     config/scenarios/<이름>.yaml (또는 절대 경로)
+  scenario:=k08           config/scenarios_knu/<이름>.yaml (경북대 시나리오, 또는 절대 경로)
   sim:=gz|kinematic       use_sim_time / Gazebo 모델 조작 여부 결정
   nav:=simple|nav2        nav_bridge 백엔드
   perception:=sim|apriltag  sim: 시뮬 검출기, apriltag: apriltag_ros + 어댑터
@@ -79,7 +79,7 @@ def _setup(context):
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument('scenario', default_value='s1_single'),
+        DeclareLaunchArgument('scenario', default_value='k08'),
         DeclareLaunchArgument('map', default_value='', description='맵 이름. 비우면 시나리오 YAML 의 map 키'),
         DeclareLaunchArgument('sim', default_value='gz', choices=['gz', 'kinematic']),
         DeclareLaunchArgument('nav', default_value='simple', choices=['simple', 'nav2']),

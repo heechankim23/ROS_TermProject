@@ -488,6 +488,21 @@ t_max 가 보장하는 것은 "1번보다 t_max 이상 늦게 들어온 요청�
 - CI: `package.xml` 에 `python3-scipy` 추가, `test_navigation` 의 가짜 `free_spot` 을 A 의 인자에 맞춤
 - 확장 프로필 해시 목록: 기본 파일을 일부러 고쳤으면 `python3 tools/update_legacy_hashes.py` 로 갱신하고 같이 커밋
 
+운동학 제약 경로 계획 (11-25, `kinematic_planner.py`, nav_bridge simple 백엔드):
+- 예전: 격자 A* 꺾은선 → 꺾이는 점마다 제자리 회전 후 직진. 지금: (x, y, 방향) Hybrid A* + 도착 자세는 Dubins 곡선 + 곡률 제한 추종
+- 최소 회전 반경 `min_turn_radius` 0.8 m (추종 곡률 한계, 넘지 않음), 계획은 여유 1.25배(1.0 m)
+- 경로 중간 제자리 회전 없음. 차동 구동이라 출발·도착점에서만, 회전할 공간이 있을 때만 제자리 회전 (`pivot_at_ends`)
+- 좁은 곳은 후진 허용 (비용 2.5배, 전·후진 전환 벌점, `allow_reverse`)
+- 충돌: 차체 1.6 x 0.74 m 를 원 3개로 덮어 경로 위 모든 자세(0.1 m 간격)를 정적 지도 + 라이다 장애물과 검사.
+  인도(진입 금지)는 벽이 아님: 바퀴(구동축 중심)만 경계에서 0.47 m 떨어지면 되고 차체 앞부분은 나가도 됨 (팔 뻗는 자세)
+- 계획이 2번(두 번째는 빠른 탐색) 안 되면 그 목표만 예전 방식으로 (`kinematic_planning: false` 로 끌 수 있음)
+- 확인 (ROS 없이): 도로·실내·경북대 지도 무작위/시나리오 목표 150여 건 계획 성공, 차체 충돌 0, 추종 시뮬 이탈 최대 0.1 m,
+  주행 곡률 한계 안. `test/test_kinematic_planner.py` 6개. **Gazebo 에서 실제 주행은 아직 확인 안 함**
+
+이전 시나리오 삭제 (11-25): 경북대 시나리오(`config/scenarios_knu/` k00~k32)만 쓴다.
+`config/scenarios/`(s1~s19), `archive/scenarios_indoor·campus·road_old` 삭제, 기본 시나리오 `k08`, CI 시나리오 테스트는 KNU k03·k04·k07.
+확장 프로필(`extended.launch.py`, `scenarios_extended/`)은 그대로 두었지만 s1~s9 는 이제 없어서 돌지 않음 → 유지·삭제 결정 필요
+
 도킹 간단 모드 (11-25):
 - `dock_controller` 에 `dock_mode` 추가 (`robot_params.yaml`). **기본 `snap`**: 충전소 앞까지 주행 → 도킹 자리로 들어간 뒤
   시뮬레이터에서 도킹 자리로 맞춤 (Gazebo `set_pose`, kinematic `fake_base` 의 `/sim/set_robot_pose`). 앞까지 못 가도 맞춰서 성공 처리
