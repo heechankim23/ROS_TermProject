@@ -31,6 +31,7 @@ from .common import PoseTracker, future_wait, now_sec, run_blocking, spin_single
 from .motion import GoToController, quat_from_yaw, yaw_from_quat
 from .occupancy import OccupancyMap, free_standoff
 from .planner import Costmap, free_spot, nearest_free
+from .kinematic_planner import KinematicParams, PathTracker, path_collides, plan_path
 
 
 class NavBridge(Node):
@@ -61,6 +62,15 @@ class NavBridge(Node):
         # 캠퍼스처럼 큰 지도: 맵 JSON(maps/<맵>.json)을 주면 큰 경로(1 m 격자 그래프) + 로봇 주변 창 A* 로 계획 (campus_nav.py)
         self.declare_parameter('route_map_json', '')
         self.declare_parameter('window_m', 70.0)
+
+        # 운동학 제약 경로 (kinematic_planner.py): 최소 회전 반경 곡선 + 차체 충돌 검사 + 곡률 제한 추종.
+        # 계획이 안 되면 이번 목표는 예전 방식(격자 A* + 제자리 회전 후 직진)으로 간다
+        self.declare_parameter('kinematic_planning', True)
+        self.declare_parameter('min_turn_radius', 0.8)        # 로봇 최소 회전 반경 (m). 추종 곡률 한계, 계획은 1.25배
+        self.declare_parameter('allow_reverse', True)         # 좁은 곳에서 후진 허용 (비용 2.5배, 전·후진 전환 벌점)
+        self.declare_parameter('pivot_at_ends', True)         # 출발·도착점에서만 제자리 회전 (회전할 공간이 있을 때)
+        self.declare_parameter('plan_time_budget_sec', 2.5)
+        self.declare_parameter('kin_replan_dev_m', 0.6)       # 경로에서 이만큼 벗어나면 다시 계획
 
         self.declare_parameter('scan_timeout_sec', 1.0)
         self.declare_parameter('pose_timeout_sec', 1.0)
@@ -341,6 +351,31 @@ class NavBridge(Node):
     def stop(self):
         self.cmd_pub.publish(Twist())
 
+    # ---------------- 운동학 경로 ----------------
+    def kin_params(self, greedy=False):
+        """greedy: 첫 계획이 시간 안에 안 끝났을 때 — 휴리스틱을 더 믿어 빨리 찾음 (조금 덜 짧은 경로)"""
+        gp = self.get_parameter
+        return KinematicParams(min_turn_radius=gp('min_turn_radius').value, allow_reverse=gp('allow_reverse').value,
+                               pivot_at_ends=gp('pivot_at_ends').value,
+                               time_budget_sec=gp('plan_time_budget_sec').value,
+                               heuristic_weight=3.0 if greedy else 1.4)
+
+    def kin_plan(self, pose, goal, now, greedy=False):
+        """-> (촘촘한 경로, 최종 목표인가). 큰 지도(RollingCostmap)에서 목표가 창 밖이면 큰 경로의 중간 목표까지"""
+        with self.cm_lock:
+            cm, target, final = self.cm, tuple(goal), True
+            if hasattr(cm, 'win'):
+                cm.ensure(pose[:2])
+                if not cm.in_window(goal, 2.0):
+                    if cm.plan(pose[:2], goal[:2], now) is None or cm.sub is None:
+                        return None, True
+                    sx, sy = cm.sub
+                    target, final = (sx, sy, math.atan2(sy - pose[1], sx - pose[0])), False
+                cm = cm.win
+            path = plan_path(cm, tuple(pose), target, now, self.kin_params(greedy), goal_yaw_free=not final,
+                             log=self.get_logger().info)
+        return path, final
+
     # ---------------- simple backend ----------------
     def run_simple(self, gh, goal, attempt):
         gp = self.get_parameter
@@ -353,6 +388,7 @@ class NavBridge(Node):
         stop_d = gp('obstacle_stop_dist').value
         path, planned_at = None, -1e9
         backed = 0.0
+        kin = {'tracker': None, 'checked_at': -1e9, 'fails': 0, 'failed': False, 'final': True}
         while rclpy.ok():
             if gh.is_cancel_requested:
                 self.stop()
@@ -376,9 +412,8 @@ class NavBridge(Node):
             sensor_missing_since = None
             dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
 
-            # ---- 경로 계획 (코스트맵이 있을 때) ----
+            # 목표가 '빈 자리'로 고른 것(standoff)인데 그사이 새 장애물이 붙었으면 다시 고른다 (두 방식 공통)
             if self.cm is not None and dist > gp('pos_tol').value:
-                # 목표가 '빈 자리'로 고른 것(standoff)인데 그사이 새 장애물(방금 내려놓은 킥보드 등)이 붙었으면 다시 고른다
                 if gh.request.standoff > 0.0 and now - planned_at > gp('replan_sec').value:
                     with self.cm_lock:
                         tight = not self.cm.spot_ok(goal[0], goal[1], now, gp('goal_clearance').value - 0.05,
@@ -391,50 +426,96 @@ class NavBridge(Node):
                         self.get_logger().info(f'목표 주변에 새 장애물 -> 목표 변경 ({goal[0]:.2f}, {goal[1]:.2f}) -> '
                                                f'({new[0]:.2f}, {new[1]:.2f})')
                         goal, path = new, None
+                        kin['tracker'] = None
                         dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
-                with self.cm_lock:
-                    need = (path is None or now - planned_at > gp('replan_sec').value
-                            or self.cm.path_blocked(path, now, pose[:2])
-                            or (hasattr(self.cm, 'needs_replan') and self.cm.needs_replan(pose, now)))
-                    if need:
-                        path = self.cm.plan(pose[:2], goal[:2], now)
-                        planned_at = now
-                if path is None:
-                    self.stop()
-                    if blocked_since is None:      # 왜 길이 없는지 한 번 남긴다 (출발 칸이 막힌 곳인지, 목표가 막힌 곳인지)
-                        with self.cm_lock:
-                            sj, si = self.cm.cell(pose[0], pose[1])
-                            gj, gi = self.cm.cell(goal[0], goal[1])
-                            ins = self.cm.inside(sj, si) and self.cm.inside(gj, gi)
-                            info = (f'출발 ({pose[0]:.2f}, {pose[1]:.2f}) 정적 장애물/진입 금지 칸={bool(self.cm.static[sj, si])} '
-                                    f'장애물까지 {self.cm.dist_at(pose[0], pose[1], now):.2f} m, '
-                                    f'목표 ({goal[0]:.2f}, {goal[1]:.2f}) 장애물까지 {self.cm.dist_at(goal[0], goal[1], now):.2f} m'
-                                    ) if ins else '출발 또는 목표가 지도 밖'
-                        self.get_logger().warn(f'경로 없음: {info}')
-                    blocked_since = now if blocked_since is None else blocked_since
-                    if now - blocked_since > gp('blocked_timeout_sec').value:
-                        return False, 'no path'
-                    time.sleep(0.05)
-                    continue
-                look = gp('lookahead').value
-                if not path:
-                    path = [goal[:2]]
-                while len(path) > 1 and math.hypot(path[0][0] - pose[0], path[0][1] - pose[1]) < look:
+            use_kin = self.cm is not None and gp('kinematic_planning').value and not kin['failed']
+            if use_kin:
+                # ---- 운동학 제약 경로 (최소 회전 반경 곡선 + 차체 충돌 검사) ----
+                tr = kin['tracker']
+                need = tr is None
+                if not need and now - kin['checked_at'] > gp('replan_sec').value:
+                    kin['checked_at'] = planned_at = now
                     with self.cm_lock:
-                        if not self.cm.segment_ok(pose[:2], path[1], self.cm.cost_grid(now), 1e18):
-                            break
-                    path.pop(0)
-                wp = path[0]
+                        grid = self.cm.win if hasattr(self.cm, 'win') else self.cm
+                        blocked = path_collides(grid, tr.path, now, self.kin_params(), from_index=tr.i,
+                                                start=pose[:2])
+                        need = (blocked or tr.cross_track(pose) > gp('kin_replan_dev_m').value
+                                or (hasattr(self.cm, 'needs_replan') and self.cm.needs_replan(pose, now)))
+                    if need:
+                        self.get_logger().info('경로 다시 계획 (' + ('새 장애물' if blocked else '경로 이탈/구간 끝') + ')')
+                if need:
+                    kpath, final = self.kin_plan(pose, goal, now, greedy=kin['fails'] > 0)
+                    if kpath is None:
+                        self.stop()
+                        kin['fails'] += 1
+                        if kin['fails'] >= 2:
+                            kin['failed'] = True
+                            self.get_logger().warn('운동학 경로를 못 찾음 -> 이번 목표는 격자 A* 경로(예전 방식)로')
+                        time.sleep(0.05)
+                        continue
+                    kin['fails'] = 0
+                    kin['final'] = final
+                    kin['checked_at'] = planned_at = now
+                    tr = kin['tracker'] = PathTracker(
+                        kpath, v_max=gp('v_max').value, w_max=gp('w_max').value,
+                        min_turn_radius=gp('min_turn_radius').value, pos_tol=gp('pos_tol').value,
+                        yaw_tol=math.radians(gp('yaw_tol_deg').value), final_yaw=final)
+                    blocked_since = None
+                v, w, done = tr.step(pose)
+                if done:
+                    if kin['final']:
+                        self.stop()
+                        return True, ''
+                    kin['tracker'] = None                    # 큰 지도의 중간 목표 도착 -> 다음 구간 계획
+                    continue
+                nxt = tr.path[min(tr.i, len(tr.path) - 1)]
+                wp = (nxt[0], nxt[1])
             else:
-                wp = goal
-            last = self.cm is None or len(path or []) <= 1
-            v, w, done = ctrl.step(pose, (wp[0], wp[1], goal[2]), final_yaw=last)
-            if done and last:
-                self.stop()
-                return True, ''
-            if done:                                       # 중간 경로점 도착 -> 다음 점
-                path.pop(0)
-                continue
+                # ---- 경로 계획 (코스트맵이 있을 때) ----
+                if self.cm is not None and dist > gp('pos_tol').value:
+                    with self.cm_lock:
+                        need = (path is None or now - planned_at > gp('replan_sec').value
+                                or self.cm.path_blocked(path, now, pose[:2])
+                                or (hasattr(self.cm, 'needs_replan') and self.cm.needs_replan(pose, now)))
+                        if need:
+                            path = self.cm.plan(pose[:2], goal[:2], now)
+                            planned_at = now
+                    if path is None:
+                        self.stop()
+                        if blocked_since is None:      # 왜 길이 없는지 한 번 남긴다 (출발 칸이 막힌 곳인지, 목표가 막힌 곳인지)
+                            with self.cm_lock:
+                                sj, si = self.cm.cell(pose[0], pose[1])
+                                gj, gi = self.cm.cell(goal[0], goal[1])
+                                ins = self.cm.inside(sj, si) and self.cm.inside(gj, gi)
+                                info = (f'출발 ({pose[0]:.2f}, {pose[1]:.2f}) 정적 장애물/진입 금지 칸={bool(self.cm.static[sj, si])} '
+                                        f'장애물까지 {self.cm.dist_at(pose[0], pose[1], now):.2f} m, '
+                                        f'목표 ({goal[0]:.2f}, {goal[1]:.2f}) 장애물까지 {self.cm.dist_at(goal[0], goal[1], now):.2f} m'
+                                        ) if ins else '출발 또는 목표가 지도 밖'
+                            self.get_logger().warn(f'경로 없음: {info}')
+                        blocked_since = now if blocked_since is None else blocked_since
+                        if now - blocked_since > gp('blocked_timeout_sec').value:
+                            return False, 'no path'
+                        time.sleep(0.05)
+                        continue
+                    look = gp('lookahead').value
+                    if not path:
+                        path = [goal[:2]]
+                    while len(path) > 1 and math.hypot(path[0][0] - pose[0], path[0][1] - pose[1]) < look:
+                        with self.cm_lock:
+                            if not self.cm.segment_ok(pose[:2], path[1], self.cm.cost_grid(now), 1e18):
+                                break
+                        path.pop(0)
+                    wp = path[0]
+                else:
+                    wp = goal
+                last = self.cm is None or len(path or []) <= 1
+                v, w, done = ctrl.step(pose, (wp[0], wp[1], goal[2]), final_yaw=last)
+                if done and last:
+                    self.stop()
+                    return True, ''
+                if done:                                       # 중간 경로점 도착 -> 다음 점
+                    path.pop(0)
+                    continue
             if v > 0 and self.front_min < stop_d:          # 안전장치: 계획에 없던 가까운 장애물
                 v, w = 0.0, 0.0
                 blocked_since = now if blocked_since is None else blocked_since
@@ -449,6 +530,7 @@ class NavBridge(Node):
                         backed += 0.15 * 0.05
                         if backed >= back:
                             blocked_since, path = None, None     # 다 물러났으면 다시 계획
+                            kin['tracker'] = None
                 if blocked_since is not None and now - blocked_since > gp('blocked_timeout_sec').value:
                     self.stop()
                     self.get_logger().warn(f'전방 {self.front_min:.2f} m 에 장애물 (계획에 없음): 로봇 ({pose[0]:.1f}, {pose[1]:.1f}, '
