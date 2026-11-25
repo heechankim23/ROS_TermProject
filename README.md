@@ -488,6 +488,12 @@ t_max 가 보장하는 것은 "1번보다 t_max 이상 늦게 들어온 요청�
 - CI: `package.xml` 에 `python3-scipy` 추가, `test_navigation` 의 가짜 `free_spot` 을 A 의 인자에 맞춤
 - 확장 프로필 해시 목록: 기본 파일을 일부러 고쳤으면 `python3 tools/update_legacy_hashes.py` 로 갱신하고 같이 커밋
 
+도킹 간단 모드 (11-25):
+- `dock_controller` 에 `dock_mode` 추가 (`robot_params.yaml`). **기본 `snap`**: 충전소 앞까지 주행 → 도킹 자리로 들어간 뒤
+  시뮬레이터에서 도킹 자리로 맞춤 (Gazebo `set_pose`, kinematic `fake_base` 의 `/sim/set_robot_pose`). 앞까지 못 가도 맞춰서 성공 처리
+- `precise`: 설계대로 태그를 보며 정밀 진입 (발표에서 정밀 도킹을 보여 줄 때). 노드 구조·설계는 그대로
+- snap 모드의 도킹 오차(거의 0)는 시뮬레이터에서 맞춘 값이므로, 정밀 도킹 성능 지표로 쓰려면 `precise` 로 측정할 것
+
 확인 요청:
 - **A**: `mission_manager_campus.py` 를 D 구조에 맞춘 것 (동작은 그대로, 적재함 다루는 방식만 바뀜). KNU 시나리오 회귀 한 번
 - **C**: `nav_bridge.py` 병합 결과 (A 의 nearest_free 대체 목표가 C 의 재시도 흐름 안에서 도는지)

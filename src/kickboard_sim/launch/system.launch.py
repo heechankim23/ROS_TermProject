@@ -55,7 +55,7 @@ def _setup(context):
                            # speed:=2.5 처럼 주면 로봇 최고 속도를 덮어쓴다 (빨리 보기)
                            **({'v_max': float(speed), 'w_max': min(2.0, 0.6 + 0.3 * float(speed))} if speed else {}))),
         node('collector'),
-        node('dock_controller', {'map_config_file': map_cfg}),
+        node('dock_controller', {'map_config_file': map_cfg, 'gz_enabled': sim == 'gz', 'world_name': mf['name']}),
         node('scooter_fleet_sim', {'scenario_file': scenario, 'map_config_file': map_cfg, 'terrain_json': mf['terrain_json'],
                                    'gz_enabled': sim == 'gz', 'world_name': mf['name'],
                                    # 로봇팔이 킥보드 모델을 직접 치우므로 fleet_sim 은 지우지 않음

@@ -59,6 +59,12 @@ scooter_fleet_sim:
     battery_threshold_pct: 20.0
     remove_on_load: true
 
+dock_controller:
+  ros__parameters:
+    dock_mode: snap            # snap = 시뮬 실행용: 충전소 앞까지 주행 -> 도킹 자리로 들어가 시뮬레이터에서 맞춤 (항상 성공)
+                               # precise = 설계대로 태그를 보며 P제어 정밀 진입 (발표에서 정밀 도킹을 보여 줄 때)
+    snap_drive_sec: 15.0       # snap: 도킹 자리로 직접 들어가는 최대 시간, 그 뒤 남은 오차를 맞춤
+
 sim_tag_detector:
   ros__parameters:
     hfov_deg: 62.2
