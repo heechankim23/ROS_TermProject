@@ -4,14 +4,14 @@ mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: 305.919, y: -146.754, z: 0.1, yaw_deg: 242.8}
+robot_spawn: {x: 319.611, y: -141.982, z: 0.1, yaw_deg: 62.8}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: 305.398, y: -147.768, yaw_deg: 62.8}
+  tag_pose: {x: 320.132, y: -140.968, yaw_deg: -117.2}
   dock_distance: 1.14
   pre_dock_distance: 4.44
-  station: {model: scootover_robot_station, x: 306.513, y: -145.598, yaw_deg: -117.2}
+  station: {model: scootover_robot_station, x: 319.017, y: -143.138, yaw_deg: 62.8}
 parking_zones:
 - name: P18
   site: 305 복지관 인근
@@ -60,7 +60,7 @@ parking_zones:
   - {id: P26-10, x: 233.93, y: -288.82, z: -6.55, yaw_deg: 53.4, role: broken}
 charging_zones: []
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

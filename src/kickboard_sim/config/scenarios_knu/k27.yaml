@@ -16,7 +16,7 @@ pass_criteria:
 robot: {initial_battery_pct: 100, capacity: 2}
 gps_noise_sigma: 6.0
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 215.24, y: -346.93, yaw_deg: 30.4, battery_pct: 58, silent: true, place: walkway, where: "IT대학1호관 앞 보행로"}
+  - {id: 1, x: 215.24, y: -346.93, yaw_deg: -149.6, battery_pct: 58, silent: true, place: walkway, where: "IT대학1호관 앞 보행로"}
 events:
   - {t: 15, id: 1, type: "report", reason: "obstruction", gps_error_m: 12.0, note: "통로 막음"}
   - {t: 0, type: "gps_drift", x: 221.413, y: -323.55, radius: 60, sigma: 6.0}

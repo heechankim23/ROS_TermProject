@@ -8,7 +8,7 @@ based_on: [s11_side_street_blocked]
 situation: "글로벌플라자 광장에서 행사가 열려 C4 충전구역이 1시간 폐쇄되고 행사 부스(장애물)가 들어선다. 근처에 배터리 부족 2대."
 mission: "폐쇄된 C4 를 목적지에서 빼고 다른 충전구역(C5 인문대 쪽)으로 보낸다. 부스를 피해 이동한다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 1, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (125 m), 가장 가까운 C4 은 자리 없음"}
+  - {id: 1, order: 1, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (85 m), 가장 가까운 C4 은 자리 없음"}
   - {id: 2, order: 2, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (176 m), 가장 가까운 C4 은 자리 없음"}
 pass_criteria:
   - "충전 주차구역: #1,2 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
@@ -16,8 +16,8 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 64.57, y: 209.67, yaw_deg: 72.7, battery_pct: 8, place: entrance, where: "103 글로벌플라자 출입구 앞"}
-  - {id: 2, x: 11.01, y: 283.72, yaw_deg: -95.1, battery_pct: 12, place: walkway, where: "대강당 앞 보행로"}
+  - {id: 1, x: 62.71, y: 151.75, yaw_deg: -65.3, battery_pct: 8, place: entrance, where: "103 글로벌플라자 출입구 앞"}
+  - {id: 2, x: 11.01, y: 283.72, yaw_deg: 84.9, battery_pct: 12, place: walkway, where: "대강당 앞 보행로"}
 events:
   - {t: 0, type: "zone_closed", zone: "C4", duration: 3600, note: "광장 행사"}
   - {t: 0, type: "obstacle", name: "event_booth", x: 89.508, y: 224.293, size: [6, 3, 2.5]}

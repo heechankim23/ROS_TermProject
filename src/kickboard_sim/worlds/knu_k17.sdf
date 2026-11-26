@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- 시나리오 k17 전용 작은 캠퍼스 (264 x 308 m). scripts/build_scenario_worlds.py 가 만든 파일.
+<!-- 시나리오 k17 전용 작은 캠퍼스 (720 x 328 m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/knu_k17.yaml -->
 <sdf version="1.9">
   <world name="knu_k17">
@@ -28,7 +28,7 @@
     <model name="terrain">
       <static>true</static>
       <link name="link">
-        <collision name="c"><pose>-72.0 -286.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>304 348</size></plane></geometry></collision>
+        <collision name="c"><pose>52.0 -296.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>760 368</size></plane></geometry></collision>
         <visual name="v"><pose>0 0 0.005 0 0 0</pose><geometry><mesh><uri>model://knu_campus/meshes/terrain_k17.obj</uri></mesh></geometry></visual>
       </link>
     </model>
@@ -43,20 +43,19 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k17.obj</uri></mesh></geometry></visual>
-        <collision name="P23_rack"><pose>-58.741 -270.218 0.4 0 0 -0.0526</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P24_rack"><pose>-144.245 -240.731 0.4 0 0 3.1190</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P25_rack"><pose>-9.940 -302.885 0.4 0 0 -1.6093</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
-    <include><uri>model://kickspot_4</uri><name>C6_kickspot_1</name><pose>-162.325 -400.080 0.000 0 0 1.5479</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C6_kickspot_2</name><pose>-165.424 -400.009 0.000 0 0 1.5479</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C2_kickspot_1</name><pose>371.752 -174.527 0.000 0 0 0.6034</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C2_kickspot_2</name><pose>373.511 -177.079 0.000 0 0 0.6034</pose></include>
     <include><uri>model://kickspot_4</uri><name>C7_kickspot_1</name><pose>-34.918 -173.137 0.000 0 0 1.4395</pose></include>
     <include><uri>model://kickspot_4</uri><name>C7_kickspot_2</name><pose>-31.845 -173.543 0.000 0 0 1.4395</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C8_kickspot_1</name><pose>-268.510 -257.860 0.000 0 0 -3.0188</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C8_kickspot_2</name><pose>-268.890 -254.784 0.000 0 0 -3.0188</pose></include>
     <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
       <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>-35.522 -279.601 0 0 0 -1.6234</pose>
+      <pose>-9.448 -296.579 0 0 0 3.1031</pose>
     </include>
   </world>
 </sdf>

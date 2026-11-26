@@ -8,11 +8,11 @@ based_on: [s4_low_battery]
 situation: "첨성관(114) 기숙사 앞 보행로에 넘어진 킥보드가 있고 배터리가 8 % 다."
 mission: "넘어짐으로 높은 우선순위로 수거하되, 목적지는 일반 구역이 아니라 충전 주차구역이다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 1, dest: charging, zone: C1, reasons: ["넘어짐", "불법 주차", "배터리 부족"], hint: "C1 중앙도서관 앞 (203 m)"}
+  - {id: 1, order: 1, dest: charging, zone: C2, reasons: ["넘어짐", "불법 주차", "배터리 부족"], hint: "C2 편의점 인근 (복지관) (268 m)"}
 pass_criteria:
   - "충전 주차구역: #1 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 398.49, y: 90.99, yaw_deg: -21.2, tilt_deg: 90, battery_pct: 8, place: walkway, where: "첨성관 앞 보행로"}
+  - {id: 1, x: 398.49, y: 90.99, yaw_deg: 158.8, tilt_deg: 90, battery_pct: 8, place: walkway, where: "첨성관 앞 보행로"}

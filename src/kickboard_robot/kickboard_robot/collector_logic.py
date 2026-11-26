@@ -60,6 +60,63 @@ def entry_error(robot, cx, cy, heading, lane=0):
     return c * dx + s * dy, -s * dx + c * dy, wrap_angle(robot[2] - tyaw)
 
 
+def dock_errors(pose, target):
+    """적재 자리 좌표에서 본 로봇: (남은 거리 along: + = 아직 앞쪽, 옆 lat: 왼쪽 +, 방향 head)"""
+    tx, ty, tyaw = target
+    c, s = math.cos(tyaw), math.sin(tyaw)
+    dx, dy = pose[0] - tx, pose[1] - ty
+    return c * dx + s * dy, -s * dx + c * dy, wrap_angle(pose[2] - tyaw)
+
+
+def dock_step(pose, target, goal_along=0.0, v_max=0.25, w_max=0.6, look=0.5, max_head=math.radians(25)):
+    """적재 자리를 지나는 직선(방향 = target yaw)을 따라 along = goal_along 까지 가는 한 주기. -> (v, w, done)
+    goal_along 이 지금보다 작으면 후진(도킹), 크면 전진(다시 빼기).
+    옆 오차는 '선 쪽으로 기울인 방향'을 목표로 해 달리면서 줄인다 (제자리 회전 없음)."""
+    ea, el, ey = dock_errors(pose, target)
+    rem = ea - goal_along                       # + 면 후진해야 함
+    if abs(rem) <= 0.02:
+        return 0.0, 0.0, True
+    back = rem > 0
+    want = math.atan2(el, look)                 # 후진: el_dot = v sin(ey), v < 0 이므로 ey > 0 이 el 을 줄임
+    want = max(-max_head, min(max_head, want if back else -want))
+    w = max(-w_max, min(w_max, 2.0 * wrap_angle(want - ey)))
+    v = max(0.05, min(v_max, 0.6 * abs(rem)))
+    if abs(wrap_angle(want - ey)) > math.radians(20):
+        v = 0.05                                # 방향이 많이 틀렸으면 거의 서서 돌림
+    return (-v if back else v), w, False
+
+
+def dock_ok(pose, target, pos_tol=0.04, lat_tol=0.07):
+    ea, el, _ = dock_errors(pose, target)
+    return abs(ea) <= pos_tol and abs(el) <= lat_tol
+
+
+def fine_align_plan(robot, target, pos_tol, yaw_tol, max_move, lat_tol=None):
+    """정렬 이동이 끝난 뒤 적재 자리(target = (x, y, yaw))에 정확히 서기 위한 짧은 동작 목록.
+    차동 구동이라 옆으로는 못 가므로: 옆 오차가 lat_tol(없으면 pos_tol) 이하이면 [방향 맞춤, 앞뒤 직진],
+    아니면 [자리 쪽(또는 반대쪽, 덜 도는 쪽)으로 회전, 직진(후진은 음수), 방향 맞춤].
+    -> [('turn', 절대 yaw) | ('drive', 진행 방향 거리 m)] / [] (이미 허용 오차 안) / None (max_move 보다 멀어 직접 못 맞춤)"""
+    tx, ty, tyaw = target
+    c, s = math.cos(tyaw), math.sin(tyaw)
+    dx, dy = robot[0] - tx, robot[1] - ty
+    ea, el = c * dx + s * dy, -s * dx + c * dy
+    ey = wrap_angle(robot[2] - tyaw)
+    lat_tol = pos_tol if lat_tol is None else lat_tol     # 옆 맞춤은 두 번 크게 돌아야 해서 따로 느슨하게 둘 수 있음
+    if abs(ea) <= pos_tol and abs(el) <= lat_tol and abs(ey) <= yaw_tol:
+        return []
+    d = math.hypot(dx, dy)
+    if d > max_move:
+        return None
+    if abs(el) <= lat_tol:
+        return ([('turn', tyaw)] if abs(ey) > yaw_tol else []) + ([('drive', -ea)] if abs(ea) > pos_tol else [])
+    b = math.atan2(-dy, -dx)                       # 로봇 -> 자리 방향
+    fwd, back = b, wrap_angle(b + math.pi)
+    # 전진/후진 중 지금 방향에서 덜 도는 쪽 (어차피 끝에 tyaw 로 돌아오므로 tyaw 기준으로 고름)
+    if abs(wrap_angle(fwd - tyaw)) <= abs(wrap_angle(back - tyaw)):
+        return [('turn', fwd), ('drive', d), ('turn', tyaw)]
+    return [('turn', back), ('drive', -d), ('turn', tyaw)]
+
+
 def arrived_by_tag(tag_distance, standoff, margin):
     """이동 중 태그가 standoff + margin 안에서 보이면 접근 완료로 본다 (GPS 오차로 목표가 너무 붙었을 때)."""
     return tag_distance <= standoff + margin

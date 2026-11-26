@@ -70,10 +70,11 @@ ZONES = {1: ('본부·인문·도서관', '#cb679e', '#b85a85'), 2: ('농생대�
          3: ('사범·사회·경상', '#89bc81', '#6c9b6e'), 4: ('공대·IT대', '#72a7df', '#5688b5'),
          5: ('생활관·창업', '#a48bd9', '#8c76ae')}           # (이름, 안내 색, 3D 건물 색) — KNU 안심동행 지도와 같은 색
 
-ROAD_W = {'service': 6.0, 'residential': 6.0, 'pedestrian': 4.0, 'footway': 2.5, 'steps': 2.5}
+ROAD_W = {'service': 6.0, 'residential': 6.0, 'pedestrian': 4.0, 'footway': 2.5, 'steps': 2.5}   # 거치대 자리 계산
+PATH_W = dict(ROAD_W, footway=3.0)     # 바닥 그림의 길 폭. 보행로는 눈에 띄게 3 m
 
 # ---------------------------------------------------------------------------------------------
-# 충전 주차구역 후보 (사용자 지정 8곳). anchor 근처(45 m 안)의 기존 주차 가능 구역을 충전구역으로 바꾸고,
+# 충전 주차구역 후보 (처음 8곳. 아래 DELETED_ZONES·GENERAL_FROM_CHARGING 을 뺀 5곳이 남는다). anchor 근처(45 m 안)의 기존 주차 가능 구역을 충전구역으로 바꾸고,
 # 없으면 그 자리에 새 충전구역을 만든다.  ('bldg', 번호) | ('water', 이름) | ('pitch', sport/kind) | ('mid', a, b)
 # ---------------------------------------------------------------------------------------------
 CHARGING_SITES = [
@@ -87,6 +88,9 @@ CHARGING_SITES = [
     ('C8', '대운동장 쪽', ('pitch', 'track')),
 ]
 SITE_MATCH_M = 45.0
+# 11-26 배치 변경. 나머지 구역의 위치·번호가 그대로이도록, 전부 배치한 뒤 빼거나 바꾼다
+DELETED_ZONES = ('C1', 'C3', 'P19', 'P23')
+GENERAL_FROM_CHARGING = {'C6': ('P33', '공대9호관')}      # 충전 후보 -> 일반 주차구역 (새 번호, 이름)
 
 # 거치대 규격
 PARK_SLOTS, BROKEN_SLOTS, PARK_PITCH = 8, 2, 0.7        # 일반: 정상 8칸 + 고장 분류 2칸 (반대 방향), 칸 간격 0.7 m
@@ -107,7 +111,11 @@ GARAGE_LEN, GARAGE_W = GS['footprint'][1][0] - GS['footprint'][0][0], GS['footpr
 RES_NAV = 0.25        # 주행 지도 해상도 (m/px)
 RES_GRID = 0.5        # 배치 계산용 격자
 TERRAIN_STEP = 8.0    # 지형 메시 격자 (m)
-TEX = 4096            # 지형 텍스처 (px)
+TEX = 8192            # 지형 텍스처 (px, 긴 변)
+TEX_SS = 2            # 그릴 때 배율 (줄여서 저장 -> 계단 현상 제거)
+BLD_VIS_H = 1.2       # 건물 보이는 높이 배율
+ROAD_BLD_GAP = 1.0    # 건물 외곽선이 길을 덮는 곳은 길 우선: 길 가장자리에서 이만큼까지 건물을 잘라 냄
+
 
 
 def P(lon, lat):
@@ -359,6 +367,41 @@ def build_masks(L, g):
             'green': green > 0, 'roads': roads > 0, 'steps': steps > 0, 'solid': solid}
 
 
+def trim_buildings(L, res=0.25):
+    """OSM 건물 외곽선이 차도·보행로를 덮는 부분을 잘라 낸다 (길 위에 벽이 생기지 않게).
+    메시·주행 지도·라이다 지도가 모두 이 외곽선을 쓰도록 배치 계산이 끝난 뒤 L['buildings'] 를 바꾼다.
+    나뉘면 가장 큰 조각만 번호·이름을 갖는다"""
+    out = []
+    for b in L['buildings']:
+        p = b['poly']
+        x0, y0 = p.min(0) - 2
+        x1, y1 = p.max(0) + 2
+        g = Grid((x0, y0, x1, y1), res)
+        bld, road = g.blank(), g.blank()
+        g.fill(bld, p)
+        for r in L['roads']:
+            q = r['pts']
+            half = PATH_W.get(r['kind'], 3.0) / 2 + ROAD_BLD_GAP
+            if r['kind'] == 'steps' or q[:, 0].max() < x0 - half or q[:, 0].min() > x1 + half \
+                    or q[:, 1].max() < y0 - half or q[:, 1].min() > y1 + half:
+                continue
+            g.line(road, q, 2 * half)
+        if not (bld & road).any():
+            out.append(b)
+            continue
+        cs, _ = cv2.findContours((bld & ~road).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        parts = []
+        for c in cs:
+            c = cv2.approxPolyDP(c, 0.4 / res, True)[:, 0, :].astype(float)
+            if len(c) >= 3 and cv2.contourArea(c.astype(np.float32)) * res * res >= 10.0:
+                parts.append(np.stack([g.x0 + (c[:, 0] + 0.5) * res, g.y1 - (c[:, 1] + 0.5) * res], -1))
+        parts.sort(key=lambda q: -abs(poly_area(q)))
+        for k, q in enumerate(parts):
+            out.append(dict(b, poly=q) if k == 0 else
+                       dict(b, id=f"{b['id']}#{k}", number=None, name='', osm_name='', poly=q, c=poly_centroid(q)))
+    L['buildings'] = out
+
+
 # =============================================================================================
 # 4) 주차구역 · 충전구역 · 거치대 · 슬롯
 # =============================================================================================
@@ -556,7 +599,38 @@ def build_zones(L, g, M, clear):
         zones.append({'id': f'P{n:02d}', 'type': 'general', 'site': f'{label} 인근', 'origin': 'image',
                       'poly': z['poly'], 'rack': rack, 'slots': make_slots(rack, 'general') if rack else [],
                       'anchor': z['centroid'], 'image_index': k})
-    return zones
+    return edit_zones(zones)
+
+
+def edit_zones(zones):
+    out, moved = [], []
+    for z in zones:
+        if z['id'] in DELETED_ZONES:
+            continue
+        if z['id'] in GENERAL_FROM_CHARGING:
+            new_id, site = GENERAL_FROM_CHARGING[z['id']]
+            rack = dict(z['rack'], length=(PARK_SLOTS + BROKEN_SLOTS) * PARK_PITCH)
+            moved.append(dict(z, id=new_id, type='general', site=site, rack=rack, slots=make_slots(rack, 'general')))
+            continue
+        out.append(z)
+    return out + moved
+
+
+def rack_apron(center, out, depth, road_kind, length, reach):
+    """길 가운데에서 거치대 쪽으로 reach(거치대 중심 기준, out 방향)까지의 포장 면. 길과 거치대 사이 틈을 잇는다"""
+    t = np.array([-out[1], out[0]])
+    p = center - out * (ROAD_W[road_kind] / 2 + 0.5 + depth / 2)
+    q = center + out * reach
+    return np.array([p - t * length / 2, p + t * length / 2, q + t * length / 2, q - t * length / 2])
+
+
+def zone_apron(z):
+    """일반 구역: 슬롯 뒤(길 반대쪽)에도 로봇이 서야 한다 (후진 적재 자리 = 슬롯 중심 앞 2.07 m) -> 3 m 뒤까지, 양끝 3.5 m 돌아갈 폭.
+    충전 구역: 기둥 앞까지만"""
+    r = z['rack']
+    if z['type'] == 'general':
+        return rack_apron(r['center'], r['out'], r['depth'], r['road_kind'], r['length'] + 7.0, 3.2)
+    return rack_apron(r['center'], r['out'], r['depth'], r['road_kind'], r['length'] + 3.0, -r['depth'] / 2 + 0.3)
 
 
 def place_dock(L, g, M, clear):
@@ -665,29 +739,13 @@ RACK_COLORS = {
 
 def rack_geometry(obj, zones, gates, dock, T, flat):
     zf = (lambda x, y: 0.0) if flat else (lambda x, y: float(T.z(x, y)))
-    for z in zones:
-        r = z['rack']
-        if not r:
-            continue
-        c, yaw, t, out = r['center'], r['yaw'], r['axis'], r['out']
-        z0 = zf(*c)
-        L_ = r['length']
-        back = c + out * (r['depth'] / 2 - 0.12)
-        if z['type'] == 'general':
-            # 3번 사진: 바닥 레일(보라 바퀴 거치) + 뒤쪽 낮은 잠금 바 + 끝에 'P' 키오스크
-            obj.box('rack_base', back[0], back[1], z0 + 0.35, L_ + 0.2, 0.25, 0.7, yaw)
-            for s in z['slots']:
-                p = s['xy'] + out * (r['depth'] / 2 - 0.45)
-                obj.box('broken_red' if s['role'] == 'broken' else 'rack_purple',
-                        p[0], p[1], z0 + 0.06, 0.18, 0.62, 0.12, yaw)      # 바퀴 거치: 축 방향 0.18, 깊이 0.62
-            k = c + t * (L_ / 2 + 0.45) + out * (r['depth'] / 2 - 0.35)
-            obj.box('rack_kiosk', k[0], k[1], z0 + 0.6, 0.5, 0.5, 1.2, yaw)
-        # 충전구역: Kickspot 4구 2대를 world 에 include 한다 (write_world). 여기서는 그리지 않음
     for gte in gates:
         x, y = gte['xy']
         z0 = zf(x, y)
         obj.box('gate_red', x, y, z0 + 1.6, 0.6, 0.6, 3.2)
         obj.box('gate_white', x, y, z0 + 3.35, 0.8, 0.8, 0.3)
+    if not obj.groups:                      # 빈 메시는 gz 가 싫어함
+        obj.box('gate_white', 0.0, 0.0, -50.0, 0.1, 0.1, 0.1)
 
 
 # =============================================================================================
@@ -695,9 +753,10 @@ def rack_geometry(obj, zones, gates, dock, T, flat):
 # =============================================================================================
 TEX_COL = {
     'outside': (205, 207, 203), 'campus': (214, 210, 196), 'green': (188, 212, 156), 'water': (110, 165, 215),
-    'pitch': (120, 175, 105), 'track': (196, 112, 92), 'cars': (170, 170, 172), 'service': (96, 98, 104),
-    'pedestrian': (190, 180, 160), 'footway': (232, 214, 170), 'steps': (150, 128, 100),
-    'zone_general': (140, 180, 235), 'zone_charge': (40, 180, 160), 'contour': (150, 120, 90),
+    'pitch': (120, 175, 105), 'track': (196, 112, 92), 'cars': (112, 114, 120), 'service': (78, 80, 88),
+    'pedestrian': (226, 190, 150), 'footway': (236, 208, 164), 'steps': (150, 128, 100),
+    'curb': (150, 112, 80), 'road_edge': (235, 235, 235), 'center_line': (245, 196, 40),
+    'zone_general': (30, 105, 255), 'zone_charge': (0, 205, 160), 'contour': (150, 120, 90),
     'bld_floor': (120, 120, 125), 'boundary': (180, 60, 60),
 }
 
@@ -716,6 +775,88 @@ def hillshade(T, g, exaggeration=4.0, strength=0.22):
     shade = (nx * lx + ny * ly + nz * lz) / n / math.sqrt(lx * lx + ly * ly + lz * lz)
     shade = 1.0 - strength * (1.0 - np.clip(shade, 0, 1)) / max(1e-6, 1.0 - float(np.clip(shade, 0, 1).min()))
     return cv2.resize(shade.astype(np.float32), (g.w, g.h), interpolation=cv2.INTER_LINEAR)
+
+
+def draw_roads(d, L, g):
+    """보행로(밝은 포장 + 갈색 연석)와 차도(아스팔트 + 흰 가장자리선 + 노란 중앙선)"""
+    def px_w(m):
+        return max(1, int(round(m / g.res)))
+
+    def line(pts, col, width_m):
+        q = [tuple(v) for v in g.px(np.asarray(pts))]
+        w = px_w(width_m)
+        d.line(q, fill=col, width=w, joint='curve')
+        for x, y in (q[0], q[-1]):                   # 끝을 둥글게 (갈림길 틈 메움)
+            d.ellipse([x - w / 2, y - w / 2, x + w / 2, y + w / 2], fill=col)
+
+    def of(*kinds):
+        return [r for r in L['roads'] if r['kind'] in kinds]
+
+    walk, drive = of('footway', 'pedestrian'), of('service', 'residential')
+    for r in walk:
+        line(r['pts'], TEX_COL['curb'], PATH_W[r['kind']])
+    for r in walk:
+        line(r['pts'], TEX_COL[r['kind']], PATH_W[r['kind']] - 0.4)
+    for r in of('steps'):                            # 계단: 가로 줄무늬
+        line(r['pts'], TEX_COL['steps'], PATH_W['steps'])
+        for a, b in zip(r['pts'][:-1], r['pts'][1:]):
+            ln = float(np.hypot(*(b - a)))
+            if ln < 0.1:
+                continue
+            t = (b - a) / ln
+            n = np.array([-t[1], t[0]]) * (PATH_W['steps'] / 2)
+            for u in np.arange(0.3, ln, 0.7):
+                d.line([tuple(v) for v in g.px(np.array([a + t * u - n, a + t * u + n]))], fill=(95, 78, 60),
+                       width=px_w(0.18))
+    for r in drive:
+        line(r['pts'], TEX_COL['road_edge'], PATH_W[r['kind']])
+    for r in drive:
+        line(r['pts'], TEX_COL['service'], PATH_W[r['kind']] - 0.5)
+    for r in drive:                                  # 중앙선 (점선 3 m 칠, 2 m 비움)
+        done = 0.0
+        for a, b in zip(r['pts'][:-1], r['pts'][1:]):
+            ln = float(np.hypot(*(b - a)))
+            if ln < 0.1:
+                continue
+            t = (b - a) / ln
+            u = 0.0
+            while u < ln - 1e-6:
+                phase = (done + u) % 5.0
+                step = min((3.0 if phase < 3.0 else 5.0) - phase, ln - u)
+                step = max(step, 1e-3)
+                if phase < 3.0:
+                    d.line([tuple(v) for v in g.px(np.array([a + t * u, a + t * (u + step)]))],
+                           fill=TEX_COL['center_line'], width=px_w(0.16))
+                u += step
+            done += ln
+
+
+def zone_shapes(z):
+    """칠할 면: 구역 다각형. 슬롯이 다각형 밖으로 나가면 슬롯 줄도 함께 칠한다"""
+    shapes = [np.asarray(z['poly'])]
+    r = z['rack']
+    if r and any(dist_to_poly(s['xy'], z['poly']) > 0.1 for s in z['slots']):
+        shapes.append(zone_apron(z))
+    return shapes
+
+
+def paint_zone(img, g, z, alpha=105):
+    """주차구역: 안쪽을 반투명하게 칠하고(일반 파랑, 충전 민트) 같은 색 테두리. 밑의 길이 비쳐 보인다"""
+    col = TEX_COL['zone_charge'] if z['type'] == 'charging' else TEX_COL['zone_general']
+    shapes = [g.px(s) for s in zone_shapes(z)]
+    lw = max(2, int(round(0.7 / g.res)))
+    allp = np.vstack(shapes)
+    x0, y0 = np.floor(allp.min(0)).astype(int) - lw
+    x1, y1 = np.ceil(allp.max(0)).astype(int) + lw
+    fill = Image.new('L', (int(x1 - x0), int(y1 - y0)), 0)
+    edge = Image.new('L', fill.size, 0)
+    df, de = ImageDraw.Draw(fill), ImageDraw.Draw(edge)
+    qs = [[(float(x - x0), float(y - y0)) for x, y in s] for s in shapes]
+    for q in qs:
+        df.polygon(q, fill=alpha)
+        de.line(q + q[:2], fill=255, width=lw, joint='curve')
+    img.paste(col, (int(x0), int(y0)), fill)
+    img.paste(col, (int(x0), int(y0)), edge)
 
 
 def draw_base(L, T, g, scale_px, M=None, contours=True, zones=None, shade=False):
@@ -750,28 +891,11 @@ def draw_base(L, T, g, scale_px, M=None, contours=True, zones=None, shade=False)
             for ln in lines:
                 width = 3 if lev % 10 == 0 else 1
                 d.line(pp(ln), fill=TEX_COL['contour'], width=max(1, int(width * scale_px / 3.3)))
-    for kind in ('footway', 'pedestrian', 'steps', 'service', 'residential'):
-        for r in L['roads']:
-            if r['kind'] != kind:
-                continue
-            wpx = max(1, int(round(ROAD_W[kind] / g.res)))
-            col = TEX_COL['service'] if kind == 'residential' else TEX_COL[kind]
-            d.line(pp(r['pts']), fill=col, width=wpx, joint='curve')
+    draw_roads(d, L, g)
     if zones:
         for z in zones:
-            col = TEX_COL['zone_charge'] if z['type'] == 'charging' else TEX_COL['zone_general']
-            d.polygon(pp(z['poly']), outline=col, width=max(2, int(1.2 / g.res)))
-            r = z['rack']
-            if r:     # 슬롯 바닥 칠 (2번 사진처럼 파란/청록 칸)
-                for s in z['slots']:
-                    c = s['xy']
-                    t, o = r['axis'], r['out']
-                    hw = (CHARGE_PITCH if z['type'] == 'charging' else PARK_PITCH) / 2 - 0.06
-                    hd = r['depth'] / 2
-                    q = [c - t * hw - o * hd, c + t * hw - o * hd, c + t * hw + o * hd, c - t * hw + o * hd]
-                    fill = (200, 60, 60) if s['role'] == 'broken' else \
-                        (40, 120, 220) if z['type'] == 'charging' else (150, 130, 220)
-                    d.polygon(pp(q), fill=fill)
+            paint_zone(img, g, z)
+        d = ImageDraw.Draw(img)
     for b in L['buildings']:
         d.polygon(pp(b['poly']), fill=TEX_COL['bld_floor'])
     return img
@@ -843,7 +967,7 @@ def write_terrain_model(L, T, M, zones, bounds, flat):
     obj = Obj()
     for b in L['buildings']:
         zb = 0.0 if flat else float(T.z(b['poly'][:, 0], b['poly'][:, 1]).min())
-        obj.prism(f'zone{b["zone"]}', b['poly'], zb - 2.0, zb + b['height'], roof_mat=f'roof{b["zone"]}')
+        obj.prism(f'zone{b["zone"]}', b['poly'], zb - 2.0, zb + b['height'] * BLD_VIS_H, roof_mat=f'roof{b["zone"]}')
     mats = {}
     for k, (_, _, col) in ZONES.items():
         r, g_, bb = hex_rgb(col)
@@ -860,9 +984,10 @@ def write_terrain_model(L, T, M, zones, bounds, flat):
 
 def write_texture(L, T, zones, bounds):
     x0, y0, x1, y1 = bounds
-    g = Grid(bounds, (x1 - x0) / TEX)
+    long_side = max(x1 - x0, y1 - y0)
+    g = Grid(bounds, long_side / (TEX * TEX_SS))
     img = draw_base(L, T, g, scale_px=1.0 / g.res, zones=zones)
-    img = img.resize((TEX, TEX))
+    img = img.resize((TEX, TEX), Image.LANCZOS)
     path = os.path.join(PKG, 'models', NAME, 'meshes', 'campus_ground.png')
     img.save(path, optimize=True)
     return path
@@ -871,15 +996,6 @@ def write_texture(L, T, zones, bounds):
 def write_world(L, T, zones, dock, flat):
     sfx = '_flat' if flat else ''
     zf = (lambda x, y: 0.0) if flat else (lambda x, y: float(T.z(x, y)))
-    rack_cols = []
-    for z in zones:
-        r = z['rack']
-        if not r or z['type'] == 'charging':
-            continue
-        c = r['center']
-        rack_cols.append(
-            f'        <collision name="{z["id"]}_rack"><pose>{c[0]:.3f} {c[1]:.3f} {zf(*c) + 0.4:.3f} 0 0 {r["yaw"]:.4f}</pose>'
-            f'<geometry><box><size>{r["length"] + 0.2:.2f} 0.3 0.8</size></box></geometry></collision>')
     bx, by = dock['body']
     dz = zf(bx, by)
     kicks = kickspot_includes(zones, zf)
@@ -935,12 +1051,11 @@ def write_world(L, T, zones, dock, flat):
         <visual name="v"><geometry><mesh><uri>model://{NAME}/meshes/buildings{sfx}.obj</uri></mesh></geometry></visual>
       </link>
     </model>
-    <!-- 킥보드 거치대: 일반(보라 레일 + 고장 칸 빨강) / 충전(청록 스탠드 + 파란 P 표지), 출입문 기둥 -->
+    <!-- 출입문 기둥 (일반 주차구역에는 거치대 없음 — 바닥 그림만) -->
     <model name="kickboard_racks">
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://{NAME}/meshes/racks{sfx}.obj</uri></mesh></geometry></visual>
-{chr(10).join(rack_cols)}
       </link>
     </model>
     <!-- 킥보드 충전구역: Kickspot 4구 x 2 (Blender) -->
@@ -972,23 +1087,16 @@ def kickspot_includes(zones, zf=lambda x, y: 0.0):
 
 
 def rack_boxes(zones):
-    """거치대의 고정 부분 (뒤 잠금 바·충전 스탠드 줄 + 끝의 키오스크/표지) -> [(cx, cy, 길이, 폭, yaw)].
-    슬롯(킥보드 자리)과 그 앞은 비워 둔다. 주행·라이다 지도에 장애물로 넣는다 (Gazebo 에도 충돌체가 있다)"""
+    """충전 거치대(Kickspot)의 기둥 줄 -> [(cx, cy, 길이, 폭, yaw)]. 슬롯과 그 앞은 비워 둔다.
+    주행·라이다 지도에 장애물로 넣는다 (Gazebo 에도 충돌체가 있다). 일반 주차구역에는 거치대가 없다"""
     out = []
     for z in zones:
         r = z['rack']
-        if not r:
+        if not r or z['type'] != 'charging':
             continue
-        c, t, o, L = r['center'], r['axis'], r['out'], r['length']
-        if z['type'] == 'charging':                 # Kickspot: 기둥 줄 (앞바퀴 축 앞 0 ~ 0.6 m)
-            for x, y, _ in kickspot_poses(r):
-                p = np.array([x, y]) + o * 0.30
-                out.append((p[0], p[1], KS_UNIT_W, 0.6, r['yaw']))
-            continue
-        back = c + o * (r['depth'] / 2 - 0.12)
-        out.append((back[0], back[1], L + 0.2, 0.3, r['yaw']))
-        k = c + t * (L / 2 + 0.47) + o * (r['depth'] / 2 - 0.32)
-        out.append((k[0], k[1], 0.55, 0.7, r['yaw']))
+        for x, y, _ in kickspot_poses(r):          # 기둥 줄 (앞바퀴 축 앞 0 ~ 0.6 m)
+            p = np.array([x, y]) + r['out'] * 0.30
+            out.append((p[0], p[1], KS_UNIT_W, 0.6, r['yaw']))
     return out
 
 
@@ -1055,17 +1163,17 @@ def write_config(zones, dock, T, bounds):
           f'  pre_dock_distance: {dock["pre_dock_distance"]:.2f}  # 문 앞 2 m',
           '  station: {model: scootover_robot_station, '
           f'x: {dock["body"][0]:.3f}, y: {dock["body"][1]:.3f}, yaw_deg: {math.degrees(dock["yaw_in"]):.1f}}}   # 차고 원점 = 문 앞 지면', '',
-          f'# 일반 주차구역 {len(gen)}곳: 킥보드 앱의 주차 가능 구역(사용자 제공 이미지) 그대로. 거치대 1개 = 정상 {PARK_SLOTS}칸 + 고장 분류 {BROKEN_SLOTS}칸',
+          f'# 일반 주차구역 {len(gen)}곳: 킥보드 앱의 주차 가능 구역(사용자 제공 이미지) 그대로. 거치대 없이 바닥 칸 정상 {PARK_SLOTS} + 고장 분류 {BROKEN_SLOTS} ({", ".join(DELETED_ZONES)} 삭제)',
           'parking_zones:']
     for z in gen:
         L_ += zone_yaml(z)
-    L_ += ['', f'# 충전 주차구역 {len(chg)}곳: 사람이 많이 오가는 곳 (사용자 지정 8곳). Kickspot 4구 x 2 = {CHARGE_SLOTS}칸.',
+    L_ += ['', f'# 충전 주차구역 {len(chg)}곳: 사람이 많이 오가는 곳. Kickspot 4구 x 2 = {CHARGE_SLOTS}칸.',
            '# 칸 x, y = 꽂힌 킥보드 중심 (앞바퀴 축 - 0.42), yaw = 기둥 쪽',
            'charging_zones:']
     for z in chg:
         L_ += zone_yaml(z)
     L_ += ['', 'params:                # 이 맵에서 덮어쓸 노드 파라미터 (launch/system.launch.py 가 적용)',
-           '  nav_bridge:', '    v_max: 1.5', '    w_max: 1.0', '    lookahead: 1.2', '    goal_timeout_sec: 1200.0',
+           '  nav_bridge:', '    v_max: 1.2', '    w_max: 1.0', '    lookahead: 1.2', '    goal_timeout_sec: 1200.0',
            '    replan_sec: 3.0', f'    costmap_res: {RES_NAV}', '    goal_clearance: 1.2', '    inflation_radius: 1.2',
            '    window_m: 70.0', '    max_retries: 2',
            '  battery_manager:', '    k1_pct_per_m: 0.02', '    k2_pct_per_s: 0.01',
@@ -1279,10 +1387,10 @@ def write_2d_map(L, T, zones, dock, bounds):
     d.rectangle([30, 30, 1010, 365], fill=(255, 255, 255, 235), outline=(60, 60, 60, 255), width=2)
     d.text((55, 50), '경북대학교 대구캠퍼스 — 킥보드 주차·충전 구역', font=f_t, fill=(30, 30, 40, 255))
     yy = 120
-    items = [((70, 120, 220), f'일반 주차구역 {sum(z["type"] == "general" for z in zones)}곳 (앱 주차 가능 구역, 거치대 정상 {PARK_SLOTS}칸 + 고장 {BROKEN_SLOTS}칸)'),
+    items = [((70, 120, 220), f'일반 주차구역 {sum(z["type"] == "general" for z in zones)}곳 (앱 주차 가능 구역, 정상 {PARK_SLOTS}칸 + 고장 {BROKEN_SLOTS}칸)'),
              ((20, 165, 145), f'충전 주차구역 {sum(z["type"] == "charging" for z in zones)}곳 (충전 스탠드 {CHARGE_SLOTS}칸)'),
              (TEX_COL['contour'], f'등고선 2 m 간격 (굵은 선 10 m), 표고 {T.Z.min():.0f}~{T.Z.max():.0f} m'),
-             (TEX_COL['service'], '차량 도로 (6 m)'), (TEX_COL['footway'], '보행로 (2.5 m)'), (TEX_COL['steps'], '계단 (진입 금지)'),
+             (TEX_COL['service'], '차량 도로 (6 m)'), (TEX_COL['footway'], '보행로 (3 m)'), (TEX_COL['steps'], '계단 (진입 금지)'),
              ((235, 120, 20), '경사 5 % 이상인 길 (언덕·경사로)')]
     for col, txt in items:
         d.rectangle([60, yy, 100, yy + 24], fill=tuple(col) + (255,), outline=(60, 60, 60, 255))
@@ -1328,6 +1436,7 @@ def main():
     dock = place_dock(L, g, M, clear)
     T.datum = float(T.elev(*dock['dock']))
     zones = build_zones(L, g, M, clear)
+    trim_buildings(L)
     for z in zones:
         if z['type'] == 'charging':
             print(f"    {z['id']} {z['site']:<16} {'기존 구역' if z['origin'] == 'image' else '새 구역'}  "

@@ -168,3 +168,12 @@ def test_goto_hysteresis_no_translate_on_small_drift():
     c2.step(pose, (0.01, 0.0, math.pi / 2))
     v, w, _ = c2.step(pose, (0.0, -0.03, math.pi / 2))
     assert w < 0.0
+
+
+def test_ranked_uses_given_route_distance():
+    near_by_road = ql.Item('road', ql.OUT_OF_ZONE, 10.0, 0.0, 0, 0, 0.0)
+    behind_wall = ql.Item('wall', ql.BROKEN, 47.0, 0.0, 0, 0, 0.0)
+    w, items = ql.Weights(100.0, 0.5, 1.0), [near_by_road, behind_wall]
+    assert ql.ranked(items, 0.0, (0.0, 0.0), w)[0].id == 'wall'                 # 직선거리
+    path = {'road': 10.0, 'wall': 178.0}
+    assert ql.ranked(items, 0.0, (0.0, 0.0), w, lambda xy, it: path[it.id])[0].id == 'road'

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- 시나리오 k23 전용 작은 캠퍼스 (328 x 276 m). scripts/build_scenario_worlds.py 가 만든 파일.
+<!-- 시나리오 k23 전용 작은 캠퍼스 (368 x 276 m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/knu_k23.yaml -->
 <sdf version="1.9">
   <world name="knu_k23">
@@ -28,7 +28,7 @@
     <model name="terrain">
       <static>true</static>
       <link name="link">
-        <collision name="c"><pose>44.0 206.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>368 316</size></plane></geometry></collision>
+        <collision name="c"><pose>64.0 206.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>408 316</size></plane></geometry></collision>
         <visual name="v"><pose>0 0 0.005 0 0 0</pose><geometry><mesh><uri>model://knu_campus/meshes/terrain_k23.obj</uri></mesh></geometry></visual>
       </link>
     </model>
@@ -43,9 +43,6 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k23.obj</uri></mesh></geometry></visual>
-        <collision name="P02_rack"><pose>115.967 303.376 0.4 0 0 -0.0326</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P03_rack"><pose>167.600 281.016 0.4 0 0 3.0901</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P05_rack"><pose>-81.450 192.094 0.4 0 0 -2.8691</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
     <include><uri>model://kickspot_4</uri><name>C4_kickspot_1</name><pose>93.950 217.902 0.000 0 0 -1.5899</pose></include>

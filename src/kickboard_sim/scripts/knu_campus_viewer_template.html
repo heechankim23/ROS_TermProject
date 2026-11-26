@@ -144,7 +144,7 @@ aside.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; max
       <div class="compass" aria-hidden="true"><span>N</span><svg viewBox="-10 -10 20 20"><path d="M0-8 3 2 0 0-3 2Z" fill="#e7495b"/><path d="M0 8 3-2 0 0-3-2Z" fill="#5f6d84"/></svg></div>
       <div class="legend">
         <div><i style="background:var(--charge)"></i>충전 주차구역 (충전 스탠드)</div>
-        <div><i style="background:var(--park)"></i>일반 주차구역 (슬롯 거치대)</div>
+        <div><i style="background:var(--park)"></i>일반 주차구역</div>
         <div><i style="background:var(--broken)"></i>고장 분류 칸 (반대 방향)</div>
         <div><i style="background:var(--steep)"></i>경사 5 % 이상인 길</div>
         <div><i style="background:#d4c99c"></i>보행로 · <i style="background:#68776d;margin-left:4px"></i>차량 도로</div>
@@ -156,7 +156,7 @@ aside.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; max
       <section class="card">
         <div class="eyebrow"><span class="dot"></span> KICKBOARD ZONES</div>
         <h2>킥보드 주차·충전 구역</h2>
-        <p>앱에 표시된 주차 가능 구역을 그대로 일반 주차구역으로 두고, 사람이 많이 오가는 8곳을 충전 주차구역으로 정했어요.</p>
+        <p>앱에 표시된 주차 가능 구역을 그대로 일반 주차구역으로 두고, 사람이 많이 오가는 곳을 충전 주차구역으로 정했어요.</p>
         <div class="stats">
           <div class="stat c"><b id="sCharge">–</b><span>충전 구역 · 스탠드</span></div>
           <div class="stat p"><b id="sPark">–</b><span>일반 구역 · 정상 칸</span></div>
@@ -250,7 +250,7 @@ controls2.minZoom = 0.6; controls2.maxZoom = 40; controls2.enabled = false;
 
 // ---------- 바닥 텍스처 (캔버스) ----------
 const [bx0, by0, bx1, by1] = D.bounds;
-const TMAX = Math.min(4096, renderer.capabilities.maxTextureSize), ASP = (by1 - by0) / (bx1 - bx0);
+const TMAX = Math.min(8192, renderer.capabilities.maxTextureSize), ASP = (by1 - by0) / (bx1 - bx0);
 const TW = Math.round(ASP > 1 ? TMAX / ASP : TMAX), TH = Math.round(ASP > 1 ? TMAX : TMAX * ASP);
 const tex = document.createElement('canvas'); tex.width = TW; tex.height = TH;
 const g = tex.getContext('2d');
@@ -266,16 +266,16 @@ function line(pts, color, wm, dash) {
   g.strokeStyle = color; g.lineWidth = Math.max(1, wm * sx); g.lineCap = 'round'; g.lineJoin = 'round';
   g.setLineDash(dash || []); g.stroke(); g.setLineDash([]);
 }
-const RW = { service: 6, residential: 6, pedestrian: 4, footway: 2.5, steps: 2.5 };
+const RW = { service: 6, residential: 6, pedestrian: 4, footway: 3, steps: 2.5 };
 const PAL = {
   dark: { out: '#0e1a25', campus: '#274437', green: '#2d5a3e', cars: '#33413c', track: '#6e463a', pitch: '#2f6a45', water: '#2b679a',
           c10: 'rgba(170,215,185,.30)', c2: 'rgba(170,215,185,.13)', steps: '#9b7d5c', foot: 'rgba(212,201,156,.80)', road: '#68776d',
           steep: 'rgba(240,160,64,.95)', border: '#91b69a', bld: '#1a2530',
-          pFill: 'rgba(37,99,235,.32)', pLine: '#6f9dff', pSlot: '#3b6fff' },
+        },
   light: { out: '#e4e8e2', campus: '#f4f1e8', green: '#cfe4bd', cars: '#dcdedb', track: '#e0a68c', pitch: '#acd59e', water: '#93c4ea',
           c10: 'rgba(120,95,60,.45)', c2: 'rgba(120,95,60,.20)', steps: '#a8865f', foot: '#dcc58c', road: '#8d949b',
           steep: '#e8830f', border: '#c0504d', bld: '#c9ccc8',
-          pFill: 'rgba(29,78,216,.28)', pLine: '#1d4ed8', pSlot: '#1e3a8a' },
+        },
 };
 function drawGround(opts) {
   const C = PAL[opts.light ? 'light' : 'dark'];
@@ -308,19 +308,7 @@ function drawGround(opts) {
   D.parking_zones.forEach(z => {
     const ch = z.type === 'charging';
     if (!ch && !opts.park) return;
-    if (ch) poly(z.poly, 'rgba(79,224,191,.16)', 'rgba(79,224,191,.9)', 4);
-    else {       // 일반 주차구역: 진한 채움 + 굵은 테두리 + 안쪽 점선
-      poly(z.poly, C.pFill, C.pLine, 7);
-      g.setLineDash([14, 10]); poly(z.poly, null, opts.light ? '#ffffff' : '#0b1420', 2.5); g.setLineDash([]);
-    }
-    if (!z.rack) return;
-    const pitch = ch ? 0.85 : 0.7, [ox, oy] = z.rack.out, tx = -oy, ty = ox;   // 거치대 축 = out 를 90° 돌린 방향
-    z.slots.forEach(s => {
-      const hw = pitch / 2 - 0.06, hd = z.rack.depth / 2, c = s.xy;
-      const q = [[c[0] - tx * hw - ox * hd, c[1] - ty * hw - oy * hd], [c[0] + tx * hw - ox * hd, c[1] + ty * hw - oy * hd],
-                 [c[0] + tx * hw + ox * hd, c[1] + ty * hw + oy * hd], [c[0] - tx * hw + ox * hd, c[1] - ty * hw + oy * hd]];
-      poly(q, s.role === 'broken' ? '#ff6b78' : ch ? '#3fd0b0' : C.pSlot);
-    });
+    poly(z.poly, ch ? 'rgba(0,205,160,.40)' : 'rgba(30,105,255,.38)', ch ? '#00cda0' : '#1e69ff', 5);
   });
   D.buildings.forEach(b => poly(b.poly, C.bld));
 }
@@ -351,7 +339,7 @@ const bGroup = new THREE.Group(); scene.add(bGroup);
 const edgeMat = new THREE.LineBasicMaterial({ color: '#c5d1d3', transparent: true, opacity: 0.18 });
 D.buildings.forEach(b => {
   const sh = new THREE.Shape(); b.poly.forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
-  const h = Math.max(4, Math.min(b.height, 68));
+  const h = Math.max(4, Math.min(b.height, 68)) * 1.2;
   const geo = new THREE.ExtrudeGeometry(sh, { depth: h + 3, bevelEnabled: false, curveSegments: 1 });
   geo.rotateX(-Math.PI / 2);
   const col = new THREE.Color(ZCOL[b.zone]);
@@ -370,9 +358,6 @@ const mkInst = (color, n, emissive = 0) => {
   scene.add(m); return m;
 };
 const stands = mkInst('#2bb5a2', slotsAll.filter(o => o.z.type === 'charging').length, 0.5);
-const holders = mkInst('#1d4ed8', slotsAll.filter(o => o.z.type !== 'charging' && o.s.role !== 'broken').length, 0.25);
-const brokenH = mkInst('#ff5d6c', slotsAll.filter(o => o.s.role === 'broken').length, 0.45);
-const rails = mkInst('#2a2f37', D.parking_zones.filter(z => z.rack).length, 0.05);
 const pinGeo = new THREE.CylinderGeometry(0.9, 0.9, 1, 12), ballGeo = new THREE.SphereGeometry(1, 18, 14);
 const pins = new THREE.Group(); scene.add(pins);
 D.parking_zones.forEach(z => {
@@ -387,30 +372,19 @@ D.parking_zones.forEach(z => {
 });
 const tmp = new THREE.Object3D();
 function updateRacks() {
-  let a = 0, b = 0, c = 0, r = 0;
+  let a = 0;
   D.parking_zones.forEach(z => {
     if (!z.rack) return;
     const yaw = Math.atan2(z.rack.out[1], z.rack.out[0]);
     const base = (s) => zw(s.xy[0], s.xy[1]);
+    if (z.type !== 'charging') return;
     z.slots.forEach(s => {
       const back = [s.xy[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.1), s.xy[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.1)];
-      if (z.type === 'charging') {
-        tmp.position.copy(V3(back[0], back[1], base(s) + 0.6)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.16, 1.2, 0.34);
-        tmp.updateMatrix(); stands.setMatrixAt(a++, tmp.matrix);
-      } else {
-        const p = [s.xy[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.45), s.xy[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.45)];
-        tmp.position.copy(V3(p[0], p[1], base(s) + 0.08)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.62, 0.16, 0.18);
-        tmp.updateMatrix();
-        if (s.role === 'broken') brokenH.setMatrixAt(c++, tmp.matrix); else holders.setMatrixAt(b++, tmp.matrix);
-      }
+      tmp.position.copy(V3(back[0], back[1], base(s) + 0.6)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.16, 1.2, 0.34);
+      tmp.updateMatrix(); stands.setMatrixAt(a++, tmp.matrix);
     });
-    if (z.type !== 'charging') {
-      const k = z.rack.center, bk = [k[0] + z.rack.out[0] * (z.rack.depth / 2 - 0.12), k[1] + z.rack.out[1] * (z.rack.depth / 2 - 0.12)];
-      tmp.position.copy(V3(bk[0], bk[1], zw(...k) + 0.35)); tmp.rotation.set(0, yaw, 0); tmp.scale.set(0.25, 0.7, z.rack.length + 0.2);
-      tmp.updateMatrix(); rails.setMatrixAt(r++, tmp.matrix);
-    }
   });
-  [stands, holders, brokenH, rails].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  stands.instanceMatrix.needsUpdate = true;
   pins.children.forEach(grp => {
     const z = grp.userData.z, k = z.rack.center, ch = z.type === 'charging', h = ch ? 26 : 18;
     const y0 = zw(...k);
@@ -571,7 +545,7 @@ $('tExag').addEventListener('input', e => { EXAG = +e.target.value; $('oExag').t
 $('tNames').addEventListener('change', e => { showNames = e.target.checked; placeLabels(); });
 $('tPark').addEventListener('change', e => {
   opts.park = e.target.checked; drawGround(opts); groundTex.needsUpdate = true;
-  holders.visible = brokenH.visible = rails.visible = opts.park;
+  
   pins.children.forEach(grp => { if (grp.userData.z.type !== 'charging') grp.visible = opts.park; });
   placeLabels();
 });

@@ -21,6 +21,7 @@ from std_msgs.msg import String
 from kickboard_interfaces.action import CollectScooter, GoToPose, LoadScooter
 from kickboard_interfaces.msg import RobotStatus, TagDetectionArray
 
+from .collector_logic import scooter_from_face, split_tag_id
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
 from .motion import quat_from_yaw, yaw_from_quat
 
@@ -51,7 +52,7 @@ class Collector(Node):
 
         self.cb = ReentrantCallbackGroup()
         self.pose = PoseTracker(self)
-        self.dets = {}            # tag id -> (t, TagDetection)
+        self.dets = {}            # 킥보드(기본) tag id -> (t, TagDetection, 면 번호)
         self.load_count = 0
         self.create_subscription(TagDetectionArray, '/tag_detections', self.on_dets, 10, callback_group=self.cb)
         self.create_subscription(RobotStatus, '/robot_status',
@@ -68,12 +69,17 @@ class Collector(Node):
     def on_dets(self, msg):
         t = now_sec(self)
         for d in msg.detections:
-            self.dets[d.id] = (t, d)
+            base, face = split_tag_id(d.id)      # 면마다 ID 가 다름 (기본 + 150 x 면) -> 킥보드 ID 로 모음
+            self.dets[base] = (t, d, face)
 
     def fresh(self, tag):
+        e = self.fresh_face(tag)
+        return e[0] if e else None
+
+    def fresh_face(self, tag):
         e = self.dets.get(tag)
         if e and now_sec(self) - e[0] <= self.get_parameter('detection_max_age_sec').value:
-            return e[1]
+            return e[1], e[2]
         return None
 
     def twist(self, v=0.0, w=0.0):
@@ -167,14 +173,15 @@ class Collector(Node):
         #    넘어진 기둥까지 피한다. 로봇팔은 손목을 돌려 맞추므로 어느 방향에서 다가가도 된다.
         self.fb(gh, 'ALIGNING')
         dist = self.get_parameter('align_distance').value
-        half = self.get_parameter('scooter_half_depth').value
         centers = []
 
         def collect():
-            d = self.fresh(tag)
-            if d is not None:
+            e = self.fresh_face(tag)
+            if e is not None:
+                d, face = e
                 ty = yaw_from_quat(d.pose.orientation)
-                centers.append((d.pose.position.x - half * math.cos(ty), d.pose.position.y - half * math.sin(ty), ty))
+                # 면 번호를 알면 면 -> 중심 거리(앞뒤 0.30, 옆 0.085)와 킥보드 진행 방향을 정확히 안다
+                centers.append(scooter_from_face(d.pose.position.x, d.pose.position.y, ty, face))
 
         t0 = now_sec(self)
         while now_sec(self) - t0 < 1.0:              # 1초 모아서 평균 (검출 노이즈)

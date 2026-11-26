@@ -8,7 +8,7 @@ based_on: [s1_single, s10_road_collect]
 situation: "수업 시간 직전 공대1호관(404)과 IT대학5호관(415) 출입구 앞에 킥보드가 1대씩 세워져 출입을 막는다."
 mission: "출입구 앞 킥보드를 수거해 각 건물에서 가장 가까운 일반 주차구역에 정렬한다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 2, dest: general, zone: P24, reasons: ["불법 주차"], hint: "P24 401 공대2호관 인근 (91 m)"}
+  - {id: 1, order: 2, dest: general, zone: P33, reasons: ["불법 주차"], hint: "P33 공대9호관 (88 m)"}
   - {id: 2, order: 1, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (88 m)"}
 pass_criteria:
   - "일반 주차구역 슬롯: #1,2 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
@@ -16,5 +16,5 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: -192.89, y: -317.82, yaw_deg: 126.9, battery_pct: 58, place: entrance, where: "404 공대1호관 출입구 앞"}
-  - {id: 2, x: 73.91, y: -276.68, yaw_deg: -158.3, battery_pct: 66, place: entrance, where: "415 IT대학5호관 출입구 앞"}
+  - {id: 1, x: -193.89, y: -317.91, yaw_deg: -53.1, battery_pct: 58, place: entrance, where: "404 공대1호관 출입구 앞"}
+  - {id: 2, x: 73.86, y: -276.97, yaw_deg: 21.9, battery_pct: 66, place: entrance, where: "415 IT대학5호관 출입구 앞"}

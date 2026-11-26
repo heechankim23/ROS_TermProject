@@ -4,60 +4,67 @@ mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: -166.229, y: -337.881, z: 0.1, yaw_deg: 269.0}
+robot_spawn: {x: 385.746, y: -118.326, z: 0.1, yaw_deg: 69.3}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: -166.25, y: -339.021, yaw_deg: 89.0}
+  tag_pose: {x: 386.149, y: -117.26, yaw_deg: -110.7}
   dock_distance: 1.14
   pre_dock_distance: 4.44
-  station: {model: scootover_robot_station, x: -166.205, y: -336.582, yaw_deg: -91.0}
+  station: {model: scootover_robot_station, x: 385.286, y: -119.542, yaw_deg: 69.3}
 parking_zones:
-- name: P24
-  site: 401 공대2호관 인근
+- name: P17
+  site: 304 제4합동강의동 인근
   origin: image
   polygon:
-  - [-187.1, -238.6]
-  - [-186.9, -269.1]
-  - [-106.2, -273.7]
-  - [-103.8, -236.6]
-  rack: {x: -144.25, y: -240.73, yaw_deg: 178.7, length: 7.0, road: service}
-  robot_access: {x: -144.28, y: -242.48, yaw_deg: 178.7}
+  - [469.1, -9.4]
+  - [461.3, -9.4]
+  - [412.3, -113.2]
+  - [412.3, -122.5]
+  - [456.7, -148.6]
+  - [463.2, -148.6]
+  - [492.9, -87.4]
+  - [510.9, -38.2]
+  - [510.8, -30.2]
+  rack: {x: 468.85, y: -66.16, yaw_deg: 149.8, length: 7.0, road: service}
+  robot_access: {x: 467.97, y: -67.67, yaw_deg: 149.8}
   slots:
-  - {id: P24-01, x: -141.1, y: -240.8, z: -10.64, yaw_deg: 88.7, role: normal}
-  - {id: P24-02, x: -141.8, y: -240.79, z: -10.65, yaw_deg: 88.7, role: normal}
-  - {id: P24-03, x: -142.5, y: -240.77, z: -10.65, yaw_deg: 88.7, role: normal}
-  - {id: P24-04, x: -143.2, y: -240.75, z: -10.65, yaw_deg: 88.7, role: normal}
-  - {id: P24-05, x: -143.9, y: -240.74, z: -10.66, yaw_deg: 88.7, role: normal}
-  - {id: P24-06, x: -144.6, y: -240.72, z: -10.66, yaw_deg: 88.7, role: normal}
-  - {id: P24-07, x: -145.3, y: -240.71, z: -10.66, yaw_deg: 88.7, role: normal}
-  - {id: P24-08, x: -145.99, y: -240.69, z: -10.67, yaw_deg: 88.7, role: normal}
-  - {id: P24-09, x: -146.69, y: -240.68, z: -10.67, yaw_deg: -91.3, role: broken}
-  - {id: P24-10, x: -147.39, y: -240.66, z: -10.68, yaw_deg: -91.3, role: broken}
-- name: P31
-  site: 407 화학관 인근
+  - {id: P17-01, x: 471.57, y: -67.75, z: -5.13, yaw_deg: 59.8, role: normal}
+  - {id: P17-02, x: 470.96, y: -67.4, z: -5.12, yaw_deg: 59.8, role: normal}
+  - {id: P17-03, x: 470.36, y: -67.04, z: -5.11, yaw_deg: 59.8, role: normal}
+  - {id: P17-04, x: 469.75, y: -66.69, z: -5.1, yaw_deg: 59.8, role: normal}
+  - {id: P17-05, x: 469.15, y: -66.34, z: -5.09, yaw_deg: 59.8, role: normal}
+  - {id: P17-06, x: 468.54, y: -65.99, z: -5.08, yaw_deg: 59.8, role: normal}
+  - {id: P17-07, x: 467.94, y: -65.63, z: -5.07, yaw_deg: 59.8, role: normal}
+  - {id: P17-08, x: 467.33, y: -65.28, z: -5.06, yaw_deg: 59.8, role: normal}
+  - {id: P17-09, x: 466.73, y: -64.93, z: -5.05, yaw_deg: -120.2, role: broken}
+  - {id: P17-10, x: 466.13, y: -64.58, z: -5.05, yaw_deg: -120.2, role: broken}
+- name: P18
+  site: 305 복지관 인근
   origin: image
   polygon:
-  - [-152.4, -434.5]
-  - [-154.8, -479.5]
-  - [-110.5, -483.2]
-  - [-109.4, -434.1]
-  rack: {x: -131.09, y: -457.96, yaw_deg: -1.3, length: 7.0, road: service}
-  robot_access: {x: -131.05, y: -456.21, yaw_deg: -1.3}
+  - [300.3, -91.6]
+  - [281.0, -138.1]
+  - [322.7, -161.6]
+  - [329.2, -161.6]
+  - [351.1, -112.4]
+  - [308.1, -91.5]
+  rack: {x: 312.3, y: -139.41, yaw_deg: -27.2, length: 7.0, road: service}
+  robot_access: {x: 311.5, y: -140.96, yaw_deg: -27.2}
   slots:
-  - {id: P31-01, x: -134.24, y: -457.89, z: -10.11, yaw_deg: -91.3, role: normal}
-  - {id: P31-02, x: -133.54, y: -457.91, z: -10.1, yaw_deg: -91.3, role: normal}
-  - {id: P31-03, x: -132.84, y: -457.92, z: -10.09, yaw_deg: -91.3, role: normal}
-  - {id: P31-04, x: -132.14, y: -457.94, z: -10.08, yaw_deg: -91.3, role: normal}
-  - {id: P31-05, x: -131.44, y: -457.95, z: -10.06, yaw_deg: -91.3, role: normal}
-  - {id: P31-06, x: -130.74, y: -457.97, z: -10.05, yaw_deg: -91.3, role: normal}
-  - {id: P31-07, x: -130.04, y: -457.99, z: -10.04, yaw_deg: -91.3, role: normal}
-  - {id: P31-08, x: -129.34, y: -458.0, z: -10.03, yaw_deg: -91.3, role: normal}
-  - {id: P31-09, x: -128.64, y: -458.02, z: -10.01, yaw_deg: 88.7, role: broken}
-  - {id: P31-10, x: -127.94, y: -458.03, z: -10.0, yaw_deg: 88.7, role: broken}
+  - {id: P18-01, x: 309.5, y: -137.97, z: -5.32, yaw_deg: 62.8, role: normal}
+  - {id: P18-02, x: 310.12, y: -138.29, z: -5.3, yaw_deg: 62.8, role: normal}
+  - {id: P18-03, x: 310.74, y: -138.61, z: -5.27, yaw_deg: 62.8, role: normal}
+  - {id: P18-04, x: 311.37, y: -138.93, z: -5.24, yaw_deg: 62.8, role: normal}
+  - {id: P18-05, x: 311.99, y: -139.25, z: -5.21, yaw_deg: 62.8, role: normal}
+  - {id: P18-06, x: 312.61, y: -139.57, z: -5.18, yaw_deg: 62.8, role: normal}
+  - {id: P18-07, x: 313.23, y: -139.89, z: -5.14, yaw_deg: 62.8, role: normal}
+  - {id: P18-08, x: 313.86, y: -140.21, z: -5.11, yaw_deg: 62.8, role: normal}
+  - {id: P18-09, x: 314.48, y: -140.53, z: -5.07, yaw_deg: -117.2, role: broken}
+  - {id: P18-10, x: 315.1, y: -140.85, z: -5.04, yaw_deg: -117.2, role: broken}
 charging_zones: []
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

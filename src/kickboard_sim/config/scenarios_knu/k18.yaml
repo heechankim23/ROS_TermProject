@@ -33,5 +33,5 @@ scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|sta
   - {id: 6, x: 132.274, y: -203.18, yaw_deg: 51.8, battery_pct: 68, slot: P21-06, place: slot, where: "P21 415 IT대학5호관 인근 06번 칸"}
   - {id: 7, x: 132.824, y: -203.613, yaw_deg: 51.8, battery_pct: 71, slot: P21-07, place: slot, where: "P21 415 IT대학5호관 인근 07번 칸"}
   - {id: 8, x: 133.375, y: -204.045, yaw_deg: 51.8, battery_pct: 74, slot: P21-08, place: slot, where: "P21 415 IT대학5호관 인근 08번 칸"}
-  - {id: 9, x: 82.69, y: -281.0, yaw_deg: 55.0, battery_pct: 63, place: walkway, where: "IT대학5호관 앞 보행로"}
-  - {id: 10, x: 8.02, y: -232.33, yaw_deg: -134.5, battery_pct: 71, place: walkway, where: "IT대학4호관 앞 보행로"}
+  - {id: 9, x: 82.69, y: -281.0, yaw_deg: -125.0, battery_pct: 63, place: walkway, where: "IT대학5호관 앞 보행로"}
+  - {id: 10, x: 8.02, y: -232.33, yaw_deg: 45.5, battery_pct: 71, place: walkway, where: "IT대학4호관 앞 보행로"}

@@ -8,6 +8,7 @@ Costmap
     d < inflate   (로봇을 덮는 원 0.95 m)  -> 가까울수록 비쌈 (그래야 제자리 회전해도 안 부딪힘)
 A* (8방향) 로 경로를 찾고, 보이는 곳까지 건너뛰어(line of sight) 꺾임을 줄인다.
 """
+import copy
 import heapq
 import math
 import warnings
@@ -66,6 +67,13 @@ class Costmap:
             return self.distance(t) >= clearance
         self.spot_ok(self.x0, self.y0, t, clearance, keep_clearance)       # 캐시 갱신
         return (self._dist_phys >= clearance) & (self._dist_keep >= keep_clearance)
+
+    def snapshot(self):
+        """계획용 복사본: 잠금 밖에서 계획하는 동안 라이다 갱신(seen)이 계속돼도 영향받지 않게"""
+        c = copy.copy(self)
+        c.seen = self.seen.copy()
+        c._dist = None
+        return c
 
     @classmethod
     def from_occupancy(cls, omap, **kw):

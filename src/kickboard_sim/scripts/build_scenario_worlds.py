@@ -36,9 +36,8 @@ MARGIN = 40.0
 
 
 
-# 건물 보이는 크기 (로봇·킥보드와의 화면 비율용, 주행에는 영향 없음)
-BLD_H_SCALE, BLD_H_MIN, BLD_H_MAX = 0.35, 2.5, 6.0
-BLD_XY_SCALE = 0.8
+# 건물 보이는 높이 (로봇·킥보드와의 화면 비율용). 바닥 윤곽은 줄이지 않는다: 보이는 벽 = 주행·라이다 지도의 벽
+BLD_H_SCALE, BLD_H_MIN, BLD_H_MAX = 0.45, 3.2, 8.0
 
 def setup():
     L = K.load_layers()
@@ -56,6 +55,7 @@ def setup():
     dock0 = K.place_dock(L, g, M, clear)
     T.datum = float(T.elev(*dock0['dock']))
     zones = K.build_zones(L, g, M, clear)
+    K.trim_buildings(L)                       # 배치는 원본 외곽선으로, 메시·지도는 길을 비운 외곽선으로
     return L, bounds, T, g, M, clear, zones
 
 
@@ -127,13 +127,9 @@ def write_meshes(L, T, sid, zones, bbox, gbounds):
         p = b['poly']
         if p[:, 0].max() < x0 or p[:, 0].min() > x1 or p[:, 1].max() < y0 or p[:, 1].min() > y1:
             continue
-        # 화면 비율: 실제 크기 그대로면 로봇(1.7 m)·킥보드(1.1 m)에 비해 건물이 너무 커 보여서
-        # 높이를 낮추고(실제의 BLD_H_SCALE, BLD_H_MIN~BLD_H_MAX m) 바닥 윤곽도 중심 쪽으로 줄인다.
-        # 주행·라이다는 2D 지도(원래 윤곽)를 쓰므로 로봇 경로는 그대로이고 보이는 모습만 바뀐다.
-        c = p.mean(axis=0)
-        ps = c + (p - c) * BLD_XY_SCALE
+        # 높이만 낮춘다 (실제의 BLD_H_SCALE, BLD_H_MIN~BLD_H_MAX m)
         h = min(max(b['height'] * BLD_H_SCALE, BLD_H_MIN), BLD_H_MAX)
-        obj.prism(f'zone{b["zone"]}', ps, -0.5, h, roof_mat=f'roof{b["zone"]}')
+        obj.prism(f'zone{b["zone"]}', p, -0.5, h, roof_mat=f'roof{b["zone"]}')
         nb += 1
     mats = {}
     for k, (_, _, col) in K.ZONES.items():
@@ -153,16 +149,7 @@ def write_meshes(L, T, sid, zones, bbox, gbounds):
 
 def write_world(sid, name, zones, dock, bbox):
     x0, y0, x1, y1 = bbox
-    cols = []
-    for z in zones:
-        r = z['rack']
-        if z['type'] == 'charging':                 # Kickspot 모델이 충돌체를 가짐
-            continue
-        c = r['center']
-        cols.append(f'        <collision name="{z["id"]}_rack"><pose>{c[0]:.3f} {c[1]:.3f} 0.4 0 0 {r["yaw"]:.4f}</pose>'
-                    f'<geometry><box><size>{r["length"] + 0.2:.2f} 0.3 0.8</size></box></geometry></collision>')
     bx, by = dock['body']
-    nl = '\n'
     kicks = K.kickspot_includes(zones)
     sdf = f'''<?xml version="1.0"?>
 <!-- 시나리오 {sid} 전용 작은 캠퍼스 ({x1 - x0:.0f} x {y1 - y0:.0f} m). scripts/build_scenario_worlds.py 가 만든 파일.
@@ -209,7 +196,6 @@ def write_world(sid, name, zones, dock, bbox):
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://{K.NAME}/meshes/racks_{sid}.obj</uri></mesh></geometry></visual>
-{nl.join(cols)}
       </link>
     </model>
 {kicks}

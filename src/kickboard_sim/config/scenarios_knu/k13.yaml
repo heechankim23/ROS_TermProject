@@ -5,17 +5,17 @@ id: k13
 category: "C 수용량·적재량"
 map: knu_campus_flat
 based_on: [s9_drop_sites]
-situation: "모든 충전 주차구역의 스탠드를 5칸으로 줄인다. 가장 가까운 C1 중앙도서관 앞은 이미 4대가 충전 중이다. 도서관 주변에서 배터리 부족 킥보드 4대가 발생한다."
-mission: "C1 에 1대만 꽂고, 나머지 3대는 각 킥보드에서 다음으로 가까운 빈 충전구역(C4 글로벌플라자 광장, C3 일청담–사범대 사이)으로 보낸다."
+situation: "모든 충전 주차구역의 스탠드를 5칸으로 줄인다. 가장 가까운 C4 글로벌플라자 광장은 이미 4대가 충전 중이다. 도서관 주변에서 배터리 부족 킥보드 4대가 발생한다."
+mission: "C4 에 1대만 꽂고, 나머지 3대는 각 킥보드에서 다음으로 가까운 빈 충전구역(C5 인문대 쪽 등)으로 보낸다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
   - {id: 1, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
   - {id: 2, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
   - {id: 3, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
   - {id: 4, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
-  - {id: 5, order: 2, dest: charging, zone: C4, reasons: ["불법 주차", "배터리 부족"], hint: "C4 글로벌플라자 광장 (136 m), 가장 가까운 C1 은 자리 없음"}
-  - {id: 6, order: 1, dest: charging, zone: C1, reasons: ["불법 주차", "배터리 부족"], hint: "C1 중앙도서관 앞 (66 m)"}
-  - {id: 7, order: 3, dest: charging, zone: C3, reasons: ["불법 주차", "배터리 부족"], hint: "C3 일청담–사범대 사이 (214 m), 가장 가까운 C1 은 자리 없음"}
-  - {id: 8, order: 4, dest: charging, zone: C4, reasons: ["불법 주차", "배터리 부족"], hint: "C4 글로벌플라자 광장 (165 m), 가장 가까운 C1 은 자리 없음"}
+  - {id: 5, order: 2, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (215 m), 가장 가까운 C4 은 자리 없음"}
+  - {id: 6, order: 1, dest: charging, zone: C4, reasons: ["불법 주차", "배터리 부족"], hint: "C4 글로벌플라자 광장 (127 m)"}
+  - {id: 7, order: 3, dest: charging, zone: C2, reasons: ["불법 주차", "배터리 부족"], hint: "C2 편의점 인근 (복지관) (268 m), 가장 가까운 C4 은 자리 없음"}
+  - {id: 8, order: 4, dest: charging, zone: C5, reasons: ["불법 주차", "배터리 부족"], hint: "C5 인문대 쪽 (280 m), 가장 가까운 C4 은 자리 없음"}
 pass_criteria:
   - "충전 주차구역: #5,6,7,8 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
   - "조치 없음: #1,2,3,4 → 수거하지 않음 (위치 변화 0.2 m 이하)"
@@ -24,11 +24,11 @@ pass_criteria:
 robot: {initial_battery_pct: 100, capacity: 2}
 overrides: {charging_capacity: 5}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 200.540, y: 132.240, yaw_deg: 176.5, battery_pct: 25, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
-  - {id: 2, x: 200.580, y: 132.860, yaw_deg: 176.5, battery_pct: 30, slot: C1-02, charging: true, place: slot, where: "C1 중앙도서관 앞 02번 칸"}
-  - {id: 3, x: 200.620, y: 133.480, yaw_deg: 176.5, battery_pct: 35, slot: C1-03, charging: true, place: slot, where: "C1 중앙도서관 앞 03번 칸"}
-  - {id: 4, x: 200.660, y: 134.100, yaw_deg: 176.5, battery_pct: 40, slot: C1-04, charging: true, place: slot, where: "C1 중앙도서관 앞 04번 칸"}
-  - {id: 5, x: 203.1, y: 134.63, yaw_deg: -112.7, battery_pct: 9, place: walkway, where: "도서관 앞 보행로"}
-  - {id: 6, x: 141.71, y: 105.76, yaw_deg: -39.6, battery_pct: 11, place: lawn, where: "도서관 앞 잔디"}
-  - {id: 7, x: 298.37, y: 90.4, yaw_deg: 126.6, battery_pct: 6, place: walkway, where: "정보화본부 앞 보행로"}
-  - {id: 8, x: 258.63, y: 190.4, yaw_deg: 121.8, battery_pct: 13, place: entrance, where: "116 종합정보센터 출입구 앞"}
+  - {id: 1, x: 93.028, y: 218.34, yaw_deg: -91.1, battery_pct: 25, slot: C4-01, charging: true, place: slot, where: "C4 글로벌플라자 광장 01번 칸"}
+  - {id: 2, x: 93.648, y: 218.328, yaw_deg: -91.1, battery_pct: 30, slot: C4-02, charging: true, place: slot, where: "C4 글로벌플라자 광장 02번 칸"}
+  - {id: 3, x: 94.268, y: 218.316, yaw_deg: -91.1, battery_pct: 35, slot: C4-03, charging: true, place: slot, where: "C4 글로벌플라자 광장 03번 칸"}
+  - {id: 4, x: 94.888, y: 218.305, yaw_deg: -91.1, battery_pct: 40, slot: C4-04, charging: true, place: slot, where: "C4 글로벌플라자 광장 04번 칸"}
+  - {id: 5, x: 203.1, y: 134.63, yaw_deg: 67.3, battery_pct: 9, place: walkway, where: "도서관 앞 보행로"}
+  - {id: 6, x: 144.82, y: 101.14, yaw_deg: -35.2, battery_pct: 11, place: lawn, where: "도서관 앞 잔디"}
+  - {id: 7, x: 308.9, y: 84.64, yaw_deg: -28.3, battery_pct: 6, place: walkway, where: "정보화본부 앞 보행로"}
+  - {id: 8, x: 258.07, y: 189.57, yaw_deg: -8.8, battery_pct: 13, place: entrance, where: "116 종합정보센터 출입구 앞"}

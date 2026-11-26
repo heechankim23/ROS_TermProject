@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- 시나리오 k22 전용 작은 캠퍼스 (348 x 360 m). scripts/build_scenario_worlds.py 가 만든 파일.
+<!-- 시나리오 k22 전용 작은 캠퍼스 (244 x 360 m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/knu_k22.yaml -->
 <sdf version="1.9">
   <world name="knu_k22">
@@ -28,7 +28,7 @@
     <model name="terrain">
       <static>true</static>
       <link name="link">
-        <collision name="c"><pose>66.0 80.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>388 400</size></plane></geometry></collision>
+        <collision name="c"><pose>14.0 80.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>284 400</size></plane></geometry></collision>
         <visual name="v"><pose>0 0 0.005 0 0 0</pose><geometry><mesh><uri>model://knu_campus/meshes/terrain_k22.obj</uri></mesh></geometry></visual>
       </link>
     </model>
@@ -43,12 +43,8 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k22.obj</uri></mesh></geometry></visual>
-        <collision name="P13_rack"><pose>-68.094 -10.548 0.4 0 0 -0.2554</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P15_rack"><pose>56.525 -61.553 0.4 0 0 -0.1103</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
-    <include><uri>model://kickspot_4</uri><name>C1_kickspot_1</name><pose>200.181 133.193 0.000 0 0 3.0803</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C1_kickspot_2</name><pose>200.370 136.287 0.000 0 0 3.0803</pose></include>
     <include><uri>model://kickspot_4</uri><name>C4_kickspot_1</name><pose>93.950 217.902 0.000 0 0 -1.5899</pose></include>
     <include><uri>model://kickspot_4</uri><name>C4_kickspot_2</name><pose>97.050 217.843 0.000 0 0 -1.5899</pose></include>
     <include><uri>model://kickspot_4</uri><name>C5_kickspot_1</name><pose>-9.034 109.944 0.000 0 0 1.9138</pose></include>

@@ -8,14 +8,14 @@ based_on: [s6_verify_fail]
 situation: "대운동장 옆 잔디에 며칠째 같은 킥보드가 있다는 방치 신고가 들어온다. 펌웨어 보고는 끊겨 있었고(통신 불량), 로봇이 도착하면 잠금장치 고장이 확인된다."
 mission: "신고 위치로 가서 카메라로 확인하고, 고장으로 판정해 고장 분류 칸으로 옮긴다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 1, dest: broken, zone: P28, reasons: ["신고 접수", "고장", "불법 주차"], hint: "P28 214 청룡관 인근 (137 m)"}
+  - {id: 1, order: 1, dest: broken, zone: P33, reasons: ["신고 접수", "고장", "불법 주차"], hint: "P33 공대9호관 (122 m)"}
 pass_criteria:
   - "고장 분류 칸 (반대 방향): #1 → 고장 분류 칸에 반대 방향으로 섬"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: -255.25, y: -343.14, yaw_deg: -177.2, battery_pct: 31, fault: lock, silent: true, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 1, x: -259.58, y: -325.28, yaw_deg: 173.0, battery_pct: 31, fault: lock, silent: true, place: lawn, where: "대운동장 옆 잔디"}
 events:
   - {t: 10, id: 1, type: "report", reason: "reported", gps_error_m: 4.0, note: "며칠째 방치돼 있어요"}
   - {t: 10, id: 1, type: "fault", code: "lock", detect: "on_inspect"}

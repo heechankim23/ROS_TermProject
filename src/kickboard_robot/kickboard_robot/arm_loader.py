@@ -120,6 +120,16 @@ def blend(a, b, u):
     return a[0] + u * (b[0] - a[0]), slerp(a[1], b[1], u)
 
 
+def blend_about(corr, pivot, u):
+    """world 에서 왼쪽에 곱하는 보정 corr 를 u(0~1) 만큼만, pivot 점을 중심으로 적용하는 pose.
+    blend(단위, corr, u)는 world 원점 둘레로 돌아 원점에서 먼 곳(캠퍼스 수백 m)에서는 중간 프레임의
+    킥보드가 수십 m 휘어 나갔다. pivot(애니메이션 끝 자리) 기준으로 바꾸면 평행이동이 실제 차이만큼만 남는다.
+    u = 1 이면 corr 와 같다."""
+    local = (corr[0] + corr[1] @ pivot - pivot, corr[1])          # pivot 기준 보정
+    p, rm = blend((np.zeros(3), np.eye(3)), local, u)
+    return pivot + p - rm @ pivot, rm
+
+
 def compose(a, b):
     return a[0] + a[1] @ b[0], a[1] @ b[1]
 
@@ -448,11 +458,15 @@ class ArmLoader(Node):
         end = compose(compose(base, self.rig.root[k1 - 1]), self.rig.scooter[lane][k1 - 1])
         goal = self.target_pose(target, keep)
         corr = compose(goal, inverse(end))                        # world 에서 왼쪽에 곱하는 보정
-        if np.linalg.norm(corr[0][:2]) > 1.5:
-            return (f'하차 목표가 너무 멂 (애니메이션 끝 자리에서 {np.linalg.norm(corr[0][:2]):.2f} m. '
+        # 거리·방향 차이는 끝 자리와 목표를 직접 비교한다. corr 의 평행이동 성분은 world 원점 둘레 회전이 섞여
+        # 원점에서 먼 곳(캠퍼스 280 m)에서는 방향이 8° 만 달라도 37 m 로 나와 멀쩡한 하차를 거절했다 (k04 P24)
+        dist = float(np.linalg.norm((goal[0] - end[0])[:2]))
+        dyaw = abs(wrap(heading(goal[1]) - heading(end[1])))
+        if dist > 1.5 or dyaw > MAX_START_ERR[1]:
+            return (f'하차 목표가 너무 멂 (애니메이션 끝 자리에서 {dist:.2f} m, 방향 차 {math.degrees(dyaw):.0f}°. '
                     f'로봇 앞이 목표 앞 1.12 m 에 서야 함)'), None
         return None, {'sid': sid, 'cargo': name, 'lane': lane, 'range': UNLOAD_RANGE, 'keep': keep,
-                      'base': base, 'corr': corr, 'goal': goal}
+                      'base': base, 'corr': corr, 'pivot': end[0], 'goal': goal}
 
     # ---------------- 주기 처리 ----------------
     def tick(self):
@@ -504,7 +518,7 @@ class ArmLoader(Node):
         # 하차: world = 시작 로봇 · 로봇 이동(애니메이션) · 킥보드(로봇 기준), 목표 쪽 보정을 미는 동안 섞음
         w = compose(compose(a['base'], self.rig.root[k]), anim_rel)
         u = ease((k - PUSH_K) / (LATCH_K - PUSH_K))
-        corr = blend((np.zeros(3), np.eye(3)), a['corr'], u)
+        corr = blend_about(a['corr'], a['pivot'], u)
         updates[a['cargo']] = compose(corr, w)
         self.drive_reverse(a, k)
 

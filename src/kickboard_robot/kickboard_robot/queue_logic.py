@@ -1,6 +1,7 @@
 """F4: 대기열 점수식과 선택 로직 (ROS 의존성 없음 -> 단위 테스트 가능).
 
 S_i = w_r * R_i + w_t * t_i - w_d * d_i
+d_i 는 dist(robot_xy, item) 가 주어지면 실제 주행 경로 길이, 없으면 직선거리.
 """
 import math
 from dataclasses import dataclass, field
@@ -52,9 +53,9 @@ def merge_reason(old, new):
     return new
 
 
-def score(item, now, robot_xy, w):
+def score(item, now, robot_xy, w, dist=None):
     wait = max(0.0, now - item.t_enqueued)
-    d = math.hypot(item.x - robot_xy[0], item.y - robot_xy[1])
+    d = math.hypot(item.x - robot_xy[0], item.y - robot_xy[1]) if dist is None else dist(robot_xy, item)
     return w.w_r * REASON_WEIGHT.get(item.reason, 1.0) + w.w_t * wait - w.w_d * d
 
 
@@ -67,14 +68,14 @@ def starvation_bound(w, d_max):
     return (w.w_r * dr_max + w.w_d * d_max) / w.w_t if w.w_t > 0 else float('inf')
 
 
-def ranked(items, now, robot_xy, w):
+def ranked(items, now, robot_xy, w, dist=None):
     """WAITING 항목을 점수 내림차순으로. 동점이면 먼저 들어온 순."""
     cand = [i for i in items if i.status == WAITING]
-    return sorted(cand, key=lambda i: (-score(i, now, robot_xy, w), i.t_enqueued))
+    return sorted(cand, key=lambda i: (-score(i, now, robot_xy, w, dist), i.t_enqueued))
 
 
-def queue_position(items, item_id, now, robot_xy, w):
-    order = ranked(items, now, robot_xy, w)
+def queue_position(items, item_id, now, robot_xy, w, dist=None):
+    order = ranked(items, now, robot_xy, w, dist)
     for k, it in enumerate(order):
         if it.id == item_id:
             return k + 1

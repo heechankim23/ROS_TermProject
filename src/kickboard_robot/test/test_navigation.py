@@ -282,3 +282,15 @@ def test_kinematic_action_arrives_and_stops(bridge):
         client.destroy()
         driver.destroy_node()
         base.destroy_node()
+
+
+def test_planning_does_not_hold_costmap_lock(bridge, monkeypatch):
+    """계획 중에도 라이다 갱신(cm_lock)이 가능해야 한다: 아니면 TF·스캔 수신이 함께 멈춘다"""
+    from kickboard_robot import nav_bridge as nav
+    from kickboard_robot.planner import Costmap
+    node = bridge
+    node.cm = Costmap(0.0, 0.0, 8.0, 8.0, res=0.25)
+    held = []
+    monkeypatch.setattr(nav, 'plan_path', lambda cm, *a, **k: held.append((node.cm_lock.locked(), cm is node.cm)))
+    node.kin_plan((2.0, 2.0, 0.0), (5.0, 5.0, 0.0), 0.0)
+    assert held == [(False, False)]

@@ -1,5 +1,5 @@
 # 시나리오 k18 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
-# 구역은 이 시나리오에 필요한 4곳만, 로봇 도크는 시나리오 근처 길가.
+# 구역은 이 시나리오에 필요한 3곳만, 로봇 도크는 시나리오 근처 길가.
 mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
@@ -38,31 +38,6 @@ parking_zones:
   - {id: P21-08, x: 133.37, y: -204.05, z: -9.6, yaw_deg: 51.8, role: normal}
   - {id: P21-09, x: 133.92, y: -204.48, z: -9.6, yaw_deg: -128.2, role: broken}
   - {id: P21-10, x: 134.48, y: -204.91, z: -9.61, yaw_deg: -128.2, role: broken}
-- name: P23
-  site: 409 공대3호관 인근
-  origin: image
-  polygon:
-  - [-76.5, -231.1]
-  - [-76.3, -269.5]
-  - [-49.0, -269.3]
-  - [-33.4, -262.5]
-  - [-33.4, -250.6]
-  - [-38.7, -244.0]
-  - [-62.1, -234.9]
-  - [-67.4, -228.4]
-  rack: {x: -58.74, y: -270.22, yaw_deg: -3.0, length: 7.0, road: service}
-  robot_access: {x: -58.83, y: -271.97, yaw_deg: -3.0}
-  slots:
-  - {id: P23-01, x: -61.89, y: -270.05, z: -8.0, yaw_deg: 87.0, role: normal}
-  - {id: P23-02, x: -61.19, y: -270.09, z: -7.96, yaw_deg: 87.0, role: normal}
-  - {id: P23-03, x: -60.49, y: -270.13, z: -7.93, yaw_deg: 87.0, role: normal}
-  - {id: P23-04, x: -59.79, y: -270.16, z: -7.9, yaw_deg: 87.0, role: normal}
-  - {id: P23-05, x: -59.09, y: -270.2, z: -7.87, yaw_deg: 87.0, role: normal}
-  - {id: P23-06, x: -58.39, y: -270.24, z: -7.84, yaw_deg: 87.0, role: normal}
-  - {id: P23-07, x: -57.69, y: -270.27, z: -7.81, yaw_deg: 87.0, role: normal}
-  - {id: P23-08, x: -56.99, y: -270.31, z: -7.78, yaw_deg: 87.0, role: normal}
-  - {id: P23-09, x: -56.29, y: -270.35, z: -7.75, yaw_deg: -93.0, role: broken}
-  - {id: P23-10, x: -55.6, y: -270.38, z: -7.72, yaw_deg: -93.0, role: broken}
 - name: P25
   site: 412 미래창직관 인근
   origin: image
@@ -108,7 +83,7 @@ parking_zones:
   - {id: P26-10, x: 233.93, y: -288.82, z: -6.55, yaw_deg: 53.4, role: broken}
 charging_zones: []
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

@@ -8,8 +8,8 @@ based_on: [s1_single]
 situation: "중앙도서관 앞 보행로와 잔디에 킥보드 3대가 제각각 방향으로 세워져 있다. 넘어진 것은 없고 배터리도 정상이다."
 mission: "3대를 차례로 수거해 가까운 일반 주차구역 슬롯에 같은 방향으로 세운다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 1, dest: general, zone: P08, reasons: ["불법 주차"], hint: "P08 110 정보화본부 인근 (60 m)"}
-  - {id: 2, order: 2, dest: general, zone: P06, reasons: ["불법 주차"], hint: "P06 111 중앙도서관 인근 (160 m)"}
+  - {id: 1, order: 2, dest: general, zone: P08, reasons: ["불법 주차"], hint: "P08 110 정보화본부 인근 (60 m)"}
+  - {id: 2, order: 1, dest: general, zone: P08, reasons: ["불법 주차"], hint: "P08 110 정보화본부 인근 (119 m)"}
   - {id: 3, order: 3, dest: general, zone: P06, reasons: ["불법 주차"], hint: "P06 111 중앙도서관 인근 (31 m)"}
 pass_criteria:
   - "일반 주차구역 슬롯: #1,2,3 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
@@ -17,6 +17,6 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 203.22, y: 136.63, yaw_deg: -87.2, battery_pct: 72, place: walkway, where: "중앙도서관 앞 보행로"}
-  - {id: 2, x: 89.31, y: 104.88, yaw_deg: 170.0, battery_pct: 64, place: lawn, where: "중앙도서관 앞 잔디"}
-  - {id: 3, x: 176.37, y: 206.71, yaw_deg: -155.4, battery_pct: 81, place: walkway, where: "중앙도서관 동쪽 보행로"}
+  - {id: 1, x: 203.22, y: 136.63, yaw_deg: 137.8, battery_pct: 72, place: walkway, where: "중앙도서관 앞 보행로"}
+  - {id: 2, x: 145.62, y: 105.06, yaw_deg: 25.0, battery_pct: 64, place: lawn, where: "중앙도서관 앞 잔디"}
+  - {id: 3, x: 176.37, y: 206.71, yaw_deg: 2.3, battery_pct: 81, place: walkway, where: "중앙도서관 동쪽 보행로"}

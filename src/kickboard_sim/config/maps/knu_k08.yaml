@@ -4,14 +4,14 @@ mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: 340.96, y: -152.945, z: 0.1, yaw_deg: 62.8}
+robot_spawn: {x: 361.453, y: -120.359, z: 0.1, yaw_deg: 249.3}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: 341.481, y: -151.931, yaw_deg: -117.2}
+  tag_pose: {x: 361.05, y: -121.425, yaw_deg: 69.3}
   dock_distance: 1.14
   pre_dock_distance: 4.44
-  station: {model: scootover_robot_station, x: 340.367, y: -154.102, yaw_deg: 62.8}
+  station: {model: scootover_robot_station, x: 361.914, y: -119.143, yaw_deg: -110.7}
 parking_zones:
 - name: P17
   site: 304 제4합동강의동 인근
@@ -109,34 +109,27 @@ charging_zones:
   - {id: C2-06, x: 372.99, y: -177.06, z: -2.3, yaw_deg: 34.6, role: charge}
   - {id: C2-07, x: 373.34, y: -177.57, z: -2.27, yaw_deg: 34.6, role: charge}
   - {id: C2-08, x: 373.69, y: -178.08, z: -2.25, yaw_deg: 34.6, role: charge}
-- name: C3
-  site: 일청담–사범대 사이
+- name: C7
+  site: 테니스장 쪽
   origin: image
   polygon:
-  - [197.6, -117.6]
-  - [197.7, -132.1]
-  - [205.5, -149.3]
-  - [277.2, -179.2]
-  - [303.3, -185.6]
-  - [312.3, -161.7]
-  - [277.1, -138.1]
-  - [282.2, -124.8]
-  - [278.3, -116.9]
-  - [226.1, -93.5]
-  - [217.0, -93.6]
-  rack: {x: 239.0, y: -115.28, yaw_deg: -174.8, length: 6.8, road: footway}
-  robot_access: {x: 239.15, y: -117.02, yaw_deg: -174.8}
+  - [-78.3, -98.6]
+  - [-89.7, -180.8]
+  - [-37.6, -187.0]
+  - [-27.6, -107.4]
+  rack: {x: -33.44, y: -173.76, yaw_deg: -7.5, length: 6.8, road: service}
+  robot_access: {x: -33.67, y: -175.49, yaw_deg: -7.5}
   slots:
-  - {id: C3-01, x: 241.47, y: -115.05, z: -6.71, yaw_deg: 95.2, role: charge}
-  - {id: C3-02, x: 240.85, y: -115.11, z: -6.72, yaw_deg: 95.2, role: charge}
-  - {id: C3-03, x: 240.23, y: -115.16, z: -6.73, yaw_deg: 95.2, role: charge}
-  - {id: C3-04, x: 239.61, y: -115.22, z: -6.75, yaw_deg: 95.2, role: charge}
-  - {id: C3-05, x: 238.38, y: -115.33, z: -6.77, yaw_deg: 95.2, role: charge}
-  - {id: C3-06, x: 237.76, y: -115.39, z: -6.79, yaw_deg: 95.2, role: charge}
-  - {id: C3-07, x: 237.14, y: -115.45, z: -6.8, yaw_deg: 95.2, role: charge}
-  - {id: C3-08, x: 236.53, y: -115.5, z: -6.81, yaw_deg: 95.2, role: charge}
+  - {id: C7-01, x: -35.9, y: -173.43, z: -11.98, yaw_deg: 82.5, role: charge}
+  - {id: C7-02, x: -35.28, y: -173.51, z: -11.95, yaw_deg: 82.5, role: charge}
+  - {id: C7-03, x: -34.67, y: -173.59, z: -11.92, yaw_deg: 82.5, role: charge}
+  - {id: C7-04, x: -34.05, y: -173.68, z: -11.89, yaw_deg: 82.5, role: charge}
+  - {id: C7-05, x: -32.82, y: -173.84, z: -11.83, yaw_deg: 82.5, role: charge}
+  - {id: C7-06, x: -32.21, y: -173.92, z: -11.8, yaw_deg: 82.5, role: charge}
+  - {id: C7-07, x: -31.59, y: -174.0, z: -11.77, yaw_deg: 82.5, role: charge}
+  - {id: C7-08, x: -30.98, y: -174.08, z: -11.73, yaw_deg: 82.5, role: charge}
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

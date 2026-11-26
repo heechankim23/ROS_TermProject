@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- 경북대학교 대구캠퍼스 (평지). scripts/build_knu_campus.py 가 만든 파일 — 직접 고치지 말고 스크립트를 고칠 것.
      world 프레임 = map 프레임 (+x 동, +y 북, 원점 위도 35.8904 경도 128.6103). 맵 설정: config/maps/knu_campus.yaml
-     지형 z 는 로봇 도크(차고 옆) = 0. 주차구역 32곳, 충전 주차구역 8곳.
+     지형 z 는 로봇 도크(차고 옆) = 0. 주차구역 31곳, 충전 주차구역 5곳.
      킥보드는 scooter_fleet_sim 이 시나리오대로 만든다. -->
 <sdf version="1.9">
   <world name="knu_campus_flat">
@@ -50,58 +50,20 @@
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/buildings_flat.obj</uri></mesh></geometry></visual>
       </link>
     </model>
-    <!-- 킥보드 거치대: 일반(보라 레일 + 고장 칸 빨강) / 충전(청록 스탠드 + 파란 P 표지), 출입문 기둥 -->
+    <!-- 출입문 기둥 (일반 주차구역에는 거치대 없음 — 바닥 그림만) -->
     <model name="kickboard_racks">
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_flat.obj</uri></mesh></geometry></visual>
-        <collision name="P01_rack"><pose>246.462 312.663 0.400 0 0 -1.4886</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P02_rack"><pose>115.967 303.376 0.400 0 0 -0.0326</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P03_rack"><pose>167.600 281.016 0.400 0 0 3.0901</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P04_rack"><pose>248.914 273.194 0.400 0 0 -1.5857</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P05_rack"><pose>-81.450 192.094 0.400 0 0 -2.8691</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P06_rack"><pose>207.297 212.685 0.400 0 0 -0.0535</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P07_rack"><pose>-101.049 161.934 0.400 0 0 -1.8339</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P08_rack"><pose>262.508 127.872 0.400 0 0 -1.5623</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P09_rack"><pose>-136.725 97.547 0.400 0 0 2.8962</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P10_rack"><pose>460.838 96.834 0.400 0 0 -1.1477</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P11_rack"><pose>326.677 57.348 0.400 0 0 2.6915</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P12_rack"><pose>428.481 12.042 0.400 0 0 2.6738</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P13_rack"><pose>-68.094 -10.548 0.400 0 0 -0.2554</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P14_rack"><pose>-411.900 -59.312 0.400 0 0 -1.5457</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P15_rack"><pose>56.525 -61.553 0.400 0 0 -0.1103</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P16_rack"><pose>-297.616 -64.201 0.400 0 0 1.5574</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P17_rack"><pose>468.847 -66.162 0.400 0 0 2.6140</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P18_rack"><pose>312.299 -139.407 0.400 0 0 -0.4744</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P19_rack"><pose>-226.817 -126.886 0.400 0 0 0.2226</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P20_rack"><pose>-504.646 -149.688 0.400 0 0 -3.1049</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P21_rack"><pose>131.999 -202.964 0.400 0 0 -0.6664</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P22_rack"><pose>-406.261 -195.135 0.400 0 0 -0.7706</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P23_rack"><pose>-58.741 -270.218 0.400 0 0 -0.0526</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P24_rack"><pose>-144.245 -240.731 0.400 0 0 3.1190</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P25_rack"><pose>-9.940 -302.885 0.400 0 0 -1.6093</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P26_rack"><pose>231.399 -286.942 0.400 0 0 -0.6390</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P27_rack"><pose>-453.251 -349.529 0.400 0 0 -0.0210</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P28_rack"><pose>-392.001 -354.255 0.400 0 0 -0.1338</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P29_rack"><pose>135.089 -380.739 0.400 0 0 2.8859</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P30_rack"><pose>57.378 -418.487 0.400 0 0 3.1051</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P31_rack"><pose>-131.093 -457.962 0.400 0 0 -0.0221</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P32_rack"><pose>329.308 -532.615 0.400 0 0 2.9250</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
     <!-- 킥보드 충전구역: Kickspot 4구 x 2 (Blender) -->
-    <include><uri>model://kickspot_4</uri><name>C1_kickspot_1</name><pose>200.181 133.193 0.000 0 0 3.0803</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C1_kickspot_2</name><pose>200.370 136.287 0.000 0 0 3.0803</pose></include>
     <include><uri>model://kickspot_4</uri><name>C2_kickspot_1</name><pose>371.752 -174.527 0.000 0 0 0.6034</pose></include>
     <include><uri>model://kickspot_4</uri><name>C2_kickspot_2</name><pose>373.511 -177.079 0.000 0 0 0.6034</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C3_kickspot_1</name><pose>240.502 -114.718 0.000 0 0 1.6616</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C3_kickspot_2</name><pose>237.414 -114.999 0.000 0 0 1.6616</pose></include>
     <include><uri>model://kickspot_4</uri><name>C4_kickspot_1</name><pose>93.950 217.902 0.000 0 0 -1.5899</pose></include>
     <include><uri>model://kickspot_4</uri><name>C4_kickspot_2</name><pose>97.050 217.843 0.000 0 0 -1.5899</pose></include>
     <include><uri>model://kickspot_4</uri><name>C5_kickspot_1</name><pose>-9.034 109.944 0.000 0 0 1.9138</pose></include>
     <include><uri>model://kickspot_4</uri><name>C5_kickspot_2</name><pose>-11.953 108.901 0.000 0 0 1.9138</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C6_kickspot_1</name><pose>-162.325 -400.080 0.000 0 0 1.5479</pose></include>
-    <include><uri>model://kickspot_4</uri><name>C6_kickspot_2</name><pose>-165.424 -400.009 0.000 0 0 1.5479</pose></include>
     <include><uri>model://kickspot_4</uri><name>C7_kickspot_1</name><pose>-34.918 -173.137 0.000 0 0 1.4395</pose></include>
     <include><uri>model://kickspot_4</uri><name>C7_kickspot_2</name><pose>-31.845 -173.543 0.000 0 0 1.4395</pose></include>
     <include><uri>model://kickspot_4</uri><name>C8_kickspot_1</name><pose>-268.510 -257.860 0.000 0 0 -3.0188</pose></include>

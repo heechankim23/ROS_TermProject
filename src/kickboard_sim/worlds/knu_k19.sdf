@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- 시나리오 k19 전용 작은 캠퍼스 (360 x 220 m). scripts/build_scenario_worlds.py 가 만든 파일.
+<!-- 시나리오 k19 전용 작은 캠퍼스 (360 x 256 m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/knu_k19.yaml -->
 <sdf version="1.9">
   <world name="knu_k19">
@@ -28,7 +28,7 @@
     <model name="terrain">
       <static>true</static>
       <link name="link">
-        <collision name="c"><pose>-4.0 -310.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>400 260</size></plane></geometry></collision>
+        <collision name="c"><pose>-4.0 -292.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>400 296</size></plane></geometry></collision>
         <visual name="v"><pose>0 0 0.005 0 0 0</pose><geometry><mesh><uri>model://knu_campus/meshes/terrain_k19.obj</uri></mesh></geometry></visual>
       </link>
     </model>
@@ -43,10 +43,6 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k19.obj</uri></mesh></geometry></visual>
-        <collision name="P23_rack"><pose>-58.741 -270.218 0.4 0 0 -0.0526</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P24_rack"><pose>-144.245 -240.731 0.4 0 0 3.1190</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P25_rack"><pose>-9.940 -302.885 0.4 0 0 -1.6093</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P29_rack"><pose>135.089 -380.739 0.4 0 0 2.8859</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
 
@@ -54,7 +50,7 @@
     <include>
       <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>-47.090 -271.081 0 0 0 1.5182</pose>
+      <pose>-22.360 -280.275 0 0 0 -1.6130</pose>
     </include>
   </world>
 </sdf>

@@ -14,7 +14,7 @@ expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순
   - {id: 4, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
   - {id: 5, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
   - {id: 6, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
-  - {id: 7, order: 1, dest: general, zone: P18, reasons: ["정렬 불량"], hint: "P18 305 복지관 인근 (4 m)"}
+  - {id: 7, order: 1, dest: general, zone: P18, reasons: ["정렬 불량"], hint: "P18 305 복지관 인근 (6 m)"}
 pass_criteria:
   - "일반 주차구역 슬롯: #7 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
   - "조치 없음: #1,2,3,4,5,6 → 수거하지 않음 (위치 변화 0.2 m 이하)"
@@ -28,4 +28,4 @@ scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|sta
   - {id: 4, x: 311.365, y: -138.928, yaw_deg: 62.8, battery_pct: 76, slot: P18-04, place: slot, where: "P18 305 복지관 인근 04번 칸"}
   - {id: 5, x: 311.988, y: -139.248, yaw_deg: 62.8, battery_pct: 80, slot: P18-05, place: slot, where: "P18 305 복지관 인근 05번 칸"}
   - {id: 6, x: 312.611, y: -139.567, yaw_deg: 62.8, battery_pct: 84, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
-  - {id: 7, x: 308.52, y: -140.95, yaw_deg: -0.8, battery_pct: 69, place: zone_loose, where: "P18 305 복지관 인근 구역 안, 슬롯 밖"}
+  - {id: 7, x: 314.37, y: -144.7, yaw_deg: 145.6, battery_pct: 69, place: zone_loose, where: "P18 305 복지관 인근 구역 안, 슬롯 밖"}

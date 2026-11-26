@@ -10,6 +10,7 @@ planner.Costmap 은 지도 전체를 한 격자로 잡고 A* 를 돈다. 캠퍼�
                  로봇이 움직이면 창을 다시 잡는다 (라이다로 본 장애물 기억은 겹치는 부분만 옮긴다).
 nav_bridge 가 쓰는 Costmap 메서드(update_scan, plan, path_blocked, spot_ok, dist_at ...)를 같은 이름으로 제공한다.
 """
+import copy
 import json
 import math
 import warnings
@@ -22,9 +23,12 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from scipy import ndimage
 
+OFF_ROAD_COST = 5.0          # 큰 경로에서 차도·보행로 밖 1 m 의 비용 (길 = 1)
+
+
 class GridRouter:
     """빈 공간 위 1 m 격자 그래프에서 큰 경로를 찾는다 (scipy C 구현 Dijkstra, 캠퍼스 끝에서 끝까지 1초 안).
-    칸 비용: 도로 1.0, 보행로 1.2, 길이 아닌 곳(광장·잔디) 1.8, 장애물 1.2 m 안이면 x1.5.
+    칸 비용: 도로 1.0, 보행로 1.2, 길이 아닌 곳(광장·잔디) OFF_ROAD_COST = 5 (막지는 않되 길을 따라가게), 장애물 1.2 m 안이면 x1.5.
     여유 거리(clear)가 min_clear 보다 작은 칸은 지나갈 수 없다 (로봇 반폭 + 격자 오차)."""
 
     def __init__(self, clear, ox, oy, res, roads=None, min_clear=0.6, cell=1.0):
@@ -35,7 +39,7 @@ class GridRouter:
         self.ox, self.oy, self.cell = ox, oy, res * f
         self.h, self.w = c.shape
         free = c >= min_clear
-        cost = np.full(c.shape, 1.8)
+        cost = np.full(c.shape, OFF_ROAD_COST)
         if roads is not None:
             cost = np.where(roads[:H, :W].reshape(H // f, f, W // f, f).any(axis=(1, 3)), 1.0, cost)
         cost = np.where(c < 1.2, cost * 1.5, cost)
@@ -80,6 +84,27 @@ class GridRouter:
     def xy(self, k):
         j, i = self.ij[k]
         return (self.ox + (i + 0.5) * self.cell, self.oy + (j + 0.5) * self.cell)
+
+    def distances_from(self, start):
+        """start 에서 모든 칸까지의 큰 경로를 한 번에 푼다 -> length(goal): 그 경로를 따라간 길이(m), 못 가면 None.
+        비용(길 우선)이 가장 낮은 경로의 실제 길이라 nav_bridge 가 가는 거리와 같다"""
+        from scipy.sparse.csgraph import dijkstra
+        ss = self.node(*start)
+        if ss is None:
+            return lambda goal: None
+        dist, pred = dijkstra(self.G, directed=False, indices=ss, return_predecessors=True)
+
+        def length(goal):
+            k = self.node(*goal)
+            if k is None or not np.isfinite(dist[k]):
+                return None
+            total, prev = 0.0, tuple(goal)
+            while k >= 0 and k != ss:
+                p = self.xy(k)
+                total += math.dist(prev, p)
+                prev, k = p, pred[k]
+            return total + math.dist(prev, start)
+        return length
 
     def route(self, start, goal):
         """start -> goal 큰 경로 [(x, y), ...] (start 제외, goal 포함). 못 찾으면 None. 같은 목표면 결과를 재사용"""
@@ -159,6 +184,14 @@ class RollingCostmap:
         self.wc = None
         self.sub = None
         self._probe = None
+
+    def snapshot(self):
+        """계획용 복사본 (Costmap.snapshot 과 같은 뜻). 정적 지도·큰 경로 그래프는 함께 쓴다"""
+        c = copy.copy(self)
+        if self.win is not None:
+            c.win = self.win.snapshot()
+        c._probe = None
+        return c
 
     # ---------- 창 ----------
     def _crop(self, cx, cy, size):

@@ -15,10 +15,16 @@ import json
 import math
 import os
 import random
+import sys
 
 import cv2
 import numpy as np
 from PIL import Image
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                                'kickboard_robot'))
+from kickboard_robot.collector_logic import (ENTRY_DIST, SpotGrid, fill_static, plan_align_spots,  # noqa: E402
+                                             reverse_entry_pose)
 
 PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(PKG, 'config', 'scenarios_knu')
@@ -29,7 +35,7 @@ MAP = json.load(open(os.path.join(PKG, 'maps', 'knu_campus.json')))
 # =============================================================================================
 LOW_BATTERY = 20.0          # 킥보드 배터리 부족 기준 (%)
 FALL_TILT = 45.0            # 넘어짐 기준 (기울기, 도)
-ROBOT_CAPACITY = 4          # 적재함 칸 수
+ROBOT_CAPACITY = 2          # 적재함 칸 수 (SCOOTOVER v19 적재 레인 2개)
 ROBOT_RETURN = 20.0         # 로봇 복귀 배터리 (%)
 DEFAULT_CHARGE_CAP = 8      # 충전 주차구역 스탠드 수 (맵 기본값, 시나리오에서 덮어쓸 수 있음)
 REASONS = {                 # 요청 사유 -> (코드, 표시 이름, 우선순위 가중치)
@@ -106,26 +112,27 @@ def poly_contains(poly, x, y):
 
 
 class NavGrid:
-    """주행 지도(0.25 m) -> 0.5 m 격자. 로봇 중심이 갈 수 있는 곳 = 장애물에서 0.5 m 이상 + 도크와 연결된 영역"""
+    """로봇 중심은 길(주행 지도) 안 0.5 m 이상, 벽·물(라이다 지도)에서 1.2 m 이상이어야 설 수 있다.
+    킥보드는 길 밖(잔디·출입구)에도 놓이지만 로봇이 길에서 팔을 뻗을 수 있어야 한다"""
     def __init__(self):
         meta = {}
         for ln in open(os.path.join(PKG, 'maps', 'knu_campus.yaml')):
             k, _, v = ln.partition(':')
             meta[k.strip()] = v.strip()
-        self.res0 = float(meta['resolution'])
-        ox, oy, _ = json.loads(meta['origin'])
-        img = np.array(Image.open(os.path.join(PKG, 'maps', 'knu_campus.png')))
-        occ = img < 128
-        h, w = occ.shape
-        occ = occ[:h // 2 * 2, :w // 2 * 2].reshape(h // 2, 2, w // 2, 2).any(axis=(1, 3))
-        self.res = self.res0 * 2
-        self.ox, self.oy = ox, oy
-        self.h, self.w = occ.shape
-        self.occ = occ
-        free = (~occ).astype(np.uint8)
-        self.clear = cv2.distanceTransform(free, cv2.DIST_L2, 5) * self.res
-        drive = (self.clear >= 0.5).astype(np.uint8)
-        n, self.lab = cv2.connectedComponents(drive, connectivity=8)
+        self.res = float(meta['resolution'])
+        self.ox, self.oy, _ = json.loads(meta['origin'])
+
+        def clear_of(name):
+            occ = np.array(Image.open(os.path.join(PKG, 'maps', name))) < 128
+            return cv2.distanceTransform((~occ).astype(np.uint8), cv2.DIST_L2, 5) * np.float32(self.res)
+
+        self.road = clear_of('knu_campus.png')            # 길 경계까지
+        self.clear = clear_of('knu_campus_lidar.png')     # 물리 장애물까지
+        self.h, self.w = self.road.shape
+        self.maps = [((np.array(Image.open(os.path.join(PKG, 'maps', n))) < 128), self.ox, self.oy, self.res)
+                     for n in ('knu_campus.png', 'knu_campus_lidar.png')]
+        drive = ((self.road >= 0.6) & (self.clear >= 0.6)).astype(np.uint8)
+        _, self.lab = cv2.connectedComponents(drive, connectivity=8)
         self.dock_lab = self.lab[self.rc(*DOCK)]
 
     def rc(self, x, y):
@@ -137,18 +144,54 @@ class NavGrid:
         return float(self.clear[self.rc(x, y)])
 
     def reachable_access(self, x, y):
-        """킥보드에서 1.2~1.8 m 떨어진 곳 중 로봇이 설 수 있고(여유 1.0 m) 도크와 이어진 자리가 있나"""
+        """킥보드에서 1.2~1.8 m 떨어진 길 위 중 로봇이 설 수 있고 도크와 길로 이어진 자리가 있나"""
         for rad in (1.35, 1.6, 1.8, 1.2):
             for k in range(24):
                 a = 2 * math.pi * k / 24
                 px, py = x + rad * math.cos(a), y + rad * math.sin(a)
                 r, c = self.rc(px, py)
-                if self.clear[r, c] >= 1.0 and self.lab[r, c] == self.dock_lab:
+                if self.road[r, c] >= 0.6 and self.clear[r, c] >= 1.2 and self.lab[r, c] == self.dock_lab:
                     return (round(px, 2), round(py, 2))
+        return None
+
+    def loadable(self, x, y, yaw):
+        """로봇의 후진 적재 자리(collector 와 같은 검사)가 양쪽 레인 모두 길 위에 나오는가"""
+        grid = SpotGrid(x, y, half=6.0, res=0.1)
+        fill_static(grid, *self.maps)
+        for lane in (0, 1):
+            px, py, _ = reverse_entry_pose(x, y, yaw, lane)
+            if self.lab[self.rc(px, py)] != self.dock_lab:
+                return False
+            if not plan_align_spots(grid, x, y, (px, py), ENTRY_DIST, [0.0, 0.15, 0.30], inscribed=0.8,
+                                    keep_clear=0.5, entry=(yaw, lane))[0]:
+                return False
+        return True
+
+    def fit_yaw(self, x, y, yaw):
+        """원하는 방향에 가장 가까운, 실을 수 있는 방향. 없으면 None"""
+        for k in range(13):
+            for sgn in ((1,) if k in (0, 12) else (1, -1)):
+                a = math.radians(round(math.degrees(yaw + sgn * math.radians(15 * k)), 1))
+                if self.loadable(round(float(x), 2), round(float(y), 2), a):
+                    return math.atan2(math.sin(a), math.cos(a))
         return None
 
 
 NAV = NavGrid()
+WALL_GAP = 2.0              # 수거할 킥보드와 벽·물·거치대 사이 최소 거리 (m)
+
+
+def on_path(x, y):
+    """(x, y) 가 그려진 차도·보행로 위인가 (길가 여유는 제외)"""
+    p = np.array((x, y))
+    for r in ROADS:
+        half = {'service': 3.0, 'residential': 3.0, 'pedestrian': 2.0}.get(r['kind'], 1.5)
+        pts = np.array(r['pts'])
+        a, d = pts[:-1], np.diff(pts, axis=0)
+        t = np.clip(((p - a) * d).sum(1) / np.maximum((d * d).sum(1), 1e-9), 0, 1)
+        if np.min(np.hypot(*(a + d * t[:, None] - p).T)) < half:
+            return True
+    return False
 
 
 def seg_points(kinds, step=2.0):
@@ -194,16 +237,17 @@ class Placer:
         self.rng = random.Random(seed)
         self.used = []
 
-    def ok(self, x, y, min_gap=1.1):
+    def ok(self, x, y, min_gap=3.5):
+        """길 위·길가에 놓는 킥보드: 벽에서 WALL_GAP, 다른 킥보드에서 min_gap 이상 (로봇 1.94 x 1.05 m 가 맞출 공간)"""
         if not poly_contains(MAP['boundary'], x, y):
             return False
-        if NAV.clearance(x, y) < 0.45:
+        if NAV.clearance(x, y) < WALL_GAP:
             return False
         return all(math.hypot(x - u, y - v) >= min_gap for u, v in self.used)
 
-    def take(self, x, y, yaw, place, where, min_gap=1.1):
+    def take(self, x, y, yaw, place, where):
         self.used.append((x, y))
-        return {'x': round(float(x), 2), 'y': round(float(y), 2), 'yaw_deg': round(math.degrees(yaw) % 360 - 180, 1),
+        return {'x': round(float(x), 2), 'y': round(float(y), 2), 'yaw_deg': round((math.degrees(yaw) + 180) % 360 - 180, 1),
                 'place': place, 'where': where}
 
     def _near(self, pts, anchor, rmax):
@@ -228,10 +272,23 @@ class Placer:
             q = poly[np.argmin(np.hypot(*(poly - p).T))]
             v = p - q
             v = v / (np.linalg.norm(v) + 1e-9)
-            for off in (1.2, 1.6, 2.2):
+            for off in (2.2, 2.6, 3.2):
                 x, y = q + v * off
                 if self.ok(x, y) and NAV.reachable_access(x, y):
-                    yaw = math.atan2(v[1], v[0]) + math.pi / 2 + self.rng.uniform(-0.6, 0.6)
+                    yaw = NAV.fit_yaw(x, y, math.atan2(v[1], v[0]) + math.pi / 2 + self.rng.uniform(-0.6, 0.6))
+                    if yaw is not None:
+                        return self.take(x, y, yaw, 'entrance', f"{num} {b['name']} 출입구 앞")
+        # 벽 앞까지 길이 닿지 않으면: 건물에 가장 가까운 길의 건물 쪽 가장자리 바로 바깥
+        for _, p in best[k * 3:]:
+            q = poly[np.argmin(np.hypot(*(poly - p).T))]
+            v = q - p
+            v = v / (np.linalg.norm(v) + 1e-9)
+            for off in (2.0, 2.4, 3.2, 3.6):
+                x, y = p + v * off
+                if not on_path(x, y) and self.ok(x, y) and NAV.reachable_access(x, y):
+                    yaw = NAV.fit_yaw(x, y, math.atan2(v[1], v[0]) + math.pi / 2 + self.rng.uniform(-0.6, 0.6))
+                    if yaw is None:
+                        continue
                     return self.take(x, y, yaw, 'entrance', f"{num} {b['name']} 출입구 앞")
         raise RuntimeError(f'entrance {num}')
 
@@ -241,8 +298,10 @@ class Placer:
         for r in (rmax, rmax * 2, rmax * 4):       # 가까운 보행로가 없으면 반경을 넓힌다
             for p, t, kind in self._near(FOOT, (ax, ay), r)[self.rng.randint(0, 6):]:
                 x, y = p
-                if self.ok(x, y) and NAV.reachable_access(x, y):
-                    yaw = math.atan2(t[1], t[0]) + self.rng.uniform(-0.8, 0.8)
+                if self.ok(x, y):
+                    yaw = NAV.fit_yaw(x, y, math.atan2(t[1], t[0]) + self.rng.uniform(-0.8, 0.8))
+                    if yaw is None:
+                        continue
                     return self.take(x, y, yaw, 'walkway', label)
         raise RuntimeError(f'walkway {label}')
 
@@ -252,25 +311,31 @@ class Placer:
         for p, t, kind in self._near(SERVICE, (ax, ay), rmax)[self.rng.randint(0, 6):]:
             n = np.array([-t[1], t[0]]) * self.rng.choice((1, -1))
             x, y = p + n * 2.4
-            if self.ok(x, y) and NAV.reachable_access(x, y):
-                return self.take(x, y, math.atan2(t[1], t[0]), 'roadside', label)
+            if self.ok(x, y):
+                yaw = NAV.fit_yaw(x, y, math.atan2(t[1], t[0]))
+                if yaw is not None:
+                    return self.take(x, y, yaw, 'roadside', label)
         raise RuntimeError(f'roadside {label}')
 
     def lawn(self, anchor, label, rmax=140):
-        """잔디밭 안 (무질서 방치)"""
+        """길가 잔디 (무질서 방치): 길 경계 바로 바깥이라 로봇이 길에서 팔을 뻗을 수 있다"""
         ax, ay = self._anchor(anchor)
-        polys = sorted(GREEN, key=lambda g: math.hypot(*(np.mean(g['poly'], axis=0) - (ax, ay))))
-        for g in polys[:14]:
-            P = np.array(g['poly'])
-            x0, y0 = P.min(0)
-            x1, y1 = P.max(0)
-            for _ in range(300):
-                x, y = self.rng.uniform(x0, x1), self.rng.uniform(y0, y1)
-                if math.hypot(x - ax, y - ay) > rmax or not poly_contains(g['poly'], x, y):
-                    continue
-                # 잔디 가장자리 3 m 안 (사람이 세워 두고 가는 곳) + 로봇 접근
-                if self.ok(x, y) and NAV.reachable_access(x, y):
-                    return self.take(x, y, self.rng.uniform(-math.pi, math.pi), 'lawn', label)
+        for r in (rmax, rmax * 2):
+            cands = self._near(FOOT + SERVICE, (ax, ay), r)
+            for p, t, kind in cands[self.rng.randint(0, 6):]:
+                n = np.array([-t[1], t[0]])
+                half = {'service': 3.0, 'residential': 3.0, 'pedestrian': 2.0}.get(kind, 1.5)
+                for side in self.rng.sample((1, -1), 2):
+                    for off in (0.5, 0.7):
+                        x, y = p + n * side * (half + off)
+                        if not any(poly_contains(g['poly'], x, y) for g in GREEN):
+                            continue
+                        if on_path(x, y):                       # 다른 길 위면 잔디가 아님
+                            continue
+                        if self.ok(x, y):
+                            yaw = NAV.fit_yaw(x, y, self.rng.uniform(-math.pi, math.pi))
+                            if yaw is not None:
+                                return self.take(x, y, yaw, 'lawn', label)
         raise RuntimeError(f'lawn {label}')
 
     def stairs(self, anchor, label):
@@ -299,8 +364,10 @@ class Placer:
         t = np.array([-o[1], o[0]])
         for _ in range(200):
             p = c - o * self.rng.uniform(1.6, 4.0) + t * self.rng.uniform(-r['length'] / 2 - 2, r['length'] / 2 + 2)
-            if self.ok(*p, min_gap=1.0) and NAV.reachable_access(*p):
+            if self.ok(*p, min_gap=4.0):
                 yaw = math.atan2(o[1], o[0]) + self.rng.uniform(0.6, 2.4) * self.rng.choice((1, -1))
+                if not NAV.loadable(p[0], p[1], yaw):
+                    continue
                 return self.take(p[0], p[1], yaw, 'zone_loose', label or f"{zid} {z['site']} 구역 안, 슬롯 밖")
         raise RuntimeError(f'zone_loose {zid}')
 
@@ -341,9 +408,9 @@ def build_all():
     # ---------------------------------------------------------------- E. 운영 환경 (② 시뮬레이션 환경 대표)
     p = Placer(100)
     neat = []
-    for k, zid in enumerate(('P01', 'P03', 'P05', 'P08', 'P11', 'P13', 'P15', 'P18', 'P21', 'P23', 'P26', 'P29')):
+    for k, zid in enumerate(('P01', 'P03', 'P05', 'P08', 'P11', 'P13', 'P15', 'P18', 'P21', 'P24', 'P26', 'P29')):
         neat += [sc(p.slot(f'{zid}-0{i}'), battery_pct=40 + (k * 7 + i * 11) % 55) for i in range(1, 4)]
-    chg = [sc(p.slot(f'{z}-01'), battery_pct=b, charging=True) for z, b in (('C1', 22), ('C3', 41), ('C5', 35), ('C7', 58))]
+    chg = [sc(p.slot(f'{z}-01'), battery_pct=b, charging=True) for z, b in (('C2', 22), ('C4', 41), ('C5', 35), ('C7', 58))]
     prob = [sc(p.lawn(111, '중앙도서관 앞 잔디'), battery_pct=66), sc(p.lawn(305, '복지관 옆 잔디'), battery_pct=71),
             sc(p.lawn(104, '인문대 앞 잔디'), battery_pct=59),
             sc(p.entrance(404), battery_pct=63), sc(p.entrance(415), battery_pct=77), sc(p.entrance(103), battery_pct=69),
@@ -359,7 +426,7 @@ def build_all():
       situation='캠퍼스 12개 일반 구역 슬롯에 36대가 가지런히 서 있고 충전 스탠드 4곳에서 충전 중이다. 같은 공간들에 무질서 방치 3, '
                 '출입구 앞 불법 주차 3, 구역 안 비뚤게 2, 넘어짐 2, 배터리 부족 2, 고장 2, 신고 2(통행 방해·방치)가 섞여 있다.',
       mission='정렬된 킥보드와 충전 중인 킥보드는 그대로 두고, 문제 있는 16대를 우선순위대로 수거해 상태별 목적지(일반 슬롯·충전 스탠드·고장 칸)에 '
-              '정렬한다. 4대씩 여러 번 왕복한다.',
+              '정렬한다. 2대씩 여러 번 왕복한다.',
       scooters=neat + chg + prob,
       events=[{'t': 20, 'id': n0 + 15, 'type': 'report', 'reason': 'obstruction', 'gps_error_m': 5.0, 'note': '보행로를 막고 있어요'},
               {'t': 60, 'id': n0 + 16, 'type': 'report', 'reason': 'reported', 'gps_error_m': 6.0, 'note': '며칠째 방치돼 있어요'}])
@@ -406,8 +473,8 @@ def build_all():
     p = Placer(6)
     S(id='k06', title='배터리 부족 킥보드를 충전 주차구역으로', cat='A 상태별 기본', based_on=['s9_drop_sites', 's17_night_battery'],
       situation='공대 쪽 일반 구역에 바르게 서 있던 킥보드 2대와 IT대학 앞 보행로의 1대가 배터리 20 % 아래다.',
-      mission='3대 모두 충전 주차구역(가까운 C6 공식당 쪽 또는 C7 테니스장 쪽) 충전 스탠드에 꽂는다. 정렬 상태여도 배터리 부족이면 옮긴다.',
-      scooters=[sc(p.slot('P23-02'), battery_pct=9), sc(p.slot('P23-03'), battery_pct=12),
+      mission='3대 모두 충전 주차구역(가까운 C7 테니스장 쪽 등) 충전 스탠드에 꽂는다. 정렬 상태여도 배터리 부족이면 옮긴다.',
+      scooters=[sc(p.slot('P24-02'), battery_pct=9), sc(p.slot('P24-03'), battery_pct=12),
                 sc(p.walkway(416, 'IT대학2호관 앞 보행로'), battery_pct=6)])
 
     p = Placer(7)
@@ -437,9 +504,9 @@ def build_all():
 
     p = Placer(10)
     S(id='k10', title='고장 났고 배터리도 부족', cat='B 복합 판단', based_on=['s9_drop_sites'],
-      situation='공대9호관(406) 앞 도로가에 모터 이상 + 배터리 5 % 킥보드가 있다. 바로 옆이 C6 충전구역이다.',
+      situation='복지관(305) 앞 도로가에 모터 이상 + 배터리 5 % 킥보드가 있다. 가까이에 C2 충전구역이 있다.',
       mission='고장 킥보드는 충전하지 않는다. 충전구역이 가까워도 고장 분류 칸으로 보낸다 (충전 스탠드를 고장 난 킥보드가 차지하지 않게).',
-      scooters=[sc(p.roadside(406, '공대9호관 앞 도로가'), fault='motor', battery_pct=5)])
+      scooters=[sc(p.roadside(305, '복지관 앞 도로가'), fault='motor', battery_pct=5)])
 
     p = Placer(11)
     S(id='k11', title='방치 신고 → 확인해 보니 고장', cat='B 복합 판단', based_on=['s6_verify_fail'],
@@ -452,36 +519,36 @@ def build_all():
 
     p = Placer(12)
     S(id='k12', title='오신고 (이미 바르게 주차됨)', cat='B 복합 판단', based_on=['s6_verify_fail', 's8_auto_cancel'],
-      situation='C1 중앙도서관 앞 충전 스탠드에 바르게 꽂혀 있는 킥보드를 누군가 "방치"로 신고한다.',
+      situation='C4 글로벌플라자 광장 충전 스탠드에 바르게 꽂혀 있는 킥보드를 누군가 "방치"로 신고한다.',
       mission='현장에서 정상 주차·충전 중임을 확인하고 수거하지 않는다. 요청을 "조치 불필요"로 닫는다.',
-      scooters=[sc(p.slot('C1-03'), battery_pct=45, report='reported', false_report=True, silent=True)],
+      scooters=[sc(p.slot('C4-03'), battery_pct=45, report='reported', false_report=True, silent=True)],
       events=[{'t': 15, 'id': 1, 'type': 'report', 'reason': 'reported', 'gps_error_m': 3.0, 'note': '방치된 것 같아요'}])
 
     # ---------------------------------------------------------------- C. 수용량 · 적재량
     p = Placer(13)
-    occ = [sc(p.slot(f'C1-0{i}'), battery_pct=20 + 5 * i, charging=True) for i in range(1, 5)]
+    occ = [sc(p.slot(f'C4-0{i}'), battery_pct=20 + 5 * i, charging=True) for i in range(1, 5)]
     S(id='k13', title='충전 주차구역 수용량 초과 (최대 5대)', cat='C 수용량·적재량', based_on=['s9_drop_sites'],
-      situation='모든 충전 주차구역의 스탠드를 5칸으로 줄인다. 가장 가까운 C1 중앙도서관 앞은 이미 4대가 충전 중이다. '
+      situation='모든 충전 주차구역의 스탠드를 5칸으로 줄인다. 가장 가까운 C4 글로벌플라자 광장은 이미 4대가 충전 중이다. '
                 '도서관 주변에서 배터리 부족 킥보드 4대가 발생한다.',
-      mission='C1 에 1대만 꽂고, 나머지 3대는 각 킥보드에서 다음으로 가까운 빈 충전구역(C4 글로벌플라자 광장, C3 일청담–사범대 사이)으로 보낸다.',
+      mission='C4 에 1대만 꽂고, 나머지 3대는 각 킥보드에서 다음으로 가까운 빈 충전구역(C5 인문대 쪽 등)으로 보낸다.',
       overrides={'charging_capacity': 5},
       scooters=occ + [sc(p.walkway(111, '도서관 앞 보행로'), battery_pct=9), sc(p.lawn(111, '도서관 앞 잔디'), battery_pct=11),
                       sc(p.walkway(110, '정보화본부 앞 보행로'), battery_pct=6), sc(p.entrance(116), battery_pct=13)])
 
     p = Placer(14)
     pre = []
-    for zid, n in (('C1', 5), ('C2', 5), ('C3', 4), ('C4', 5), ('C5', 5), ('C6', 5), ('C7', 4), ('C8', 5)):
+    for zid, n in (('C2', 5), ('C4', 5), ('C5', 5), ('C7', 4), ('C8', 4)):
         pre += [sc(p.slot(f'{zid}-0{i}'), battery_pct=30 + 3 * i, charging=True) for i in range(1, n + 1)]
     lows = [sc(p.walkway(a, f'{BLD[a]["name"]} 앞 보행로'), battery_pct=4 + i) for i, a in enumerate((104, 107, 208, 409, 415, 305))]
     S(id='k14', title='캠퍼스 전체 충전 주차구역 포화', cat='C 수용량·적재량', based_on=['s17_night_battery'],
-      situation='충전 스탠드를 5칸으로 줄였고 8개 충전구역 중 6곳이 꽉 차 있다(C3·C7 만 1칸씩 빔). 배터리 부족 킥보드가 6대 발생한다.',
+      situation='충전 스탠드를 5칸으로 줄였고 5개 충전구역 중 3곳이 꽉 차 있다(C7·C8 만 1칸씩 빔). 배터리 부족 킥보드가 6대 발생한다.',
       mission='빈 2칸에 먼저 꽂고, 남은 4대는 가까운 일반 주차구역 슬롯에 세운 뒤 "충전 대기"로 표시하고 관리자에게 알린다.',
       overrides={'charging_capacity': 5}, scooters=pre + lows)
 
     p = Placer(15)
     S(id='k15', title='로봇 적재량 초과 (한 곳에 7대)', cat='C 수용량·적재량', based_on=['s3_full_load'],
-      situation='축제 뒤 대운동장 쪽 C8 근처 도로가와 잔디에 넘어지거나 흩어진 킥보드 7대. 로봇 적재함은 4칸이다.',
-      mission='4대를 싣고 하역한 뒤 다시 와서 나머지 3대를 처리한다. 적재함이 차면 새 수거를 시작하지 않는다.',
+      situation='축제 뒤 대운동장 쪽 C8 근처 도로가와 잔디에 넘어지거나 흩어진 킥보드 7대. 로봇 적재함은 2칸이다.',
+      mission='2대를 싣고 하역한 뒤 다시 오기를 반복해 7대를 처리한다. 적재함이 차면 새 수거를 시작하지 않는다.',
       scooters=[sc(p.lawn('대운동장', '대운동장 옆 잔디'), tilt_deg=90 if i % 2 else 0, battery_pct=50 + 4 * i) for i in range(4)]
                + [sc(p.roadside('대운동장', '대운동장 옆 도로가'), battery_pct=60 + 5 * i) for i in range(3)])
 
@@ -504,13 +571,13 @@ def build_all():
         many.append(sc(pos, **st))
     S(id='k16', title='요청 폭주 (시험 끝난 날 25건)', cat='C 수용량·적재량', based_on=['s19_peak_stream', 's5_aging'],
       situation='기말고사가 끝난 오후, 5분 동안 캠퍼스 전역에서 25건의 수거 요청이 들어온다(넘어짐·불법 주차·배터리 부족·고장 섞임).',
-      mission='점수식(사유 우선순위 + 대기 시간 − 거리)으로 고르고, 4대씩 묶어 여러 번 왕복한다. 먼 곳 요청도 기아 방지 상한 안에 선택돼야 한다.',
+      mission='점수식(사유 우선순위 + 대기 시간 − 거리)으로 고르고, 2대씩 묶어 여러 번 왕복한다. 먼 곳 요청도 기아 방지 상한 안에 선택돼야 한다.',
       scooters=many)
 
     p = Placer(17)
-    S(id='k17', title='적재함 안에 목적지가 다른 4대', cat='C 수용량·적재량', based_on=['s3_full_load', 's9_drop_sites'],
-      situation='공대 거리에서 4대를 연달아 싣는다: 배터리 부족 2, 고장 1, 정상(불법 주차) 1.',
-      mission='하역 순서를 거리 기준으로 정해 한 번의 순회로 일반 구역 → 고장 칸 → 충전구역에 모두 내린다.',
+    S(id='k17', title='목적지가 섞인 4대', cat='C 수용량·적재량', based_on=['s3_full_load', 's9_drop_sites'],
+      situation='공대 거리에서 4대를 2대씩 싣는다: 배터리 부족 2, 고장 1, 정상(불법 주차) 1.',
+      mission='하역 순서를 거리 기준으로 정해 순회할 때마다 실은 2대를 각 목적지(일반 구역·고장 칸·충전구역)에 내린다.',
       scooters=[sc(p.walkway(404, '공대1호관 앞 보행로'), battery_pct=8), sc(p.walkway(409, '공대3호관 앞 보행로'), battery_pct=11),
                 sc(p.entrance(410), fault='throttle', battery_pct=52), sc(p.entrance(412), battery_pct=67)])
 
@@ -622,7 +689,7 @@ def build_all():
       events=[{'t': 600, 'id': 1, 'type': 'fall', 'after_drop': 180}])   # 새 노드: 하역 180초 뒤. 기존 노드는 t=600 에 적용
 
     p = Placer(31)
-    night = [sc(p.slot(z), battery_pct=b) for z, b in (('P05-02', 6), ('P09-04', 9), ('P13-01', 4), ('P19-06', 12),
+    night = [sc(p.slot(z), battery_pct=b) for z, b in (('P05-02', 6), ('P09-04', 9), ('P13-01', 4), ('P18-06', 12),
                                                        ('P24-03', 7), ('P27-02', 10), ('P30-05', 8), ('P31-01', 13))]
     night += [sc(p.slot('P11-03'), fault='brake', battery_pct=40), sc(p.slot('P29-07'), fault='display', battery_pct=9)]
     S(id='k31', title='야간 일괄 순회 (배터리 부족 8 + 고장 2)', cat='D 돌발상황', based_on=['s17_night_battery'],
@@ -631,7 +698,7 @@ def build_all():
       robot={'initial_battery_pct': 95}, scooters=night)
 
     p = Placer(32)
-    day = [sc(p.slot('C1-01'), battery_pct=35, charging=True), sc(p.slot('P06-02'), battery_pct=70),
+    day = [sc(p.slot('C4-01'), battery_pct=35, charging=True), sc(p.slot('P06-02'), battery_pct=70),
            sc(p.walkway(111, '도서관 앞 보행로'), tilt_deg=90, battery_pct=66),
            sc(p.entrance(103), battery_pct=74), sc(p.lawn(104, '인문대 앞 잔디'), battery_pct=9),
            sc(p.walkway(305, '복지관 앞 보행로'), fault='brake', battery_pct=48),
@@ -646,7 +713,7 @@ def build_all():
       overrides={'charging_capacity': 5}, scooters=day,
       events=[{'t': 30, 'id': 7, 'type': 'report', 'reason': 'obstruction', 'gps_error_m': 5.0, 'note': '통로 막음'},
               {'t': 20, 'id': 4, 'type': 'park', 'slot': 'P06-05'},     # 로봇이 가기 전에 사용자가 먼저 정렬
-              {'t': 360, 'type': 'stand_fault', 'slot': 'C1-02'}], expect_override={4: 'cancelled'})
+              {'t': 360, 'type': 'stand_fault', 'slot': 'C4-02'}], expect_override={4: 'cancelled'})
 
 
 # =============================================================================================
@@ -776,16 +843,16 @@ def scenario_checks(scn, rows, targets, cap):
                 z = s['slot'].split('-')[0]
                 charging_now[z] = charging_now.get(z, 0) + 1
         zones = [z for z in ZONES if z.startswith('C')]
-        free = sum(cap - charging_now.get(z, 0) for z in zones) if sid == 'k14' else cap - charging_now.get('C1', 0)
+        free = sum(cap - charging_now.get(z, 0) for z in zones) if sid == 'k14' else cap - charging_now.get('C4', 0)
         want = need.get('charging', 0) + need.get('charge_wait', 0)
         assert want > free, f'{sid}: 충전 필요 {want} <= 빈칸 {free}'
-        msg.append(f'충전 필요 {want}대 > {"전체" if sid == "k14" else "C1"} 빈 스탠드 {free}칸')
+        msg.append(f'충전 필요 {want}대 > {"전체" if sid == "k14" else "C4"} 빈 스탠드 {free}칸')
     if sid == 'k18':
         assert sum(1 for s in scn['scooters'] if (s.get('slot') or '').startswith('P21')) == 8
         assert all(r['zone'] != 'P21' for r in rows if r['dest'] == 'general')
         msg.append('P21 정상 슬롯 8/8 점유 → 다른 구역 배정 확인')
     if sid == 'k13':
-        assert sum(1 for r in rows if r['zone'] == 'C1' and r['dest'] == 'charging') == 1
+        assert sum(1 for r in rows if r['zone'] == 'C4' and r['dest'] == 'charging') == 1
     if sid == 'k14':
         assert need.get('charge_wait', 0) == need.get('charging', 0) + need.get('charge_wait', 0) - 2 or True
         msg.append(f'충전 대기 {need.get("charge_wait", 0)}대')

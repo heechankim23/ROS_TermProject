@@ -8,7 +8,7 @@
   python3 scripts/run_knu_scenarios.py k01 k08 k13        # 고른 것만
   python3 scripts/run_knu_scenarios.py --gui              # Gazebo 화면을 띄워서 (하나씩)
   python3 scripts/run_knu_scenarios.py --kinematic -j 4   # Gazebo 없이 로직만, 4개 동시에 (ROS_DOMAIN_ID 를 나눠 씀)
-  python3 scripts/run_knu_scenarios.py --speed 3.0        # 로봇 최고 속도(m/s) 덮어쓰기 (기본 1.5, 빨리 확인할 때)
+  python3 scripts/run_knu_scenarios.py --speed 3.0        # 로봇 최고 속도(m/s) 덮어쓰기 (기본 1.2 = 모터 한계, 그 이상은 Gazebo 에서 잘림)
 
 '끝' 판정: 로봇이 대기(IDLE)로 돌아온 뒤 --grace 초 동안 새 일이 없고, 시나리오의 마지막 이벤트·등장 시각도 지났을 때.
 시나리오당 최대 --limit 초. 로그: my_ws/results/knu_<날짜_시각>/<시나리오>.log
@@ -125,7 +125,7 @@ def main():
     ap.add_argument('--rviz', action='store_true')
     ap.add_argument('--kinematic', action='store_true', help='Gazebo 없이 로직만')
     ap.add_argument('-j', '--jobs', type=int, default=1, help='동시에 돌릴 수 (Gazebo 는 1 권장)')
-    ap.add_argument('--speed', type=float, default=0.0, help='로봇 최고 속도 m/s (0 = 맵 기본 1.5)')
+    ap.add_argument('--speed', type=float, default=0.0, help='로봇 최고 속도 m/s (0 = 맵 기본 1.2)')
     ap.add_argument('--map', default='', help='맵 덮어쓰기 (예: knu_campus = 언덕 지형 전체 캠퍼스)')
     ap.add_argument('--full', action='store_true', help='시나리오 전용 작은 world 대신 캠퍼스 전체 world')
     ap.add_argument('--rtf', type=float, default=1.0, help='Gazebo 배속 (예: 4). kinematic 에는 해당 없음 (--speed 사용)')

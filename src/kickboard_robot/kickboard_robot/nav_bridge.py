@@ -362,20 +362,40 @@ class NavBridge(Node):
                                heuristic_weight=3.0 if greedy else 1.4)
 
     def kin_plan(self, pose, goal, now, greedy=False):
-        """-> (촘촘한 경로, 최종 목표인가). 큰 지도(RollingCostmap)에서 목표가 창 밖이면 큰 경로의 중간 목표까지"""
-        with self.cm_lock:
-            cm, target, final = self.cm, tuple(goal), True
-            if hasattr(cm, 'win'):
-                cm.ensure(pose[:2])
-                if not cm.in_window(goal, 2.0):
-                    if cm.plan(pose[:2], goal[:2], now) is None or cm.sub is None:
-                        return None, True
-                    sx, sy = cm.sub
-                    target, final = (sx, sy, math.atan2(sy - pose[1], sx - pose[0])), False
-                cm = cm.win
-            path = plan_path(cm, tuple(pose), target, now, self.kin_params(greedy), goal_yaw_free=not final,
-                             log=self.get_logger().info)
+        """-> (촘촘한 경로, 최종 목표인가). 큰 지도(RollingCostmap)에서 목표가 창 밖이면 큰 경로의 중간 목표까지.
+        계획은 수 초 걸릴 수 있어 지도 복사본으로 잠금 밖에서 한다 (잠금을 쥐면 on_scan 이 막혀 단일 executor 의
+        TF·스캔 수신까지 멈춤)"""
+        cm, snap = self.plan_snapshot(pose)
+        target, final = tuple(goal), True
+        if hasattr(snap, 'win'):
+            if not snap.in_window(goal, 2.0):
+                found = snap.plan(pose[:2], goal[:2], now) is not None and snap.sub is not None
+                self.keep_route(cm, snap)
+                if not found:
+                    return None, True
+                sx, sy = snap.sub
+                target, final = (sx, sy, math.atan2(sy - pose[1], sx - pose[0])), False
+            else:
+                snap.sub = None
+                self.keep_route(cm, snap)
+            snap = snap.win
+        path = plan_path(snap, tuple(pose), target, now, self.kin_params(greedy), goal_yaw_free=not final,
+                         log=self.get_logger().info)
         return path, final
+
+    def plan_snapshot(self, pose):
+        """-> (원본 코스트맵, 계획용 복사본). 잠금은 복사하는 동안만"""
+        with self.cm_lock:
+            if hasattr(self.cm, 'win'):
+                self.cm.ensure(pose[:2])
+            return self.cm, self.cm.snapshot()
+
+    def keep_route(self, cm, snap):
+        """복사본에서 정한 중간 목표를 원본에 남긴다 (needs_replan 이 씀)"""
+        with self.cm_lock:
+            cm.sub = snap.sub
+            if snap.sub is not None:
+                cm.sub_t = snap.sub_t
 
     # ---------------- simple backend ----------------
     def run_simple(self, gh, goal, attempt):
@@ -445,6 +465,7 @@ class NavBridge(Node):
                     if need:
                         self.get_logger().info('경로 다시 계획 (' + ('새 장애물' if blocked else '경로 이탈/구간 끝') + ')')
                 if need:
+                    self.stop()                  # 계획하는 동안 직전 속도 명령으로 계속 가지 않게
                     kpath, final = self.kin_plan(pose, goal, now, greedy=kin['fails'] > 0)
                     if kpath is None:
                         self.stop()
@@ -479,9 +500,13 @@ class NavBridge(Node):
                         need = (path is None or now - planned_at > gp('replan_sec').value
                                 or self.cm.path_blocked(path, now, pose[:2])
                                 or (hasattr(self.cm, 'needs_replan') and self.cm.needs_replan(pose, now)))
-                        if need:
-                            path = self.cm.plan(pose[:2], goal[:2], now)
-                            planned_at = now
+                    if need:
+                        self.stop()
+                        cm, snap = self.plan_snapshot(pose)
+                        path = snap.plan(pose[:2], goal[:2], now)
+                        if hasattr(snap, 'win'):
+                            self.keep_route(cm, snap)
+                        planned_at = now
                     if path is None:
                         self.stop()
                         if blocked_since is None:      # 왜 길이 없는지 한 번 남긴다 (출발 칸이 막힌 곳인지, 목표가 막힌 곳인지)

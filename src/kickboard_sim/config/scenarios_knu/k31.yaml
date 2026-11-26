@@ -8,14 +8,14 @@ based_on: [s17_night_battery]
 situation: "밤 11시, 각 일반 구역 슬롯에 바르게 서 있지만 배터리 부족인 킥보드 8대와 고장 2대(그중 1대는 배터리도 부족)가 있다."
 mission: "급한 요청이 없으므로 가까운 것끼리 묶어 순회한다. 배터리 부족은 충전구역, 고장은 고장 칸(배터리 부족이어도)."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 4, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (108 m)"}
-  - {id: 2, order: 5, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (126 m)"}
-  - {id: 3, order: 3, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (133 m)"}
-  - {id: 4, order: 7, dest: charging, zone: C8, reasons: ["배터리 부족"], hint: "C8 대운동장 쪽 (136 m)"}
-  - {id: 5, order: 6, dest: charging, zone: C8, reasons: ["배터리 부족"], hint: "C8 대운동장 쪽 (127 m)"}
+  - {id: 1, order: 5, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (108 m)"}
+  - {id: 2, order: 6, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (126 m)"}
+  - {id: 3, order: 4, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (133 m)"}
+  - {id: 4, order: 3, dest: charging, zone: C2, reasons: ["배터리 부족"], hint: "C2 편의점 인근 (복지관) (70 m)"}
+  - {id: 5, order: 7, dest: charging, zone: C8, reasons: ["배터리 부족"], hint: "C8 대운동장 쪽 (127 m)"}
   - {id: 6, order: 10, dest: charging, zone: C8, reasons: ["배터리 부족"], hint: "C8 대운동장 쪽 (209 m)"}
-  - {id: 7, order: 8, dest: charging, zone: C6, reasons: ["배터리 부족"], hint: "C6 공식당 쪽 (공대9호관) (222 m)"}
-  - {id: 8, order: 9, dest: charging, zone: C6, reasons: ["배터리 부족"], hint: "C6 공식당 쪽 (공대9호관) (65 m)"}
+  - {id: 7, order: 8, dest: charging, zone: C7, reasons: ["배터리 부족"], hint: "C7 테니스장 쪽 (261 m)"}
+  - {id: 8, order: 9, dest: charging, zone: C8, reasons: ["배터리 부족"], hint: "C8 대운동장 쪽 (242 m)"}
   - {id: 9, order: 1, dest: broken, zone: P11, reasons: ["고장"], hint: "P11 110 정보화본부 인근 (2 m)"}
   - {id: 10, order: 2, dest: broken, zone: P29, reasons: ["고장", "배터리 부족"], hint: "P29 419 공대8호관 인근 (1 m)"}
 pass_criteria:
@@ -28,7 +28,7 @@ scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|sta
   - {id: 1, x: -79.091, y: 192.754, yaw_deg: 105.6, battery_pct: 6, slot: P05-02, place: slot, where: "P05 108 첨성인미래관 인근 02번 칸"}
   - {id: 2, x: -135.706, y: 97.292, yaw_deg: -104.1, battery_pct: 9, slot: P09-04, place: slot, where: "P09 202 농대3호관 인근 04번 칸"}
   - {id: 3, x: -71.142, y: -9.752, yaw_deg: 75.4, battery_pct: 4, slot: P13-01, place: slot, where: "P13 201 농대1호관 인근 01번 칸"}
-  - {id: 4, x: -226.476, y: -126.809, yaw_deg: 102.8, battery_pct: 12, slot: P19-06, place: slot, where: "P19 208 제1과학관 인근 06번 칸"}
+  - {id: 4, x: 312.611, y: -139.567, yaw_deg: 62.8, battery_pct: 12, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
   - {id: 5, x: -142.496, y: -240.77, yaw_deg: 88.7, battery_pct: 7, slot: P24-03, place: slot, where: "P24 401 공대2호관 인근 03번 칸"}
   - {id: 6, x: -455.7, y: -349.477, yaw_deg: -91.2, battery_pct: 10, slot: P27-02, place: slot, where: "P27 216 학군단 인근 02번 칸"}
   - {id: 7, x: 57.728, y: -418.5, yaw_deg: 87.9, battery_pct: 8, slot: P30-05, place: slot, where: "P30 503 화목관 인근 05번 칸"}

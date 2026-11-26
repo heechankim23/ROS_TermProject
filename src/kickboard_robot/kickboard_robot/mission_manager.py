@@ -50,8 +50,8 @@ from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, 
                             EnergyModel, MissionParams, ResolveWatch, WaitGuard, affordable, charge_needed,
                             classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
-                            drop_cost, drop_destination, drop_next_points, must_head_home, parking_jobs, rear_clear,
-                            scan_to_body_points)
+                            drop_cost, drop_destination, drop_next_points, drop_station_walls, must_head_home, parking_jobs,
+                            rear_clear, scan_to_body_points)
 from .motion import quat_from_yaw
 from .occupancy import OccupancyMap
 from .profiling import Profiler
@@ -605,6 +605,8 @@ class MissionManager(Node):
             m = self.last_scan[1]
             pts = scan_to_body_points(m.ranges, m.angle_min, m.angle_increment, m.range_min, m.range_max,
                                       self.p('scan_offset_x'))
+            if st is not None:              # 차고 자기 옆벽(지도 격자 번짐)은 장애물이 아님
+                pts = drop_station_walls(pts, pose, st, tuple(self.p('station_region')))
             clear = rear_clear(pts, remain, self.p('undock_margin'))
         cmd = Twist()
         if clear:

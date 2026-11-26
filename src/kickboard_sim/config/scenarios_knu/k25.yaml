@@ -9,7 +9,7 @@ situation: "지형 맵(knu_campus)에서 도크(표고 약 59 m)와 북쪽 누�
 mission: "경사 5 % 이상 구간을 지나며 수거한다. 오르막에서 배터리 소모가 늘어 복귀 판단이 앞당겨지는지 확인한다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
   - {id: 1, order: 1, dest: general, zone: P01, reasons: ["넘어짐", "불법 주차"], hint: "P01 124 누리관 인근 (46 m)"}
-  - {id: 2, order: 3, dest: general, zone: P31, reasons: ["불법 주차"], hint: "P31 407 화학관 인근 (105 m)"}
+  - {id: 2, order: 3, dest: general, zone: P33, reasons: ["불법 주차"], hint: "P33 공대9호관 (41 m)"}
   - {id: 3, order: 2, dest: general, zone: P29, reasons: ["불법 주차"], hint: "P29 419 공대8호관 인근 (54 m)"}
 pass_criteria:
   - "일반 주차구역 슬롯: #1,2,3 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
@@ -17,6 +17,6 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 290.92, y: 325.05, yaw_deg: -139.4, tilt_deg: 90, battery_pct: 60, place: walkway, where: "누리관 앞 보행로"}
-  - {id: 2, x: -169.04, y: -360.19, yaw_deg: 28.8, battery_pct: 70, place: walkway, where: "공대9호관 앞 보행로"}
-  - {id: 3, x: 88.2, y: -354.26, yaw_deg: 160.6, battery_pct: 52, place: walkway, where: "화목관 앞 보행로"}
+  - {id: 1, x: 290.92, y: 325.05, yaw_deg: 40.6, tilt_deg: 90, battery_pct: 60, place: walkway, where: "누리관 앞 보행로"}
+  - {id: 2, x: -169.04, y: -360.19, yaw_deg: -151.2, battery_pct: 70, place: walkway, where: "공대9호관 앞 보행로"}
+  - {id: 3, x: 88.2, y: -354.26, yaw_deg: -19.4, battery_pct: 52, place: walkway, where: "화목관 앞 보행로"}

@@ -17,8 +17,8 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: -211.22, y: -444.12, yaw_deg: -165.3, tilt_deg: 90, battery_pct: 66, place: walkway, where: "화학관 앞 보행로"}
-  - {id: 2, x: 91.94, y: -281.41, yaw_deg: 25.8, battery_pct: 74, spawn_at: 90, place: entrance, where: "416 IT대학2호관 출입구 앞"}
+  - {id: 1, x: -211.22, y: -444.12, yaw_deg: 14.7, tilt_deg: 90, battery_pct: 66, place: walkway, where: "화학관 앞 보행로"}
+  - {id: 2, x: 91.98, y: -281.32, yaw_deg: -153.2, battery_pct: 74, spawn_at: 90, place: entrance, where: "416 IT대학2호관 출입구 앞"}
 events:
   - {t: 60, id: 1, type: "stand"}
   - {t: 75, id: 1, type: "rent"}

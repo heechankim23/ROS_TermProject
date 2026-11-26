@@ -43,12 +43,6 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k24.obj</uri></mesh></geometry></visual>
-        <collision name="P01_rack"><pose>246.462 312.663 0.4 0 0 -1.4886</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P02_rack"><pose>115.967 303.376 0.4 0 0 -0.0326</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P03_rack"><pose>167.600 281.016 0.4 0 0 3.0901</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P04_rack"><pose>248.914 273.194 0.4 0 0 -1.5857</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P20_rack"><pose>-504.646 -149.688 0.4 0 0 -3.1049</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
-        <collision name="P22_rack"><pose>-406.261 -195.135 0.4 0 0 -0.7706</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
 

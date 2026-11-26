@@ -58,55 +58,51 @@ parking_zones:
   - {id: P11-09, x: 324.47, y: 58.41, z: -0.96, yaw_deg: 64.2, role: broken}
   - {id: P11-10, x: 323.84, y: 58.72, z: -0.93, yaw_deg: 64.2, role: broken}
 charging_zones:
-- name: C1
-  site: 중앙도서관 앞
+- name: C2
+  site: 편의점 인근 (복지관)
   origin: image
   polygon:
-  - [132.6, 178.8]
-  - [130.3, 111.2]
-  - [139.4, 109.9]
-  - [148.5, 102.0]
-  - [198.0, 98.5]
-  - [197.6, 176.7]
-  rack: {x: 200.69, y: 134.71, yaw_deg: 86.5, length: 6.8, road: footway}
-  robot_access: {x: 202.44, y: 134.61, yaw_deg: 86.5}
+  - [395.5, -137.2]
+  - [373.5, -182.4]
+  - [363.4, -242.1]
+  - [462.5, -302.3]
+  - [475.6, -306.2]
+  - [523.4, -228.9]
+  - [524.6, -219.6]
+  - [484.1, -177.6]
+  - [403.3, -137.1]
+  rack: {x: 372.29, y: -176.04, yaw_deg: -55.4, length: 6.8, road: service}
+  robot_access: {x: 370.85, y: -177.03, yaw_deg: -55.4}
   slots:
-  - {id: C1-01, x: 200.54, y: 132.24, z: 2.22, yaw_deg: 176.5, role: charge}
-  - {id: C1-02, x: 200.58, y: 132.86, z: 2.2, yaw_deg: 176.5, role: charge}
-  - {id: C1-03, x: 200.62, y: 133.48, z: 2.18, yaw_deg: 176.5, role: charge}
-  - {id: C1-04, x: 200.66, y: 134.1, z: 2.15, yaw_deg: 176.5, role: charge}
-  - {id: C1-05, x: 200.73, y: 135.33, z: 2.11, yaw_deg: 176.5, role: charge}
-  - {id: C1-06, x: 200.77, y: 135.95, z: 2.09, yaw_deg: 176.5, role: charge}
-  - {id: C1-07, x: 200.81, y: 136.57, z: 2.07, yaw_deg: 176.5, role: charge}
-  - {id: C1-08, x: 200.85, y: 137.19, z: 2.04, yaw_deg: 176.5, role: charge}
-- name: C3
-  site: 일청담–사범대 사이
-  origin: image
+  - {id: C2-01, x: 370.88, y: -174.0, z: -2.42, yaw_deg: 34.6, role: charge}
+  - {id: C2-02, x: 371.23, y: -174.51, z: -2.4, yaw_deg: 34.6, role: charge}
+  - {id: C2-03, x: 371.58, y: -175.02, z: -2.38, yaw_deg: 34.6, role: charge}
+  - {id: C2-04, x: 371.93, y: -175.53, z: -2.36, yaw_deg: 34.6, role: charge}
+  - {id: C2-05, x: 372.64, y: -176.55, z: -2.32, yaw_deg: 34.6, role: charge}
+  - {id: C2-06, x: 372.99, y: -177.06, z: -2.3, yaw_deg: 34.6, role: charge}
+  - {id: C2-07, x: 373.34, y: -177.57, z: -2.27, yaw_deg: 34.6, role: charge}
+  - {id: C2-08, x: 373.69, y: -178.08, z: -2.25, yaw_deg: 34.6, role: charge}
+- name: C4
+  site: 글로벌플라자 광장
+  origin: new
   polygon:
-  - [197.6, -117.6]
-  - [197.7, -132.1]
-  - [205.5, -149.3]
-  - [277.2, -179.2]
-  - [303.3, -185.6]
-  - [312.3, -161.7]
-  - [277.1, -138.1]
-  - [282.2, -124.8]
-  - [278.3, -116.9]
-  - [226.1, -93.5]
-  - [217.0, -93.6]
-  rack: {x: 239.0, y: -115.28, yaw_deg: -174.8, length: 6.8, road: footway}
-  robot_access: {x: 239.15, y: -117.02, yaw_deg: -174.8}
+  - [89.2, 222.1]
+  - [102.0, 221.9]
+  - [101.8, 214.5]
+  - [89.0, 214.7]
+  rack: {x: 95.51, y: 218.29, yaw_deg: -1.1, length: 6.8, road: service}
+  robot_access: {x: 95.54, y: 220.04, yaw_deg: -1.1}
   slots:
-  - {id: C3-01, x: 241.47, y: -115.05, z: -6.71, yaw_deg: 95.2, role: charge}
-  - {id: C3-02, x: 240.85, y: -115.11, z: -6.72, yaw_deg: 95.2, role: charge}
-  - {id: C3-03, x: 240.23, y: -115.16, z: -6.73, yaw_deg: 95.2, role: charge}
-  - {id: C3-04, x: 239.61, y: -115.22, z: -6.75, yaw_deg: 95.2, role: charge}
-  - {id: C3-05, x: 238.38, y: -115.33, z: -6.77, yaw_deg: 95.2, role: charge}
-  - {id: C3-06, x: 237.76, y: -115.39, z: -6.79, yaw_deg: 95.2, role: charge}
-  - {id: C3-07, x: 237.14, y: -115.45, z: -6.8, yaw_deg: 95.2, role: charge}
-  - {id: C3-08, x: 236.53, y: -115.5, z: -6.81, yaw_deg: 95.2, role: charge}
+  - {id: C4-01, x: 93.03, y: 218.34, z: -5.8, yaw_deg: -91.1, role: charge}
+  - {id: C4-02, x: 93.65, y: 218.33, z: -5.75, yaw_deg: -91.1, role: charge}
+  - {id: C4-03, x: 94.27, y: 218.32, z: -5.7, yaw_deg: -91.1, role: charge}
+  - {id: C4-04, x: 94.89, y: 218.3, z: -5.65, yaw_deg: -91.1, role: charge}
+  - {id: C4-05, x: 96.13, y: 218.28, z: -5.56, yaw_deg: -91.1, role: charge}
+  - {id: C4-06, x: 96.75, y: 218.27, z: -5.51, yaw_deg: -91.1, role: charge}
+  - {id: C4-07, x: 97.37, y: 218.26, z: -5.47, yaw_deg: -91.1, role: charge}
+  - {id: C4-08, x: 97.99, y: 218.25, z: -5.43, yaw_deg: -91.1, role: charge}
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

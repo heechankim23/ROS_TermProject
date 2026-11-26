@@ -1,4 +1,5 @@
 """F4 / F12 / F13 / F15: 대기열과 우선순위.
+점수의 거리는 map_yaml·route_map_json 이 있으면 주행 경로 길이 (없으면 직선거리).
 
 - /queue/enqueue (내부)        : request_gateway 가 전달. 같은 ID 면 병합(사유만 갱신)
 - /queue/select_next (내부)    : mission_manager 가 다음 대상을 요청 -> 점수 최고 항목 IN_PROGRESS
@@ -6,6 +7,8 @@
 - /get_queue, /cancel_request, /set_config (P1)
 - /queue_status (1 Hz), /queue_markers (RViz)
 """
+import math
+
 import rclpy
 from geometry_msgs.msg import PoseStamped
 from rcl_interfaces.msg import Parameter as ParamMsg
@@ -37,6 +40,10 @@ class QueueManager(Node):
         self.declare_parameter('stale_cancel_sec', 8.0)
         self.last_seen = {}        # id -> 마지막 보고 시각 (한 번이라도 보고한 킥보드만)
 
+        self.declare_parameter('map_yaml', '')           # 주행 지도 (nav_bridge 와 같은 것)
+        self.declare_parameter('route_map_json', '')     # 도로·보행로
+        self.router = self.load_router()
+        self.reach = None          # 마지막으로 푼 (출발점, length 함수)
         self.items = {}            # id -> ql.Item
         self.robot_xy = (0.0, 0.0)
         self.pose = PoseTracker(self)
@@ -60,6 +67,30 @@ class QueueManager(Node):
         self.get_logger().info(
             f'가중치 w_r={w.w_r} w_t={w.w_t} w_d={w.w_d} -> 기아 방지 상한 '
             f't_max={ql.starvation_bound(w, self.get_parameter("d_max").value):.1f}s')
+
+    def load_router(self):
+        path, roads = self.get_parameter('map_yaml').value, self.get_parameter('route_map_json').value
+        if not path or not roads:
+            return None
+        from .campus_nav import RollingCostmap
+        from .occupancy import OccupancyMap
+        try:
+            return RollingCostmap(OccupancyMap(path), roads, res=0.25).graph
+        except Exception as exc:  # noqa: BLE001
+            self.get_logger().warn(f'경로 거리 지도 불러오기 실패 ({exc}) -> 직선거리 사용')
+            return None
+
+    def route_dist(self, robot_xy, item):
+        """로봇 -> 킥보드 주행 경로 길이. 계산(수백 ms)은 on_select 때와 로봇이 처음일 때만, 그 밖에는 마지막 결과를 쓴다"""
+        if self.reach is None:
+            self.reach = (robot_xy, self.router.distances_from(robot_xy))
+        origin, length = self.reach
+        d = length((item.x, item.y))
+        return math.dist(robot_xy, (item.x, item.y)) if d is None else d
+
+    @property
+    def dist(self):
+        return None if self.router is None else self.route_dist
 
     def weights(self):
         g = self.get_parameter
@@ -88,28 +119,30 @@ class QueueManager(Node):
             self.ev.emit('enqueued', id=req.scooter_id, reason=req.reason, x=req.x, y=req.y)
         res.accepted = True
         res.queue_position = ql.queue_position(self.items.values(), req.scooter_id, now,
-                                               self._robot_xy(), self.weights())
+                                               self._robot_xy(), self.weights(), self.dist)
         res.message = ql.REASON_NAMES.get(req.reason, '?')
         return res
 
     def on_select(self, req, res):
         now = now_sec(self)
         self.robot_xy = (req.robot_x, req.robot_y)
-        order = ql.ranked(self.items.values(), now, self.robot_xy, self.weights())
+        self.reach = None                       # 지금 위치에서 다시 푼다
+        order = ql.ranked(self.items.values(), now, self.robot_xy, self.weights(), self.dist)
         res.found = bool(order)
         if not order:
             return res
         it = order[0]
         it.status = ql.IN_PROGRESS
         res.scooter_id, res.reason = it.id, it.reason
-        res.score = float(ql.score(it, now, self.robot_xy, self.weights()))
+        res.score = float(ql.score(it, now, self.robot_xy, self.weights(), self.dist))
+        d = math.dist(self.robot_xy, (it.x, it.y)) if self.dist is None else self.dist(self.robot_xy, it)
         res.target_pose = PoseStamped()
         res.target_pose.header.frame_id = 'map'
         res.target_pose.header.stamp = self.get_clock().now().to_msg()
         res.target_pose.pose.position.x, res.target_pose.pose.position.y = it.x, it.y
         res.target_pose.pose.orientation.w = 1.0
         self.get_logger().info(f'다음 대상 {it.id} (점수 {res.score:.1f}, 대기 {now - it.t_enqueued:.0f}s, '
-                               f'후보 {len(order)}건)')
+                               f'주행 거리 {d:.0f} m, 후보 {len(order)}건)')
         return res
 
     def on_update(self, req, res):
@@ -199,7 +232,7 @@ class QueueManager(Node):
         out = []
         for it in self.items.values():
             out.append(QueueItem(id=it.id, reason=it.reason, wait_sec=float(now - it.t_enqueued),
-                                 score=float(ql.score(it, now, rxy, w)), status=it.status,
+                                 score=float(ql.score(it, now, rxy, w, self.dist)), status=it.status,
                                  x=it.x, y=it.y, nav_failures=it.nav_failures))
         out.sort(key=lambda q: (q.status not in ql.ACTIVE, -q.score))
         return out

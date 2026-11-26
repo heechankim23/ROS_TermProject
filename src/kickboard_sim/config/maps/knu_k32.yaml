@@ -1,17 +1,17 @@
 # 시나리오 k32 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.
-# 구역은 이 시나리오에 필요한 24곳만, 로봇 도크는 시나리오 근처 길가.
+# 구역은 이 시나리오에 필요한 21곳만, 로봇 도크는 시나리오 근처 길가.
 mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: 132.212, y: -58.836, z: 0.1, yaw_deg: 91.7}
+robot_spawn: {x: 67.516, y: 15.337, z: 0.1, yaw_deg: 296.5}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: 132.178, y: -57.697, yaw_deg: -88.3}
+  tag_pose: {x: 68.024, y: 14.317, yaw_deg: 116.5}
   dock_distance: 1.14
   pre_dock_distance: 4.44
-  station: {model: scootover_robot_station, x: 132.251, y: -60.136, yaw_deg: 91.7}
+  station: {model: scootover_robot_station, x: 66.936, y: 16.501, yaw_deg: -63.5}
 parking_zones:
 - name: P02
   site: 120 예술대학 인근
@@ -77,6 +77,31 @@ parking_zones:
   - {id: P04-08, x: 248.89, y: 271.44, z: -9.96, yaw_deg: -0.9, role: normal}
   - {id: P04-09, x: 248.88, y: 270.74, z: -9.94, yaw_deg: 179.1, role: broken}
   - {id: P04-10, x: 248.87, y: 270.04, z: -9.91, yaw_deg: 179.1, role: broken}
+- name: P05
+  site: 108 첨성인미래관 인근
+  origin: image
+  polygon:
+  - [-62.9, 242.2]
+  - [-68.1, 242.1]
+  - [-96.6, 210.1]
+  - [-96.6, 203.5]
+  - [-82.2, 191.6]
+  - [-77.0, 191.7]
+  - [-47.2, 223.7]
+  - [-47.2, 229.0]
+  rack: {x: -81.45, y: 192.09, yaw_deg: -164.4, length: 7.0, road: service}
+  robot_access: {x: -80.98, y: 190.41, yaw_deg: -164.4}
+  slots:
+  - {id: P05-01, x: -78.42, y: 192.94, z: -10.27, yaw_deg: 105.6, role: normal}
+  - {id: P05-02, x: -79.09, y: 192.75, z: -10.26, yaw_deg: 105.6, role: normal}
+  - {id: P05-03, x: -79.77, y: 192.57, z: -10.25, yaw_deg: 105.6, role: normal}
+  - {id: P05-04, x: -80.44, y: 192.38, z: -10.23, yaw_deg: 105.6, role: normal}
+  - {id: P05-05, x: -81.11, y: 192.19, z: -10.22, yaw_deg: 105.6, role: normal}
+  - {id: P05-06, x: -81.79, y: 192.0, z: -10.2, yaw_deg: 105.6, role: normal}
+  - {id: P05-07, x: -82.46, y: 191.81, z: -10.19, yaw_deg: 105.6, role: normal}
+  - {id: P05-08, x: -83.14, y: 191.62, z: -10.17, yaw_deg: 105.6, role: normal}
+  - {id: P05-09, x: -83.81, y: 191.43, z: -10.16, yaw_deg: -74.4, role: broken}
+  - {id: P05-10, x: -84.48, y: 191.25, z: -10.14, yaw_deg: -74.4, role: broken}
 - name: P06
   site: 111 중앙도서관 인근
   origin: image
@@ -259,31 +284,6 @@ parking_zones:
   - {id: P21-08, x: 133.37, y: -204.05, z: -9.6, yaw_deg: 51.8, role: normal}
   - {id: P21-09, x: 133.92, y: -204.48, z: -9.6, yaw_deg: -128.2, role: broken}
   - {id: P21-10, x: 134.48, y: -204.91, z: -9.61, yaw_deg: -128.2, role: broken}
-- name: P23
-  site: 409 공대3호관 인근
-  origin: image
-  polygon:
-  - [-76.5, -231.1]
-  - [-76.3, -269.5]
-  - [-49.0, -269.3]
-  - [-33.4, -262.5]
-  - [-33.4, -250.6]
-  - [-38.7, -244.0]
-  - [-62.1, -234.9]
-  - [-67.4, -228.4]
-  rack: {x: -58.74, y: -270.22, yaw_deg: -3.0, length: 7.0, road: service}
-  robot_access: {x: -58.83, y: -271.97, yaw_deg: -3.0}
-  slots:
-  - {id: P23-01, x: -61.89, y: -270.05, z: -8.0, yaw_deg: 87.0, role: normal}
-  - {id: P23-02, x: -61.19, y: -270.09, z: -7.96, yaw_deg: 87.0, role: normal}
-  - {id: P23-03, x: -60.49, y: -270.13, z: -7.93, yaw_deg: 87.0, role: normal}
-  - {id: P23-04, x: -59.79, y: -270.16, z: -7.9, yaw_deg: 87.0, role: normal}
-  - {id: P23-05, x: -59.09, y: -270.2, z: -7.87, yaw_deg: 87.0, role: normal}
-  - {id: P23-06, x: -58.39, y: -270.24, z: -7.84, yaw_deg: 87.0, role: normal}
-  - {id: P23-07, x: -57.69, y: -270.27, z: -7.81, yaw_deg: 87.0, role: normal}
-  - {id: P23-08, x: -56.99, y: -270.31, z: -7.78, yaw_deg: 87.0, role: normal}
-  - {id: P23-09, x: -56.29, y: -270.35, z: -7.75, yaw_deg: -93.0, role: broken}
-  - {id: P23-10, x: -55.6, y: -270.38, z: -7.72, yaw_deg: -93.0, role: broken}
 - name: P24
   site: 401 공대2호관 인근
   origin: image
@@ -347,49 +347,28 @@ parking_zones:
   - {id: P28-08, x: -390.27, y: -354.49, z: -9.74, yaw_deg: -97.7, role: normal}
   - {id: P28-09, x: -389.57, y: -354.58, z: -9.72, yaw_deg: 82.3, role: broken}
   - {id: P28-10, x: -388.88, y: -354.67, z: -9.7, yaw_deg: 82.3, role: broken}
-- name: P31
-  site: 407 화학관 인근
+- name: P33
+  site: 공대9호관
   origin: image
   polygon:
-  - [-152.4, -434.5]
-  - [-154.8, -479.5]
-  - [-110.5, -483.2]
-  - [-109.4, -434.1]
-  rack: {x: -131.09, y: -457.96, yaw_deg: -1.3, length: 7.0, road: service}
-  robot_access: {x: -131.05, y: -456.21, yaw_deg: -1.3}
+  - [-206.0, -373.9]
+  - [-207.1, -416.3]
+  - [-157.7, -415.9]
+  - [-161.7, -377.5]
+  rack: {x: -163.88, y: -400.46, yaw_deg: 178.7, length: 7.0, road: service}
+  robot_access: {x: -163.92, y: -402.21, yaw_deg: 178.7}
   slots:
-  - {id: P31-01, x: -134.24, y: -457.89, z: -10.11, yaw_deg: -91.3, role: normal}
-  - {id: P31-02, x: -133.54, y: -457.91, z: -10.1, yaw_deg: -91.3, role: normal}
-  - {id: P31-03, x: -132.84, y: -457.92, z: -10.09, yaw_deg: -91.3, role: normal}
-  - {id: P31-04, x: -132.14, y: -457.94, z: -10.08, yaw_deg: -91.3, role: normal}
-  - {id: P31-05, x: -131.44, y: -457.95, z: -10.06, yaw_deg: -91.3, role: normal}
-  - {id: P31-06, x: -130.74, y: -457.97, z: -10.05, yaw_deg: -91.3, role: normal}
-  - {id: P31-07, x: -130.04, y: -457.99, z: -10.04, yaw_deg: -91.3, role: normal}
-  - {id: P31-08, x: -129.34, y: -458.0, z: -10.03, yaw_deg: -91.3, role: normal}
-  - {id: P31-09, x: -128.64, y: -458.02, z: -10.01, yaw_deg: 88.7, role: broken}
-  - {id: P31-10, x: -127.94, y: -458.03, z: -10.0, yaw_deg: 88.7, role: broken}
+  - {id: P33-01, x: -160.74, y: -400.54, z: -11.99, yaw_deg: 88.7, role: normal}
+  - {id: P33-02, x: -161.44, y: -400.52, z: -12.02, yaw_deg: 88.7, role: normal}
+  - {id: P33-03, x: -162.13, y: -400.5, z: -12.04, yaw_deg: 88.7, role: normal}
+  - {id: P33-04, x: -162.83, y: -400.49, z: -12.07, yaw_deg: 88.7, role: normal}
+  - {id: P33-05, x: -163.53, y: -400.47, z: -12.09, yaw_deg: 88.7, role: normal}
+  - {id: P33-06, x: -164.23, y: -400.46, z: -12.11, yaw_deg: 88.7, role: normal}
+  - {id: P33-07, x: -164.93, y: -400.44, z: -12.13, yaw_deg: 88.7, role: normal}
+  - {id: P33-08, x: -165.63, y: -400.42, z: -12.15, yaw_deg: 88.7, role: normal}
+  - {id: P33-09, x: -166.33, y: -400.41, z: -12.17, yaw_deg: -91.3, role: broken}
+  - {id: P33-10, x: -167.03, y: -400.39, z: -12.19, yaw_deg: -91.3, role: broken}
 charging_zones:
-- name: C1
-  site: 중앙도서관 앞
-  origin: image
-  polygon:
-  - [132.6, 178.8]
-  - [130.3, 111.2]
-  - [139.4, 109.9]
-  - [148.5, 102.0]
-  - [198.0, 98.5]
-  - [197.6, 176.7]
-  rack: {x: 200.69, y: 134.71, yaw_deg: 86.5, length: 6.8, road: footway}
-  robot_access: {x: 202.44, y: 134.61, yaw_deg: 86.5}
-  slots:
-  - {id: C1-01, x: 200.54, y: 132.24, z: 2.22, yaw_deg: 176.5, role: charge}
-  - {id: C1-02, x: 200.58, y: 132.86, z: 2.2, yaw_deg: 176.5, role: charge}
-  - {id: C1-03, x: 200.62, y: 133.48, z: 2.18, yaw_deg: 176.5, role: charge}
-  - {id: C1-04, x: 200.66, y: 134.1, z: 2.15, yaw_deg: 176.5, role: charge}
-  - {id: C1-05, x: 200.73, y: 135.33, z: 2.11, yaw_deg: 176.5, role: charge}
-  - {id: C1-06, x: 200.77, y: 135.95, z: 2.09, yaw_deg: 176.5, role: charge}
-  - {id: C1-07, x: 200.81, y: 136.57, z: 2.07, yaw_deg: 176.5, role: charge}
-  - {id: C1-08, x: 200.85, y: 137.19, z: 2.04, yaw_deg: 176.5, role: charge}
 - name: C2
   site: 편의점 인근 (복지관)
   origin: image
@@ -414,32 +393,6 @@ charging_zones:
   - {id: C2-06, x: 372.99, y: -177.06, z: -2.3, yaw_deg: 34.6, role: charge}
   - {id: C2-07, x: 373.34, y: -177.57, z: -2.27, yaw_deg: 34.6, role: charge}
   - {id: C2-08, x: 373.69, y: -178.08, z: -2.25, yaw_deg: 34.6, role: charge}
-- name: C3
-  site: 일청담–사범대 사이
-  origin: image
-  polygon:
-  - [197.6, -117.6]
-  - [197.7, -132.1]
-  - [205.5, -149.3]
-  - [277.2, -179.2]
-  - [303.3, -185.6]
-  - [312.3, -161.7]
-  - [277.1, -138.1]
-  - [282.2, -124.8]
-  - [278.3, -116.9]
-  - [226.1, -93.5]
-  - [217.0, -93.6]
-  rack: {x: 239.0, y: -115.28, yaw_deg: -174.8, length: 6.8, road: footway}
-  robot_access: {x: 239.15, y: -117.02, yaw_deg: -174.8}
-  slots:
-  - {id: C3-01, x: 241.47, y: -115.05, z: -6.71, yaw_deg: 95.2, role: charge}
-  - {id: C3-02, x: 240.85, y: -115.11, z: -6.72, yaw_deg: 95.2, role: charge}
-  - {id: C3-03, x: 240.23, y: -115.16, z: -6.73, yaw_deg: 95.2, role: charge}
-  - {id: C3-04, x: 239.61, y: -115.22, z: -6.75, yaw_deg: 95.2, role: charge}
-  - {id: C3-05, x: 238.38, y: -115.33, z: -6.77, yaw_deg: 95.2, role: charge}
-  - {id: C3-06, x: 237.76, y: -115.39, z: -6.79, yaw_deg: 95.2, role: charge}
-  - {id: C3-07, x: 237.14, y: -115.45, z: -6.8, yaw_deg: 95.2, role: charge}
-  - {id: C3-08, x: 236.53, y: -115.5, z: -6.81, yaw_deg: 95.2, role: charge}
 - name: C4
   site: 글로벌플라자 광장
   origin: new
@@ -478,25 +431,6 @@ charging_zones:
   - {id: C5-06, x: -11.52, y: 108.61, z: -5.67, yaw_deg: 109.7, role: charge}
   - {id: C5-07, x: -12.1, y: 108.4, z: -5.68, yaw_deg: 109.7, role: charge}
   - {id: C5-08, x: -12.69, y: 108.19, z: -5.69, yaw_deg: 109.7, role: charge}
-- name: C6
-  site: 공식당 쪽 (공대9호관)
-  origin: image
-  polygon:
-  - [-206.0, -373.9]
-  - [-207.1, -416.3]
-  - [-157.7, -415.9]
-  - [-161.7, -377.5]
-  rack: {x: -163.88, y: -400.46, yaw_deg: 178.7, length: 6.8, road: service}
-  robot_access: {x: -163.92, y: -402.21, yaw_deg: 178.7}
-  slots:
-  - {id: C6-01, x: -161.41, y: -400.52, z: -12.02, yaw_deg: 88.7, role: charge}
-  - {id: C6-02, x: -162.02, y: -400.51, z: -12.04, yaw_deg: 88.7, role: charge}
-  - {id: C6-03, x: -162.64, y: -400.49, z: -12.06, yaw_deg: 88.7, role: charge}
-  - {id: C6-04, x: -163.26, y: -400.48, z: -12.08, yaw_deg: 88.7, role: charge}
-  - {id: C6-05, x: -164.5, y: -400.45, z: -12.12, yaw_deg: 88.7, role: charge}
-  - {id: C6-06, x: -165.12, y: -400.44, z: -12.14, yaw_deg: 88.7, role: charge}
-  - {id: C6-07, x: -165.74, y: -400.42, z: -12.15, yaw_deg: 88.7, role: charge}
-  - {id: C6-08, x: -166.36, y: -400.41, z: -12.17, yaw_deg: 88.7, role: charge}
 - name: C7
   site: 테니스장 쪽
   origin: image
@@ -536,7 +470,7 @@ charging_zones:
   - {id: C8-07, x: -268.51, y: -254.42, z: -11.47, yaw_deg: -173.0, role: charge}
   - {id: C8-08, x: -268.59, y: -253.81, z: -11.48, yaw_deg: -173.0, role: charge}
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

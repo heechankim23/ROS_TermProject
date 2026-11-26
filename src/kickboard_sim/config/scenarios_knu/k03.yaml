@@ -15,6 +15,6 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 62.18, y: 167.12, yaw_deg: 97.1, battery_pct: 77, silent: true, place: walkway, where: "글로벌플라자 앞 보행로"}
+  - {id: 1, x: 62.18, y: 167.12, yaw_deg: -82.9, battery_pct: 77, silent: true, place: walkway, where: "글로벌플라자 앞 보행로"}
 events:
   - {t: 20, id: 1, type: "report", reason: "obstruction", gps_error_m: 6.0, note: "사용자 신고: 보행로를 막고 있어요"}

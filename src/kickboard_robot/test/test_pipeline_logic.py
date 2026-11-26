@@ -49,6 +49,60 @@ def test_collector_center_and_mean():
     assert collector_logic.arrived_by_tag(1.7, 1.6, 0.2) and not collector_logic.arrived_by_tag(1.9, 1.6, 0.2)
 
 
+def _apply_fine_plan(pose, plan):
+    x, y, th = pose
+    for kind, v in plan:
+        if kind == 'turn':
+            th = v
+        else:
+            x, y = x + v * math.cos(th), y + v * math.sin(th)
+    return x, y, th
+
+
+def test_collector_fine_align_plan_reaches_entry_spot():
+    cl = collector_logic
+    tol, ytol = 0.05, math.radians(3)
+    for heading in (0.0, 1.0, -2.5):
+        target = cl.reverse_entry_pose(3.0, -1.0, heading, lane=1)
+        assert cl.fine_align_plan(target, target, tol, ytol, 0.6) == []
+        # 경로 끝 0.24 m 허용 + 끝 회전 같은 도착 오차들 (앞뒤, 옆, 방향 섞어서)
+        for ea, el, ey in ((0.2, 0.0, 0.0), (-0.3, 0.02, 0.1), (0.05, 0.18, 0.05), (-0.1, -0.2, -0.15)):
+            c, s = math.cos(target[2]), math.sin(target[2])
+            pose = (target[0] + c * ea - s * el, target[1] + s * ea + c * el, target[2] + ey)
+            plan = cl.fine_align_plan(pose, target, tol, ytol, 0.6)
+            assert plan, (ea, el, ey)
+            end = _apply_fine_plan(pose, plan)
+            a, l, y = cl.entry_error(end, 3.0, -1.0, heading, lane=1)
+            assert abs(a) <= tol and abs(l) <= tol and abs(y) <= ytol   # 옆 오차가 tol 안이면 옆으로는 안 맞춤
+            # 큰 방향 전환 없이: 직진 거리는 처음 위치 오차 이하
+            assert all(abs(v) <= math.hypot(ea, el) + 1e-9 for k, v in plan if k == 'drive')
+        # 옆 오차가 작으면 옆으로 돌지 않고 앞뒤 직진만
+        c, s = math.cos(target[2]), math.sin(target[2])
+        pose = (target[0] + c * 0.3, target[1] + s * 0.3, target[2])
+        plan = cl.fine_align_plan(pose, target, tol, ytol, 0.6)
+        assert len(plan) == 1 and plan[0][0] == 'drive' and abs(plan[0][1] + 0.3) < 1e-9
+        # 너무 멀면 직접 맞추지 않음
+        # 옆 허용을 따로 주면 작은 옆 오차(0.07 m)는 돌지 않고 남김
+        side = (target[0] - s * 0.07, target[1] + c * 0.07, target[2])
+        assert cl.fine_align_plan(side, target, tol, ytol, 0.6, lat_tol=0.08) == []
+        assert cl.fine_align_plan(side, target, tol, ytol, 0.6)[0][0] == 'turn'
+        far = (target[0] + c * 1.0, target[1] + s * 1.0, target[2])
+        assert cl.fine_align_plan(far, target, tol, ytol, 0.6) is None
+
+
+def test_extended_collector_reads_all_tag_faces():
+    cl = collector_logic
+    hd = 0.7
+    for face in range(4):
+        tid = cl.face_tag_id(17, face)
+        base, f = cl.split_tag_id(tid)
+        assert (base, f) == (17, face)
+        a = hd + cl.FACE_NORMAL[face]
+        fx, fy = 2.0 + cl.FACE_DEPTH[face] * math.cos(a), 5.0 + cl.FACE_DEPTH[face] * math.sin(a)
+        cx, cy, h = cl.scooter_from_face(fx, fy, a, face)
+        assert abs(cx - 2.0) < 1e-9 and abs(cy - 5.0) < 1e-9 and abs(cl.wrap_angle(h - hd)) < 1e-9
+
+
 def test_collector_align_retry_same_radius():
     """정렬 재시도: 반경은 그대로, 각도만 바꾼 자리. 이미 시도한 각도 근처는 다시 고르지 않는다."""
     deg = math.degrees
@@ -314,6 +368,30 @@ def test_resolve_watch_low_battery_needs_charging_trend():
     assert not r
 
 
+def test_drop_station_walls_ignores_smeared_garage_walls():
+    # 차고 (0, 0) 방향 0, 로봇은 차고 축 위 sx 1.3 에서 안쪽(+x)을 봄. 지도 번짐으로 옆벽 칸이 축에서 0.4 m 까지 들어옴
+    st = (0.0, 0.0, 0.0)
+    pose = (1.3, 0.0, 0.0)
+    walls = [(bx, by) for bx in (-1.0, -1.3, -1.6) for by in (-0.4, 0.45, 0.6)]   # 로봇 기준: 뒤쪽 옆벽
+    assert not ml.rear_clear(walls, 2.9)
+    assert ml.rear_clear(ml.drop_station_walls(walls, pose, st), 2.9)
+    # 문 가운데나 차고 밖의 물체는 그대로 막힘
+    assert not ml.rear_clear(ml.drop_station_walls(walls + [(-1.2, 0.1)], pose, st), 2.9)
+    assert not ml.rear_clear(ml.drop_station_walls([(-2.8, 0.45)], pose, st), 2.9)   # sx -1.5: 차고 밖
+
+
+def test_arm_loader_unload_blend_far_from_origin():
+    # 원점에서 280 m 떨어진 곳, 방향 8° 차이: 보정 크기는 실제 차이(0.14 m)여야 하고 u=1 에서 목표와 같아야 함
+    from kickboard_robot.arm_loader import blend_about, compose, inverse, rz
+    end = (np.array([-140.0, -242.0, 0.0]), rz(math.radians(80)))
+    goal = (np.array([-140.1, -241.9, 0.0]), rz(math.radians(88)))
+    corr = compose(goal, inverse(end))
+    done = compose(blend_about(corr, end[0], 1.0), end)
+    assert np.allclose(done[0], goal[0]) and np.allclose(done[1], goal[1])
+    half = compose(blend_about(corr, end[0], 0.5), end)
+    assert np.linalg.norm((half[0] - end[0])[:2]) < 0.15
+
+
 def test_rear_clear_checks_corridor_behind_body():
     """도크 후진: 차체 뒤끝(-0.92)에서 남은 거리 + 여유 안, 차체 폭 안에 점이 있으면 막힘."""
     assert ml.rear_clear([], 1.0)
@@ -456,3 +534,25 @@ def test_undock_until_body_out_of_station_and_straight():
     sx, sy = ml.to_station(st, pose[0], pose[1])
     assert sx < -0.45 - 0.2 - 0.96 + 1e-6              # 차체 앞끝까지 램프 밖
     assert abs(sy) < 0.05 and abs(pose[2] - st[2]) < 0.05
+
+
+def _simulate_dock(start, target, goal_along=0.0, turn_gain=1.0, dt=0.05, steps=3000):
+    x, y, th = start
+    for _ in range(steps):
+        v, w, done = collector_logic.dock_step((x, y, th), target, goal_along)
+        if done:
+            return (x, y, th), True
+        x, y, th = x + v * math.cos(th) * dt, y + v * math.sin(th) * dt, th + turn_gain * w * dt
+    return (x, y, th), False
+
+
+def test_dock_reverses_onto_target_from_offset_staging():
+    target = collector_logic.reverse_entry_pose(3.0, -1.0, 0.7, 0)
+    c, s = math.cos(0.7), math.sin(0.7)
+    for lat, head, gain in ((0.25, 8.0, 1.0), (-0.25, -10.0, 0.6), (0.15, 0.0, 1.4)):   # gain: 스키드 스티어 회전 오차
+        start = (target[0] + 1.5 * c - lat * s, target[1] + 1.5 * s + lat * c, 0.7 + math.radians(head))
+        pose, done = _simulate_dock(start, target, turn_gain=gain)
+        ea, el, ey = collector_logic.dock_errors(pose, target)
+        assert done and collector_logic.dock_ok(pose, target) and abs(math.degrees(ey)) < 8, (lat, head, gain, ea, el, ey)
+        back, done = _simulate_dock(pose, target, goal_along=1.5, turn_gain=gain)       # 다시 빼기
+        assert done and abs(collector_logic.dock_errors(back, target)[1]) < 0.1

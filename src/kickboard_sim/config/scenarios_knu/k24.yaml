@@ -8,7 +8,7 @@ based_on: [s4_low_battery]
 situation: "로봇 배터리 32 % 로 시작. 북쪽 캠퍼스 끝(누리관·예술대)의 정상 킥보드 3대를 싣는 사이 20 % 아래로 떨어진다."
 mission: "실은 킥보드를 내리지 않고 도크로 돌아가 80 % 까지 충전한 뒤, 일반 주차구역에 하역하고 남은 요청을 이어 한다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 1, dest: general, zone: P01, reasons: ["불법 주차"], hint: "P01 124 누리관 인근 (52 m)"}
+  - {id: 1, order: 1, dest: general, zone: P01, reasons: ["불법 주차"], hint: "P01 124 누리관 인근 (50 m)"}
   - {id: 2, order: 2, dest: general, zone: P02, reasons: ["불법 주차"], hint: "P02 120 예술대학 인근 (74 m)"}
   - {id: 3, order: 3, dest: general, zone: P01, reasons: ["불법 주차"], hint: "P01 124 누리관 인근 (139 m)"}
   - {id: 4, order: 4, dest: general, zone: P20, reasons: ["불법 주차"], hint: "P20 213 제1체육관 인근 (9 m)"}
@@ -18,7 +18,7 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 32, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 297.79, y: 304.07, yaw_deg: 81.7, battery_pct: 70, place: entrance, where: "124 누리관 출입구 앞"}
-  - {id: 2, x: 67.79, y: 359.11, yaw_deg: -126.3, battery_pct: 66, place: walkway, where: "예술대학 앞 보행로"}
-  - {id: 3, x: 212.15, y: 447.65, yaw_deg: -29.1, battery_pct: 59, place: walkway, where: "문예관 앞 보행로"}
-  - {id: 4, x: -498.56, y: -155.7, yaw_deg: 58.1, battery_pct: 77, place: walkway, where: "제1체육관 앞 보행로"}
+  - {id: 1, x: 295.95, y: 304.85, yaw_deg: -98.3, battery_pct: 70, place: entrance, where: "124 누리관 출입구 앞"}
+  - {id: 2, x: 67.79, y: 359.11, yaw_deg: 53.7, battery_pct: 66, place: walkway, where: "예술대학 앞 보행로"}
+  - {id: 3, x: 212.15, y: 447.65, yaw_deg: 150.9, battery_pct: 59, place: walkway, where: "문예관 앞 보행로"}
+  - {id: 4, x: -498.56, y: -155.7, yaw_deg: -121.9, battery_pct: 77, place: walkway, where: "제1체육관 앞 보행로"}

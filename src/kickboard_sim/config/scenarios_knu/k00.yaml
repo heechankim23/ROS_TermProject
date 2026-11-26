@@ -6,7 +6,7 @@ category: "E 운영 환경"
 map: knu_campus_flat
 based_on: [s3_full_load, s19_peak_stream]
 situation: "캠퍼스 12개 일반 구역 슬롯에 36대가 가지런히 서 있고 충전 스탠드 4곳에서 충전 중이다. 같은 공간들에 무질서 방치 3, 출입구 앞 불법 주차 3, 구역 안 비뚤게 2, 넘어짐 2, 배터리 부족 2, 고장 2, 신고 2(통행 방해·방치)가 섞여 있다."
-mission: "정렬된 킥보드와 충전 중인 킥보드는 그대로 두고, 문제 있는 16대를 우선순위대로 수거해 상태별 목적지(일반 슬롯·충전 스탠드·고장 칸)에 정렬한다. 4대씩 여러 번 왕복한다."
+mission: "정렬된 킥보드와 충전 중인 킥보드는 그대로 두고, 문제 있는 16대를 우선순위대로 수거해 상태별 목적지(일반 슬롯·충전 스탠드·고장 칸)에 정렬한다. 2대씩 여러 번 왕복한다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
   - {id: 1, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
   - {id: 2, order: null, dest: none, zone: null, reasons: [], hint: "바르게 정렬됨 → 요청 없음"}
@@ -48,22 +48,22 @@ expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순
   - {id: 38, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
   - {id: 39, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
   - {id: 40, order: null, dest: none, zone: null, reasons: [], hint: "충전 중 (스탠드 점유)"}
-  - {id: 41, order: 6, dest: general, zone: P06, reasons: ["불법 주차"], hint: "P06 111 중앙도서관 인근 (163 m)"}
-  - {id: 42, order: 9, dest: general, zone: P18, reasons: ["불법 주차"], hint: "P18 305 복지관 인근 (50 m)"}
-  - {id: 43, order: 8, dest: general, zone: P13, reasons: ["불법 주차"], hint: "P13 201 농대1호관 인근 (64 m)"}
-  - {id: 44, order: 12, dest: general, zone: P24, reasons: ["불법 주차"], hint: "P24 401 공대2호관 인근 (91 m)"}
+  - {id: 41, order: 6, dest: general, zone: P08, reasons: ["불법 주차"], hint: "P08 110 정보화본부 인근 (119 m)"}
+  - {id: 42, order: 9, dest: general, zone: P18, reasons: ["불법 주차"], hint: "P18 305 복지관 인근 (54 m)"}
+  - {id: 43, order: 7, dest: general, zone: P15, reasons: ["불법 주차"], hint: "P15 106 인문한국진흥관 인근 (117 m)"}
+  - {id: 44, order: 12, dest: general, zone: P33, reasons: ["불법 주차"], hint: "P33 공대9호관 (88 m)"}
   - {id: 45, order: 10, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (88 m)"}
-  - {id: 46, order: 7, dest: general, zone: P02, reasons: ["불법 주차"], hint: "P02 120 예술대학 인근 (107 m)"}
+  - {id: 46, order: 8, dest: general, zone: P05, reasons: ["불법 주차"], hint: "P05 108 첨성인미래관 인근 (150 m)"}
   - {id: 47, order: 14, dest: general, zone: P18, reasons: ["정렬 불량"], hint: "P18 305 복지관 인근 (4 m)"}
   - {id: 48, order: 15, dest: general, zone: P21, reasons: ["정렬 불량"], hint: "P21 415 IT대학5호관 인근 (5 m)"}
-  - {id: 49, order: 2, dest: general, zone: P19, reasons: ["넘어짐", "불법 주차"], hint: "P19 208 제1과학관 인근 (43 m)"}
+  - {id: 49, order: 2, dest: general, zone: P16, reasons: ["넘어짐", "불법 주차"], hint: "P16 210 제2과학관 인근 (85 m)"}
   - {id: 50, order: 3, dest: general, zone: P24, reasons: ["넘어짐", "불법 주차"], hint: "P24 401 공대2호관 인근 (118 m)"}
   - {id: 51, order: 16, dest: charging, zone: C5, reasons: ["배터리 부족"], hint: "C5 인문대 쪽 (133 m)"}
-  - {id: 52, order: 11, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (92 m)"}
+  - {id: 52, order: 11, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (103 m)"}
   - {id: 53, order: 4, dest: broken, zone: P15, reasons: ["고장"], hint: "P15 106 인문한국진흥관 인근 (1 m)"}
-  - {id: 54, order: 5, dest: broken, zone: P29, reasons: ["고장", "불법 주차"], hint: "P29 419 공대8호관 인근 (31 m)"}
+  - {id: 54, order: 5, dest: broken, zone: P29, reasons: ["고장", "불법 주차"], hint: "P29 419 공대8호관 인근 (30 m)"}
   - {id: 55, order: 1, dest: general, zone: P15, reasons: ["통행 방해 신고", "불법 주차"], hint: "P15 106 인문한국진흥관 인근 (75 m)"}
-  - {id: 56, order: 13, dest: general, zone: P28, reasons: ["신고 접수", "불법 주차"], hint: "P28 214 청룡관 인근 (131 m)"}
+  - {id: 56, order: 13, dest: general, zone: P33, reasons: ["신고 접수", "불법 주차"], hint: "P33 공대9호관 (122 m)"}
 pass_criteria:
   - "고장 분류 칸 (반대 방향): #53,54 → 고장 분류 칸에 반대 방향으로 섬"
   - "충전 주차구역: #51,52 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
@@ -100,35 +100,35 @@ scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|sta
   - {id: 25, x: 129.523, y: -201.016, yaw_deg: 51.8, battery_pct: 52, slot: P21-01, place: slot, where: "P21 415 IT대학5호관 인근 01번 칸"}
   - {id: 26, x: 130.073, y: -201.449, yaw_deg: 51.8, battery_pct: 63, slot: P21-02, place: slot, where: "P21 415 IT대학5호관 인근 02번 칸"}
   - {id: 27, x: 130.623, y: -201.882, yaw_deg: 51.8, battery_pct: 74, slot: P21-03, place: slot, where: "P21 415 IT대학5호관 인근 03번 칸"}
-  - {id: 28, x: -61.887, y: -270.052, yaw_deg: 87.0, battery_pct: 59, slot: P23-01, place: slot, where: "P23 409 공대3호관 인근 01번 칸"}
-  - {id: 29, x: -61.188, y: -270.089, yaw_deg: 87.0, battery_pct: 70, slot: P23-02, place: slot, where: "P23 409 공대3호관 인근 02번 칸"}
-  - {id: 30, x: -60.489, y: -270.126, yaw_deg: 87.0, battery_pct: 81, slot: P23-03, place: slot, where: "P23 409 공대3호관 인근 03번 칸"}
+  - {id: 28, x: -141.096, y: -240.802, yaw_deg: 88.7, battery_pct: 59, slot: P24-01, place: slot, where: "P24 401 공대2호관 인근 01번 칸"}
+  - {id: 29, x: -141.796, y: -240.786, yaw_deg: 88.7, battery_pct: 70, slot: P24-02, place: slot, where: "P24 401 공대2호관 인근 02번 칸"}
+  - {id: 30, x: -142.496, y: -240.77, yaw_deg: 88.7, battery_pct: 81, slot: P24-03, place: slot, where: "P24 401 공대2호관 인근 03번 칸"}
   - {id: 31, x: 228.871, y: -285.064, yaw_deg: -126.6, battery_pct: 66, slot: P26-01, place: slot, where: "P26 417 반도체연구동 인근 01번 칸"}
   - {id: 32, x: 229.433, y: -285.481, yaw_deg: -126.6, battery_pct: 77, slot: P26-02, place: slot, where: "P26 417 반도체연구동 인근 02번 칸"}
   - {id: 33, x: 229.995, y: -285.899, yaw_deg: -126.6, battery_pct: 88, slot: P26-03, place: slot, where: "P26 417 반도체연구동 인근 03번 칸"}
   - {id: 34, x: 138.136, y: -381.536, yaw_deg: -104.7, battery_pct: 73, slot: P29-01, place: slot, where: "P29 419 공대8호관 인근 01번 칸"}
   - {id: 35, x: 137.459, y: -381.359, yaw_deg: -104.7, battery_pct: 84, slot: P29-02, place: slot, where: "P29 419 공대8호관 인근 02번 칸"}
   - {id: 36, x: 136.782, y: -381.182, yaw_deg: -104.7, battery_pct: 40, slot: P29-03, place: slot, where: "P29 419 공대8호관 인근 03번 칸"}
-  - {id: 37, x: 200.540, y: 132.240, yaw_deg: 176.5, battery_pct: 22, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
-  - {id: 38, x: 241.470, y: -115.050, yaw_deg: 95.2, battery_pct: 41, slot: C3-01, charging: true, place: slot, where: "C3 일청담–사범대 사이 01번 칸"}
-  - {id: 39, x: -8.020, y: 109.860, yaw_deg: 109.7, battery_pct: 35, slot: C5-01, charging: true, place: slot, where: "C5 인문대 쪽 01번 칸"}
-  - {id: 40, x: -35.900, y: -173.430, yaw_deg: 82.5, battery_pct: 58, slot: C7-01, charging: true, place: slot, where: "C7 테니스장 쪽 01번 칸"}
-  - {id: 41, x: 91.14, y: 98.34, yaw_deg: -82.5, battery_pct: 66, place: lawn, where: "중앙도서관 앞 잔디"}
-  - {id: 42, x: 360.74, y: -151.6, yaw_deg: 156.1, battery_pct: 71, place: lawn, where: "복지관 옆 잔디"}
-  - {id: 43, x: -23.25, y: 34.84, yaw_deg: 17.2, battery_pct: 59, place: lawn, where: "인문대 앞 잔디"}
-  - {id: 44, x: -192.89, y: -317.82, yaw_deg: 125.3, battery_pct: 63, place: entrance, where: "404 공대1호관 출입구 앞"}
-  - {id: 45, x: 73.91, y: -276.68, yaw_deg: -158.4, battery_pct: 77, place: entrance, where: "415 IT대학5호관 출입구 앞"}
-  - {id: 46, x: 64.57, y: 209.67, yaw_deg: 32.1, battery_pct: 69, place: entrance, where: "103 글로벌플라자 출입구 앞"}
-  - {id: 47, x: 308.6, y: -140.14, yaw_deg: -61.8, battery_pct: 74, place: zone_loose, where: "P18 305 복지관 인근 구역 안, 슬롯 밖"}
-  - {id: 48, x: 127.4, y: -201.82, yaw_deg: 159.3, battery_pct: 52, place: zone_loose, where: "P21 415 IT대학5호관 인근 구역 안, 슬롯 밖"}
-  - {id: 49, x: -219.3, y: -84.26, yaw_deg: 154.1, tilt_deg: 90, battery_pct: 61, place: walkway, where: "제1과학관 앞 보행로"}
-  - {id: 50, x: -262.01, y: -253.34, yaw_deg: -83.0, tilt_deg: 90, battery_pct: 55, place: roadside, where: "대운동장 옆 도로가"}
+  - {id: 37, x: 370.879, y: -173.999, yaw_deg: 34.6, battery_pct: 22, slot: C2-01, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 01번 칸"}
+  - {id: 38, x: 93.028, y: 218.34, yaw_deg: -91.1, battery_pct: 41, slot: C4-01, charging: true, place: slot, where: "C4 글로벌플라자 광장 01번 칸"}
+  - {id: 39, x: -8.017, y: 109.861, yaw_deg: 109.7, battery_pct: 35, slot: C5-01, charging: true, place: slot, where: "C5 인문대 쪽 01번 칸"}
+  - {id: 40, x: -35.895, y: -173.432, yaw_deg: 82.5, battery_pct: 58, slot: C7-01, charging: true, place: slot, where: "C7 테니스장 쪽 01번 칸"}
+  - {id: 41, x: 145.62, y: 105.06, yaw_deg: -77.7, battery_pct: 66, place: lawn, where: "중앙도서관 앞 잔디"}
+  - {id: 42, x: 360.04, y: -164.74, yaw_deg: 19.2, battery_pct: 71, place: lawn, where: "복지관 옆 잔디"}
+  - {id: 43, x: 41.02, y: 54.19, yaw_deg: -62.5, battery_pct: 59, place: lawn, where: "인문대 앞 잔디"}
+  - {id: 44, x: -193.89, y: -317.91, yaw_deg: -115.4, battery_pct: 63, place: entrance, where: "404 공대1호관 출입구 앞"}
+  - {id: 45, x: 73.86, y: -276.97, yaw_deg: -6.8, battery_pct: 77, place: entrance, where: "415 IT대학5호관 출입구 앞"}
+  - {id: 46, x: 62.71, y: 151.75, yaw_deg: -87.6, battery_pct: 69, place: entrance, where: "103 글로벌플라자 출입구 앞"}
+  - {id: 47, x: 313.28, y: -142.89, yaw_deg: 168.4, battery_pct: 74, place: zone_loose, where: "P18 305 복지관 인근 구역 안, 슬롯 밖"}
+  - {id: 48, x: 132.39, y: -208.14, yaw_deg: -58.4, battery_pct: 52, place: zone_loose, where: "P21 415 IT대학5호관 인근 구역 안, 슬롯 밖"}
+  - {id: 49, x: -215.3, y: -84.22, yaw_deg: 16.4, tilt_deg: 90, battery_pct: 61, place: walkway, where: "제1과학관 앞 보행로"}
+  - {id: 50, x: -261.52, y: -257.31, yaw_deg: 97.0, tilt_deg: 90, battery_pct: 55, place: roadside, where: "대운동장 옆 도로가"}
   - {id: 51, x: -68.433, y: -10.459, yaw_deg: 75.4, battery_pct: 8, slot: P13-05, place: slot, where: "P13 201 농대1호관 인근 05번 칸"}
-  - {id: 52, x: -53.6, y: -263.12, yaw_deg: 7.5, battery_pct: 6, place: walkway, where: "공대3호관 앞 보행로"}
+  - {id: 52, x: -23.87, y: -275.97, yaw_deg: -81.3, battery_pct: 6, place: walkway, where: "공대3호관 앞 보행로"}
   - {id: 53, x: 55.481, y: -61.438, yaw_deg: 83.7, battery_pct: 48, fault: brake, slot: P15-04, place: slot, where: "P15 106 인문한국진흥관 인근 04번 칸"}
-  - {id: 54, x: 118.19, y: -355.06, yaw_deg: -148.9, battery_pct: 37, fault: motor, place: walkway, where: "IT대학2호관 앞 보행로"}
-  - {id: 55, x: 28.11, y: 7.77, yaw_deg: 166.3, battery_pct: 70, silent: true, place: walkway, where: "인문한국진흥관 앞 보행로"}
-  - {id: 56, x: -262.32, y: -338.93, yaw_deg: 69.4, battery_pct: 33, silent: true, place: lawn, where: "대운동장 옆 잔디"}
+  - {id: 54, x: 119.5, y: -355.1, yaw_deg: -74.7, battery_pct: 37, fault: motor, place: walkway, where: "IT대학2호관 앞 보행로"}
+  - {id: 55, x: 29.98, y: 8.48, yaw_deg: -24.3, battery_pct: 70, silent: true, place: walkway, where: "인문한국진흥관 앞 보행로"}
+  - {id: 56, x: -259.58, y: -325.28, yaw_deg: 102.2, battery_pct: 33, silent: true, place: lawn, where: "대운동장 옆 잔디"}
 events:
   - {t: 20, id: 55, type: "report", reason: "obstruction", gps_error_m: 5.0, note: "보행로를 막고 있어요"}
   - {t: 60, id: 56, type: "report", reason: "reported", gps_error_m: 6.0, note: "며칠째 방치돼 있어요"}

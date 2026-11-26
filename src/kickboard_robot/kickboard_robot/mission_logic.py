@@ -391,6 +391,24 @@ def body_in_station(pose, station, margin=0.2, region=STATION_REGION, body=BODY)
     return False
 
 
+def drop_station_walls(points, pose, station, region=STATION_REGION, inner_half=0.30, margin=0.25):
+    """로봇 기준 점 [(x, y)] 중 충전소(차고) 자기 옆벽에 찍힌 점을 뺀다 (도크 후진 판단용).
+    지도 격자(0.25 m)가 비스듬한 차고 벽을 계단처럼 그려 벽 칸이 후진 통로(±0.55 m) 안으로 들어오면
+    rear_clear 가 늘 '뒤에 장애물'로 보고 출발하지 못했다 (k04, 차고 방향 168.7°).
+    차고 영역(앞끝 - margin ~ 뒷벽 + margin) 안에서 축에서 inner_half 이상 떨어진 점 = 옆벽으로 본다.
+    번진 벽 칸은 축에서 0.40 m 까지 들어온다 (k08, k21. 차체 반폭 0.525 보다 안쪽이라 실제 물체일 수 없음).
+    차고 문 가운데(|sy| < inner_half)와 차고 밖의 점은 그대로 둔다."""
+    c, s = math.cos(pose[2]), math.sin(pose[2])
+    x0, x1, _ = region
+    out = []
+    for bx, by in points:
+        sx, sy = to_station(station, pose[0] + c * bx - s * by, pose[1] + s * bx + c * by)
+        if x0 - margin <= sx <= x1 + margin and abs(sy) >= inner_half:
+            continue
+        out.append((bx, by))
+    return out
+
+
 def undock_twist(pose, station, speed, k_y=0.6, k_yaw=1.5, max_tilt=0.2, w_max=0.4):
     """차고 축(스테이션 +x)을 따라 똑바로 후진하는 (v, w). 방향은 안쪽(스테이션 yaw)을 본 채로,
     옆으로 벗어나면(sy) 살짝 틀어 축으로 돌아온다 (후진이라 sy 를 줄이려면 차체를 sy 쪽으로 기울임)."""

@@ -404,7 +404,7 @@ def build_robot():
          '<!-- 자동 생성: src/kickboard_sim/scripts/build_blender_models.py (원본 robot_blender/export, Blender SCOOTOVER).',
          '     손으로 고치지 말 것. 관절값 0 = 수송 자세.  모델 원점 = 차체 중심 아래 지면 = base_footprint, +x 앞.',
          '     충돌체: 차체(상자)와 바퀴만. 팔·램프·셔틀·집게는 보이기만 한다 (실린 킥보드는 arm_loader 가 옮김). -->',
-         '<sdf version="1.9">', f'  <model name="{ROBOT}">']
+         '<sdf version="1.9" xmlns:gz="http://gazebosim.org/schema">', f'  <model name="{ROBOT}">']
     # base_link
     base_vis = []
     for n, o in sorted(robot_objs.items()):
@@ -464,6 +464,8 @@ def build_robot():
         if n.startswith('wheel_') and n in wheels:
             extra = ('<collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius>'
                      '<length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2>'
+                     # 마찰 방향 지정: mu = 굴러가는 쪽, mu2 = 옆. 없으면 4륜 스키드 스티어가 달리면서 돌지 못함
+                     '<fdir1 gz:expressed_in="base_link">1 0 0</fdir1>'
                      '</ode></friction></surface></collision>')
         if n == 'wrist':
             extra = ('<sensor name="camera_wrist" type="camera"><pose>0.05 0 0.05 0 0 0</pose>'

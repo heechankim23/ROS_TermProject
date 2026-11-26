@@ -29,7 +29,7 @@ colcon build --packages-select kickboard_interfaces kickboard_robot kickboard_si
 
 - k32 하루 운영 종합: 우선순위 · 목적지 분류 · 적재량 · 자동 취소 · 충전 스탠드 고장 대응을 한 번에
 - k08 한 장소에 상태가 다른 7대: 정렬된 2대는 두고 5대를 일반 / 충전 / 고장 칸으로 나눠 보냄
-- k13 충전 구역 만석: C1 에 1대, 나머지는 다음으로 가까운 빈 충전 구역으로
+- k13 충전 구역 만석: C4 에 1대, 나머지는 다음으로 가까운 빈 충전 구역으로
 
 ### 분류별로 한 번에
 
@@ -63,7 +63,7 @@ colcon build --packages-select kickboard_interfaces kickboard_robot kickboard_si
 | k14 | 캠퍼스 전체 충전 주차구역 포화 | `./run_all_knu.sh --gui --rtf 4 k14` |
 | k15 | 로봇 적재량 초과 (한 곳에 7대) | `./run_all_knu.sh --gui --rtf 4 k15` |
 | k16 | 요청 폭주 (시험 끝난 날 25건) | `./run_all_knu.sh --gui --rtf 4 --limit 5400 k16` |
-| k17 | 적재함 안에 목적지가 다른 4대 | `./run_all_knu.sh --gui --rtf 4 k17` |
+| k17 | 목적지가 섞인 4대 | `./run_all_knu.sh --gui --rtf 4 k17` |
 | k18 | 가장 가까운 일반 주차구역이 만석 | `./run_all_knu.sh --gui --rtf 4 k18` |
 | k19 | 고장 분류 칸 부족 (고장 5대) | `./run_all_knu.sh --gui --rtf 4 k19` |
 | k20 | 가는 도중 누가 빌려 감 | `./run_all_knu.sh --gui --rtf 4 k20` |
@@ -152,7 +152,7 @@ python3 src/kickboard_sim/scripts/build_knu_campus.py        # 캠퍼스 맵 전
 
 | 이름 | 내용 | 이름 | 내용 |
 |---|---|---|---|
-| k00 | 캠퍼스 운영 전경 (킥보드 56대) | k17 | 적재함 안 목적지가 다른 4대 |
+| k00 | 캠퍼스 운영 전경 (킥보드 56대) | k17 | 목적지가 섞인 4대 |
 | k01 | 도서관 앞 무질서 방치 | k18 | 가까운 일반 구역 만석 |
 | k02 | 건물 출입구 앞 불법 주차 | k19 | 고장 분류 칸 부족 (고장 5대) |
 | k03 | 통행 방해 신고 접수 | k20 | 가는 도중 누가 빌려 감 |

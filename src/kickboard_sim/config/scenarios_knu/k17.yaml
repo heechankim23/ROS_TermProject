@@ -1,17 +1,17 @@
-# K17. 적재함 안에 목적지가 다른 4대   [C 수용량·적재량]   발전시킨 기존 시나리오: s3_full_load, s9_drop_sites
+# K17. 목적지가 섞인 4대   [C 수용량·적재량]   발전시킨 기존 시나리오: s3_full_load, s9_drop_sites
 # scripts/build_knu_scenarios.py 가 만든 파일 — 좌표를 직접 고치지 말고 스크립트의 장소 정의를 고칠 것.
-name: "K17. 적재함 안에 목적지가 다른 4대"
+name: "K17. 목적지가 섞인 4대"
 id: k17
 category: "C 수용량·적재량"
 map: knu_campus_flat
 based_on: [s3_full_load, s9_drop_sites]
-situation: "공대 거리에서 4대를 연달아 싣는다: 배터리 부족 2, 고장 1, 정상(불법 주차) 1."
-mission: "하역 순서를 거리 기준으로 정해 한 번의 순회로 일반 구역 → 고장 칸 → 충전구역에 모두 내린다."
+situation: "공대 거리에서 4대를 2대씩 싣는다: 배터리 부족 2, 고장 1, 정상(불법 주차) 1."
+mission: "하역 순서를 거리 기준으로 정해 순회할 때마다 실은 2대를 각 목적지(일반 구역·고장 칸·충전구역)에 내린다."
 expected:   # 킥보드별 예상 처리. order = 예상 처리 순서(우선순위), zone = 남은 칸을 따져 배정한 구역 (정책: 고장 > 배터리 부족 > 일반)
-  - {id: 1, order: 4, dest: charging, zone: C6, reasons: ["불법 주차", "배터리 부족"], hint: "C6 공식당 쪽 (공대9호관) (107 m)"}
-  - {id: 2, order: 3, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (93 m)"}
-  - {id: 3, order: 1, dest: broken, zone: P25, reasons: ["고장", "불법 주차"], hint: "P25 412 미래창직관 인근 (32 m)"}
-  - {id: 4, order: 2, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (37 m)"}
+  - {id: 1, order: 4, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (155 m)"}
+  - {id: 2, order: 3, dest: charging, zone: C7, reasons: ["불법 주차", "배터리 부족"], hint: "C7 테니스장 쪽 (103 m)"}
+  - {id: 3, order: 1, dest: broken, zone: P25, reasons: ["고장", "불법 주차"], hint: "P25 412 미래창직관 인근 (31 m)"}
+  - {id: 4, order: 2, dest: general, zone: P25, reasons: ["불법 주차"], hint: "P25 412 미래창직관 인근 (75 m)"}
 pass_criteria:
   - "고장 분류 칸 (반대 방향): #3 → 고장 분류 칸에 반대 방향으로 섬"
   - "충전 주차구역: #1,2 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
@@ -20,7 +20,7 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: -111.58, y: -307.09, yaw_deg: 80.6, battery_pct: 8, place: walkway, where: "공대1호관 앞 보행로"}
-  - {id: 2, x: -48.02, y: -265.33, yaw_deg: 20.6, battery_pct: 11, place: walkway, where: "공대3호관 앞 보행로"}
-  - {id: 3, x: -24.31, y: -331.1, yaw_deg: -14.1, battery_pct: 52, fault: throttle, place: entrance, where: "410 공대6호관 출입구 앞"}
-  - {id: 4, x: 18.61, y: -279.26, yaw_deg: 47.7, battery_pct: 67, place: entrance, where: "412 미래창직관 출입구 앞"}
+  - {id: 1, x: -111.58, y: -307.09, yaw_deg: -99.4, battery_pct: 8, place: walkway, where: "공대1호관 앞 보행로"}
+  - {id: 2, x: -23.87, y: -275.97, yaw_deg: -53.2, battery_pct: 11, place: walkway, where: "공대3호관 앞 보행로"}
+  - {id: 3, x: -24.31, y: -330.1, yaw_deg: 165.9, battery_pct: 52, fault: throttle, place: entrance, where: "410 공대6호관 출입구 앞"}
+  - {id: 4, x: 62.68, y: -285.32, yaw_deg: 99.8, battery_pct: 67, place: entrance, where: "412 미래창직관 출입구 앞"}

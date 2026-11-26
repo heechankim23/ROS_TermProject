@@ -55,29 +55,27 @@ parking_zones:
   - {id: P15-08, x: 58.26, y: -61.75, z: -4.93, yaw_deg: 83.7, role: normal}
   - {id: P15-09, x: 58.96, y: -61.82, z: -4.94, yaw_deg: -96.3, role: broken}
   - {id: P15-10, x: 59.66, y: -61.9, z: -4.96, yaw_deg: -96.3, role: broken}
-- name: P19
-  site: 208 제1과학관 인근
+- name: P22
+  site: 214 청룡관 인근
   origin: image
   polygon:
-  - [-165.5, -99.3]
-  - [-286.5, -112.2]
-  - [-289.0, -134.7]
-  - [-262.9, -161.0]
-  - [-226.4, -159.4]
-  - [-166.7, -136.4]
-  rack: {x: -226.82, y: -126.89, yaw_deg: 12.8, length: 7.0, road: pedestrian}
-  robot_access: {x: -226.43, y: -128.59, yaw_deg: 12.8}
+  - [-378.6, -177.8]
+  - [-426.7, -182.2]
+  - [-416.1, -225.8]
+  - [-374.5, -220.2]
+  rack: {x: -406.26, y: -195.14, yaw_deg: -44.2, length: 7.0, road: service}
+  robot_access: {x: -405.04, y: -193.88, yaw_deg: -44.2}
   slots:
-  - {id: P19-01, x: -229.89, y: -127.58, z: -13.78, yaw_deg: 102.8, role: normal}
-  - {id: P19-02, x: -229.21, y: -127.43, z: -13.77, yaw_deg: 102.8, role: normal}
-  - {id: P19-03, x: -228.52, y: -127.27, z: -13.77, yaw_deg: 102.8, role: normal}
-  - {id: P19-04, x: -227.84, y: -127.12, z: -13.77, yaw_deg: 102.8, role: normal}
-  - {id: P19-05, x: -227.16, y: -126.96, z: -13.76, yaw_deg: 102.8, role: normal}
-  - {id: P19-06, x: -226.48, y: -126.81, z: -13.76, yaw_deg: 102.8, role: normal}
-  - {id: P19-07, x: -225.79, y: -126.65, z: -13.76, yaw_deg: 102.8, role: normal}
-  - {id: P19-08, x: -225.11, y: -126.5, z: -13.76, yaw_deg: 102.8, role: normal}
-  - {id: P19-09, x: -224.43, y: -126.34, z: -13.76, yaw_deg: -77.2, role: broken}
-  - {id: P19-10, x: -223.74, y: -126.19, z: -13.76, yaw_deg: -77.2, role: broken}
+  - {id: P22-01, x: -408.52, y: -192.94, z: -14.05, yaw_deg: -134.2, role: normal}
+  - {id: P22-02, x: -408.02, y: -193.43, z: -14.08, yaw_deg: -134.2, role: normal}
+  - {id: P22-03, x: -407.52, y: -193.92, z: -14.11, yaw_deg: -134.2, role: normal}
+  - {id: P22-04, x: -407.01, y: -194.4, z: -14.14, yaw_deg: -134.2, role: normal}
+  - {id: P22-05, x: -406.51, y: -194.89, z: -14.18, yaw_deg: -134.2, role: normal}
+  - {id: P22-06, x: -406.01, y: -195.38, z: -14.21, yaw_deg: -134.2, role: normal}
+  - {id: P22-07, x: -405.51, y: -195.87, z: -14.24, yaw_deg: -134.2, role: normal}
+  - {id: P22-08, x: -405.01, y: -196.35, z: -14.27, yaw_deg: -134.2, role: normal}
+  - {id: P22-09, x: -404.5, y: -196.84, z: -14.29, yaw_deg: 45.8, role: broken}
+  - {id: P22-10, x: -404.0, y: -197.33, z: -14.32, yaw_deg: 45.8, role: broken}
 - name: P24
   site: 401 공대2호관 인근
   origin: image
@@ -101,7 +99,7 @@ parking_zones:
   - {id: P24-10, x: -147.39, y: -240.66, z: -10.68, yaw_deg: -91.3, role: broken}
 charging_zones: []
 params:
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
   request_gateway: {max_range_m: 1200.0}

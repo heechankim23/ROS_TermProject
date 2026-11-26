@@ -42,7 +42,7 @@ def _setup(context):
 
     acts = [
         LogInfo(msg=f'맵: {mf["name"]} / 시나리오: {sc.get("name")} — {sc.get("description", "").strip()}'),
-        node('queue_manager'),
+        node('queue_manager', {'map_yaml': nav_map, 'route_map_json': mf['map_json']} if mf['map_json'] else None),
         node('request_gateway', {'map_config_file': map_cfg}),
         node('mission_manager', dict({'map_config_file': map_cfg, 'map_yaml': nav_map},
                                      **{k: v for k, v in (('capacity', robot.get('capacity')),) if v is not None}),
