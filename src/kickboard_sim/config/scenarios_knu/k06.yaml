@@ -15,7 +15,7 @@ pass_criteria:
   - "충전 주차구역: #1,2,3 → 충전 스탠드에 꽂힘 (빈 스탠드, 방향 ±15°)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: -61.188, y: -270.089, yaw_deg: 87.0, battery_pct: 9, slot: P23-02, place: slot, where: "P23 409 공대3호관 인근 02번 칸"}
   - {id: 2, x: -60.489, y: -270.126, yaw_deg: 87.0, battery_pct: 12, slot: P23-03, place: slot, where: "P23 409 공대3호관 인근 03번 칸"}

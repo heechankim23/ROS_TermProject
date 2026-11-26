@@ -1,0 +1,16 @@
+Blender 5.3.0, ROOT=/Users/khc/Desktop/2026-2/Ubuntu_share/robot_blender
+파일: kickspot=kickspot/kickspot.blend(full), robot=v19/scootover_v19.blend(full), robot_station=robot_station/scootover_robot_station.blend(full), anim=v19/scootover_v19_anim.blend(track)
+[kickspot] kickspot/kickspot.blend
+  메시 20개 (0개 실패) -> kickspot/meshes
+  오브젝트 29개, 프레임 1~250
+[robot] v19/scootover_v19.blend
+  메시 67개 (0개 실패) -> robot/meshes
+  자세 기록: ['loading', 'transport'] (스크립트 transport)
+  오브젝트 79개, 프레임 1~470
+[robot_station] robot_station/scootover_robot_station.blend
+  메시 8개 (0개 실패) -> robot_station/meshes
+  오브젝트 82개, 프레임 1~250
+[anim] v19/scootover_v19_anim.blend
+  메시 20개 (0개 실패) -> anim/meshes
+  트랙: 1690프레임, 움직이는 오브젝트 71개, 고정 23개 (1 s)
+  오브젝트 103개, 프레임 1~1690

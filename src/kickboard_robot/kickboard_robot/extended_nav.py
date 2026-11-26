@@ -39,19 +39,19 @@ class NavBridge(Node):
         self.declare_parameter('max_retries', 2)
         self.declare_parameter('goal_timeout_sec', 120.0)
         self.declare_parameter('v_max', 0.22)
-        self.declare_parameter('w_max', 1.2)
+        self.declare_parameter('w_max', 1.0)          # Gazebo DiffDrive max_angular_velocity 와 같게 (넘으면 잘림)
         self.declare_parameter('pos_tol', 0.08)
         self.declare_parameter('yaw_tol_deg', 8.0)
         self.declare_parameter('obstacle_stop_dist', 0.15)    # simple: 전방 이 거리 안이면 정지 (안전장치)
         self.declare_parameter('blocked_timeout_sec', 8.0)
         self.declare_parameter('map_yaml', '')                # 빈 공간 판정용 지도 (없으면 판정 생략)
         self.declare_parameter('goal_clearance', 1.1)        # 목표 지점에서 장애물(정적 + 라이다)까지: 회전 반경 0.98 + 격자 오차
-        self.declare_parameter('inscribed_radius', 0.47)      # 로봇 반폭: 장애물이 이보다 가까운 칸은 통과 불가
-        self.declare_parameter('inflation_radius', 1.1)       # 로봇을 덮는 원(반 대각선 0.98) + 격자 오차: 되도록 피함
+        self.declare_parameter('inscribed_radius', 0.58)      # 로봇 반폭 0.525 + 여유: 장애물이 이보다 가까운 칸은 통과 불가
+        self.declare_parameter('inflation_radius', 1.2)       # 로봇을 덮는 원(반 대각선 1.11) + 격자 오차: 되도록 피함
         self.declare_parameter('replan_sec', 1.0)
         self.declare_parameter('lookahead', 0.5)              # 이만큼 가까워지면 다음 경로점으로
-        self.declare_parameter('scan_offset_x', 0.80)         # base_footprint -> base_scan (model.sdf)
-        self.declare_parameter('footprint', [-0.92, 0.89, 0.50])   # 차체 x 최소·최대, |y| (+여유): 여기 찍힌 점 무시
+        self.declare_parameter('scan_offset_x', 0.86)         # base_footprint -> base_scan (model.sdf)
+        self.declare_parameter('footprint', [-0.98, 0.96, 0.58])   # 차체 x 최소·최대, |y| (+여유): 여기 찍힌 점 무시
         self.declare_parameter('obstacle_memory_sec', 60.0)   # 라이다로 본 장애물을 다시 안 봐도 기억하는 시간
         self.declare_parameter('physical_map_yaml', '')       # 물리 장애물만 든 지도. 주행 지도와 다른 칸 = 진입 금지 구역
         self.declare_parameter('keepout_goal_clearance', -1.0)   # 설 자리와 진입 금지 경계 사이 최소 거리 (음수 = 벽과 똑같이 취급)

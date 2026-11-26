@@ -49,10 +49,12 @@
         <collision name="P24_rack"><pose>-144.245 -240.731 0.4 0 0 3.1190</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
+
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>-72.707 -97.561 0 0 0 -0.3833</pose>
+      <pose>-75.237 -110.017 0 0 0 2.9446</pose>
     </include>
   </world>
 </sdf>

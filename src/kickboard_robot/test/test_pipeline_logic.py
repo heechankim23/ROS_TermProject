@@ -415,3 +415,44 @@ def test_crop_occupancy_reads_map_rows_top_down():
     g = collector_logic.SpotGrid(0.0, 0.0, half=3.0, res=0.1)
     w = collector_logic.crop_occupancy(m, -2.0, -2.0, 0.1, g)
     assert w[g.cell(0.0, 1.5)] and not w[g.cell(0.0, 0.5)] and w[g.cell(0.0, 2.5)]   # 지도 밖 = 장애물
+
+
+def test_face_tag_ids_and_heading():
+    from kickboard_robot import collector_logic as cl
+    assert cl.split_tag_id(cl.face_tag_id(7, 2)) == (7, 2)
+    assert cl.split_tag_id(100) == (100, 0)          # 충전소 태그
+    # 킥보드 (1, 2), 방향 30°: 뒤 면(법선 210°) 검출 -> 중심·방향 복원
+    hd = math.radians(30)
+    fx, fy = 1 - 0.30 * math.cos(hd), 2 - 0.30 * math.sin(hd)
+    cx, cy, h = cl.scooter_from_face(fx, fy, hd + math.pi, 1)
+    assert abs(cx - 1) < 1e-9 and abs(cy - 2) < 1e-9 and abs(cl.wrap_angle(h - hd)) < 1e-9
+
+
+def test_reverse_entry_pose_puts_scooter_behind_lane():
+    from kickboard_robot import collector_logic as cl
+    for lane in (0, 1):
+        x, y, yaw = cl.reverse_entry_pose(0.0, 0.0, math.pi / 2, lane)
+        assert abs(yaw - math.pi / 2) < 1e-9
+        # 로봇 기준 킥보드 중심 = (-2.07, 레인 y): 뒤 램프 쪽, 그 레인 줄
+        c, s = math.cos(yaw), math.sin(yaw)
+        rx, ry = c * (0 - x) + s * (0 - y), -s * (0 - x) + c * (0 - y)
+        assert abs(rx + cl.ENTRY_DIST) < 1e-9 and abs(ry - cl.LANE_Y[lane]) < 1e-9
+        assert all(abs(e) < 1e-9 for e in cl.entry_error((x, y, yaw), 0.0, 0.0, math.pi / 2, lane))
+
+
+def test_undock_until_body_out_of_station_and_straight():
+    st = (10.0, 5.0, math.radians(30))                 # 차고: +x 안쪽
+    c, s = math.cos(st[2]), math.sin(st[2])
+    pose = [st[0] + 1.3 * c, st[1] + 1.3 * s, st[2] + 0.05]   # 도크 자리, 살짝 틀어짐
+    pose[0] -= 0.08 * s
+    pose[1] += 0.08 * c                                 # 옆으로 8 cm
+    assert ml.body_in_station(pose, st)
+    steps = 0
+    while ml.body_in_station(pose, st) and steps < 2000:
+        v, w = ml.undock_twist(pose, st, 0.2)
+        assert v < 0
+        pose = [pose[0] + v * math.cos(pose[2]) * 0.05, pose[1] + v * math.sin(pose[2]) * 0.05, pose[2] + w * 0.05]
+        steps += 1
+    sx, sy = ml.to_station(st, pose[0], pose[1])
+    assert sx < -0.45 - 0.2 - 0.96 + 1e-6              # 차체 앞끝까지 램프 밖
+    assert abs(sy) < 0.05 and abs(pose[2] - st[2]) < 0.05

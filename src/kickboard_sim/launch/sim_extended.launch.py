@@ -44,8 +44,8 @@ def _setup(context):
                                '--frame-id', parent, '--child-frame-id', child],
                     parameters=[st], output='log')
 
-    acts += [static_tf('tf_scan', 'base_footprint', 'base_scan', (0.80, 0, 0.22)),
-             static_tf('tf_cam', 'base_footprint', 'camera_link', (0.76, 0, 0.45)),
+    acts += [static_tf('tf_scan', 'base_footprint', 'base_scan', (0.86, 0, 1.04)),
+             static_tf('tf_cam', 'base_footprint', 'camera_link', (0.9125, 0, 0.38)),
              static_tf('tf_cam_opt', 'camera_link', 'camera_optical_frame', (0, 0, 0),
                        (-math.pi / 2, 0, -math.pi / 2))]
 
@@ -85,7 +85,7 @@ def _setup(context):
         acts.append(Node(package='ros_gz_sim', executable='create', output='log',
                          arguments=['-world', mf['name'], '-name', 'kickboard_robot',
                                     '-file', robot_sdf,
-                                    '-x', str(sx), '-y', str(sy), '-z', '0.01', '-Y', str(syaw)]))
+                                    '-x', str(sx), '-y', str(sy), '-z', str(float(spawn.get('z', 0.0)) + 0.01), '-Y', str(syaw)]))
         acts.append(Node(package='ros_gz_bridge', executable='parameter_bridge', name='gz_bridge',
                          parameters=[{'config_file': os.path.join(share, 'config', 'gz_bridge.yaml'),
                                       'use_sim_time': True}], output='log'))

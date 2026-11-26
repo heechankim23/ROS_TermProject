@@ -1,0 +1,11614 @@
+{
+ "blender": "5.3.0",
+ "file": "/Users/khc/Desktop/2026-2/Ubuntu_share/robot_blender/v19/scootover_v19.blend",
+ "scene": {
+  "name": "scene",
+  "frame_start": 1,
+  "frame_end": 470,
+  "frame_current": 303,
+  "fps": 24.0,
+  "unit_scale": 1.0,
+  "markers": [
+   {
+    "frame": 20,
+    "name": "[세우기] 1 지지대 펼침 (램프는 접힌 채)"
+   },
+   {
+    "frame": 65,
+    "name": "2 팔이 접힌 램프 너머로 가서 넘어진 스템을 로"
+   },
+   {
+    "frame": 200,
+    "name": "3 바퀴 접지선을 축으로 세움"
+   },
+   {
+    "frame": 290,
+    "name": "4 스탠드 쪽으로 기울여 놓음"
+   },
+   {
+    "frame": 305,
+    "name": "5 팔 접기"
+   },
+   {
+    "frame": 420,
+    "name": "6 지지대 접음"
+   }
+  ]
+ },
+ "collections": {
+  "Body": {
+   "objects": [
+    "body_front",
+    "body_side_l",
+    "arch_trim_l",
+    "body_side_r",
+    "arch_trim_r",
+    "bay_floor",
+    "rail_l",
+    "dock_holder_l",
+    "headlight_l",
+    "rail_r",
+    "dock_holder_r",
+    "headlight_r",
+    "logo_l",
+    "logo_r",
+    "dock_side_l",
+    "dock_holder_lo_l",
+    "dock_clamp_mount_l",
+    "dock_side_r",
+    "dock_holder_lo_r",
+    "dock_clamp_mount_r",
+    "arm_rail"
+   ],
+   "children": []
+  },
+  "Mechanisms": {
+   "objects": [
+    "wheel_shuttle_l",
+    "shuttle_gate_l_a",
+    "shuttle_gate_l_b",
+    "stem_clamp_up_l_a",
+    "stem_clamp_up_l_b",
+    "wheel_shuttle_r",
+    "shuttle_gate_r_a",
+    "shuttle_gate_r_b",
+    "stem_clamp_up_r_a",
+    "stem_clamp_up_r_b",
+    "wheel_fl",
+    "wheel_fr",
+    "wheel_rl",
+    "wheel_rr",
+    "ramp",
+    "ramp_tip",
+    "outrigger_l",
+    "outrigger_l_foot",
+    "outrigger_r",
+    "outrigger_r_foot",
+    "arm_base",
+    "upper_arm",
+    "forearm",
+    "wrist",
+    "finger_l",
+    "finger_r",
+    "front_ramp_l",
+    "front_ramp_l_tip",
+    "front_ramp_r",
+    "front_ramp_r_tip",
+    "shuttle_fgate_l_a",
+    "shuttle_fgate_l_b",
+    "shuttle_fgate_r_a",
+    "shuttle_fgate_r_b",
+    "stem_clamp_lo_l_a",
+    "stem_clamp_lo_l_b",
+    "stem_clamp_lo_r_a",
+    "stem_clamp_lo_r_b",
+    "robot_root"
+   ],
+   "children": []
+  },
+  "Reference": {
+   "objects": [
+    "ref_scooter_l_geo",
+    "ref_scooter_l",
+    "ref_scooter_l_stand",
+    "ref_scooter_r_geo",
+    "ref_scooter_r",
+    "ref_scooter_r_stand"
+   ],
+   "children": []
+  },
+  "Sensors": {
+   "objects": [
+    "cam_wrist",
+    "mast",
+    "lidar",
+    "cam_front"
+   ],
+   "children": []
+  },
+  "Stage": {
+   "objects": [
+    "floor",
+    "cam_persp",
+    "cam_side",
+    "cam_front34",
+    "cam_dock",
+    "cam_shuttle",
+    "cam_ramp",
+    "key_light",
+    "fill_light"
+   ],
+   "children": []
+  }
+ },
+ "texts": {
+  "scootover_pose.py": 12888
+ },
+ "actions": [],
+ "objects": {
+  "arch_trim_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.515
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.515
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     0.515,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.515,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.53,
+    0.02,
+    0.145
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "arch_trim_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.515
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.515
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     -0.515,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     -0.515,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.53,
+    0.02,
+    0.145
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "arm_base": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.8
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.8
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.8,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.8,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.161,
+    0.161,
+    0.45
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_white",
+    "mat_mint",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "arm_rail": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.75,
+    0.13,
+    0.004
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "bay_floor": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.11
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.11
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.25,
+     0.0,
+     0.11
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.25,
+     0.0,
+     0.11
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.3,
+    0.85,
+    0.08
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "body_front": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     0.0,
+     0.275
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.65,
+     0.0,
+     0.275
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.5,
+    1.05,
+    0.35
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_glass",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "body_side_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.205
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.205
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.25,
+     0.475,
+     0.205
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.25,
+     0.475,
+     0.205
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.3,
+    0.1,
+    0.29
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "body_side_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.205
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.205
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.25,
+     -0.475,
+     0.205
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.25,
+     -0.475,
+     0.205
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.3,
+    0.1,
+    0.29
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "cam_dock": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -0.697079,
+     0.385352,
+     -0.604637,
+     -0.6
+    ],
+    [
+     -0.716995,
+     -0.374648,
+     0.587841,
+     0.95
+    ],
+    [
+     0.0,
+     0.843293,
+     0.537454,
+     1.5
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.697079,
+     0.385352,
+     -0.604637,
+     -0.6
+    ],
+    [
+     -0.716995,
+     -0.374648,
+     0.587841,
+     0.95
+    ],
+    [
+     0.0,
+     0.843293,
+     0.537454,
+     1.5
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.6,
+     0.95,
+     1.5
+    ],
+    "quat_wxyz": [
+     0.341221,
+     0.18716,
+     -0.442994,
+     -0.807648
+    ],
+    "rpy": [
+     1.003381,
+     -0.0,
+     -2.342111
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.6,
+     0.95,
+     1.5
+    ],
+    "quat_wxyz": [
+     0.341221,
+     0.18716,
+     -0.442994,
+     -0.807648
+    ],
+    "rpy": [
+     1.003381,
+     -0.0,
+     -2.342111
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 35.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 0.95002
+  },
+  "cam_front": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Sensors"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.9125
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.38
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.9125
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.38
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.9125,
+     0.0,
+     0.38
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.9125,
+     0.0,
+     0.38
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.03,
+    0.12,
+    0.04
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_glass",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "cam_front34": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     0.62733,
+     -0.188,
+     0.755721,
+     3.6
+    ],
+    [
+     0.778754,
+     0.151444,
+     -0.608775,
+     -2.9
+    ],
+    [
+     0.0,
+     0.970423,
+     0.241411,
+     1.7
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.62733,
+     -0.188,
+     0.755721,
+     3.6
+    ],
+    [
+     0.778754,
+     0.151444,
+     -0.608775,
+     -2.9
+    ],
+    [
+     0.0,
+     0.970423,
+     0.241411,
+     1.7
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     3.6,
+     -2.9,
+     1.7
+    ],
+    "quat_wxyz": [
+     0.710666,
+     0.555535,
+     0.265849,
+     0.340087
+    ],
+    "rpy": [
+     1.326977,
+     -0.0,
+     0.892677
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     3.6,
+     -2.9,
+     1.7
+    ],
+    "quat_wxyz": [
+     0.710666,
+     0.555535,
+     0.265849,
+     0.340087
+    ],
+    "rpy": [
+     1.326977,
+     -0.0,
+     0.892677
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 45.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 0.76101
+  },
+  "cam_persp": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -0.740325,
+     0.221449,
+     -0.634727,
+     -5.0
+    ],
+    [
+     -0.672249,
+     -0.243875,
+     0.699004,
+     4.3
+    ],
+    [
+     -0.0,
+     0.944185,
+     0.329416,
+     2.6
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.740325,
+     0.221449,
+     -0.634727,
+     -5.0
+    ],
+    [
+     -0.672249,
+     -0.243875,
+     0.699004,
+     4.3
+    ],
+    [
+     -0.0,
+     0.944185,
+     0.329416,
+     2.6
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -5.0,
+     4.3,
+     2.6
+    ],
+    "quat_wxyz": [
+     0.293775,
+     0.208647,
+     -0.540147,
+     -0.760529
+    ],
+    "rpy": [
+     1.235112,
+     -0.0,
+     -2.40435
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -5.0,
+     4.3,
+     2.6
+    ],
+    "quat_wxyz": [
+     0.293775,
+     0.208647,
+     -0.540147,
+     -0.760529
+    ],
+    "rpy": [
+     1.235112,
+     -0.0,
+     -2.40435
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 50.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 0.69111
+  },
+  "cam_ramp": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -0.641859,
+     0.342854,
+     -0.685907,
+     -2.6
+    ],
+    [
+     -0.766823,
+     -0.286981,
+     0.57413,
+     1.35
+    ],
+    [
+     -0.0,
+     0.894479,
+     0.447109,
+     1.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.641859,
+     0.342854,
+     -0.685907,
+     -2.6
+    ],
+    [
+     -0.766823,
+     -0.286981,
+     0.57413,
+     1.35
+    ],
+    [
+     -0.0,
+     0.894479,
+     0.447109,
+     1.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -2.6,
+     1.35,
+     1.0
+    ],
+    "quat_wxyz": [
+     0.359955,
+     0.222493,
+     -0.476384,
+     -0.770706
+    ],
+    "rpy": [
+     1.107265,
+     0.0,
+     -2.267716
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -2.6,
+     1.35,
+     1.0
+    ],
+    "quat_wxyz": [
+     0.359955,
+     0.222493,
+     -0.476384,
+     -0.770706
+    ],
+    "rpy": [
+     1.107265,
+     0.0,
+     -2.267716
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 35.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 0.95002
+  },
+  "cam_shuttle": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -0.6,
+     0.580499,
+     -0.550473,
+     -0.2
+    ],
+    [
+     -0.8,
+     -0.435374,
+     0.412855,
+     0.6
+    ],
+    [
+     -0.0,
+     0.688092,
+     0.725624,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.6,
+     0.580499,
+     -0.550473,
+     -0.2
+    ],
+    [
+     -0.8,
+     -0.435374,
+     0.412855,
+     0.6
+    ],
+    [
+     -0.0,
+     0.688092,
+     0.725624,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.2,
+     0.6,
+     0.8
+    ],
+    "quat_wxyz": [
+     0.415406,
+     0.165643,
+     -0.331286,
+     -0.830813
+    ],
+    "rpy": [
+     0.758856,
+     0.0,
+     -2.214298
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.2,
+     0.6,
+     0.8
+    ],
+    "quat_wxyz": [
+     0.415406,
+     0.165643,
+     -0.331286,
+     -0.830813
+    ],
+    "rpy": [
+     0.758856,
+     0.0,
+     -2.214298
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 32.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 1.02478
+  },
+  "cam_side": {
+   "type": "CAMERA",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    [
+     -0.0,
+     0.0,
+     1.0,
+     6.0
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.68
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    [
+     -0.0,
+     0.0,
+     1.0,
+     6.0
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.68
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     6.0,
+     0.68
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     -0.707107,
+     -0.707107
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     -3.141593
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     6.0,
+     0.68
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     -0.707107,
+     -0.707107
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     -3.141593
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "lens_mm": 50.0,
+   "sensor_width_mm": 36.0,
+   "angle_rad": 0.69111
+  },
+  "cam_wrist": {
+   "type": "MESH",
+   "parent": "wrist",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Sensors"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.74
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.11
+    ],
+    [
+     -1.0,
+     0.0,
+     0.0,
+     0.54
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.74,
+     -0.11,
+     0.54
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.035,
+    0.04,
+    0.025
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_glass"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "dock_clamp_mount_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.39
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.39
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.5,
+     0.39,
+     0.8
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.5,
+     0.39,
+     0.8
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.211003,
+    0.022,
+    0.19225
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_clamp_mount_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.39
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.5
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.39
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.8
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.5,
+     -0.39,
+     0.8
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.5,
+     -0.39,
+     0.8
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.211003,
+    0.022,
+    0.19225
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_holder_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     0.058526,
+     -0.970296,
+     -0.234736,
+     0.469166
+    ],
+    [
+     0.970296,
+     0.0,
+     0.241922,
+     0.260553
+    ],
+    [
+     -0.234736,
+     -0.241922,
+     0.941474,
+     1.002285
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.058526,
+     -0.970296,
+     -0.234736,
+     0.469166
+    ],
+    [
+     0.970296,
+     0.0,
+     0.241922,
+     0.260553
+    ],
+    [
+     -0.234736,
+     -0.241922,
+     0.941474,
+     1.002285
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.469166,
+     0.260553,
+     1.002285
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.171065,
+     0.0,
+     0.686103
+    ],
+    "rpy": [
+     -0.251519,
+     0.236947,
+     1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.469166,
+     0.260553,
+     1.002285
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.171065,
+     0.0,
+     0.686103
+    ],
+    "rpy": [
+     -0.251519,
+     0.236947,
+     1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.042893,
+    0.182,
+    0.073387
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_holder_lo_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     0.058526,
+     -0.970296,
+     -0.234736,
+     0.446364
+    ],
+    [
+     0.970296,
+     0.0,
+     0.241922,
+     0.260553
+    ],
+    [
+     -0.234736,
+     -0.241922,
+     0.941474,
+     1.09374
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.058526,
+     -0.970296,
+     -0.234736,
+     0.446364
+    ],
+    [
+     0.970296,
+     0.0,
+     0.241922,
+     0.260553
+    ],
+    [
+     -0.234736,
+     -0.241922,
+     0.941474,
+     1.09374
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.446364,
+     0.260553,
+     1.09374
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.171065,
+     0.0,
+     0.686103
+    ],
+    "rpy": [
+     -0.251519,
+     0.236947,
+     1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.446364,
+     0.260553,
+     1.09374
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.171065,
+     0.0,
+     0.686103
+    ],
+    "rpy": [
+     -0.251519,
+     0.236947,
+     1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.042893,
+    0.182,
+    0.073387
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_holder_lo_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     0.058526,
+     0.970296,
+     -0.234736,
+     0.446364
+    ],
+    [
+     -0.970296,
+     -0.0,
+     -0.241922,
+     -0.260553
+    ],
+    [
+     -0.234736,
+     0.241922,
+     0.941474,
+     1.09374
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.058526,
+     0.970296,
+     -0.234736,
+     0.446364
+    ],
+    [
+     -0.970296,
+     -0.0,
+     -0.241922,
+     -0.260553
+    ],
+    [
+     -0.234736,
+     0.241922,
+     0.941474,
+     1.09374
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.446364,
+     -0.260553,
+     1.09374
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.171065,
+     0.0,
+     -0.686103
+    ],
+    "rpy": [
+     0.251519,
+     0.236947,
+     -1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.446364,
+     -0.260553,
+     1.09374
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.171065,
+     0.0,
+     -0.686103
+    ],
+    "rpy": [
+     0.251519,
+     0.236947,
+     -1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.042893,
+    0.182,
+    0.073387
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_holder_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     0.058526,
+     0.970296,
+     -0.234736,
+     0.469166
+    ],
+    [
+     -0.970296,
+     -0.0,
+     -0.241922,
+     -0.260553
+    ],
+    [
+     -0.234736,
+     0.241922,
+     0.941474,
+     1.002285
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.058526,
+     0.970296,
+     -0.234736,
+     0.469166
+    ],
+    [
+     -0.970296,
+     -0.0,
+     -0.241922,
+     -0.260553
+    ],
+    [
+     -0.234736,
+     0.241922,
+     0.941474,
+     1.002285
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.469166,
+     -0.260553,
+     1.002285
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.171065,
+     0.0,
+     -0.686103
+    ],
+    "rpy": [
+     0.251519,
+     0.236947,
+     -1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.469166,
+     -0.260553,
+     1.002285
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.171065,
+     0.0,
+     -0.686103
+    ],
+    "rpy": [
+     0.251519,
+     0.236947,
+     -1.510551
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.042893,
+    0.182,
+    0.073387
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {
+    "closed_mw": "<bpy id property array [16]>"
+   }
+  },
+  "dock_side_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.532068
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.75
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.532068
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.75
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.532068,
+     0.45,
+     0.75
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.532068,
+     0.45,
+     0.75
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.50167,
+    0.104,
+    0.748
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_mint",
+    "mat_white",
+    "mat_light",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "dock_side_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.532068
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.45
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.75
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.532068
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.45
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.75
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.532068,
+     -0.45,
+     0.75
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.532068,
+     -0.45,
+     0.75
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.50167,
+    0.104,
+    0.748
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_mint",
+    "mat_white",
+    "mat_light",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "fill_light": {
+   "type": "LIGHT",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     0.759257,
+     -0.319712,
+     0.566846,
+     3.0
+    ],
+    [
+     0.650791,
+     0.372997,
+     -0.66132,
+     -3.5
+    ],
+    [
+     -0.0,
+     0.87101,
+     0.491266,
+     3.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.759257,
+     -0.319712,
+     0.566846,
+     3.0
+    ],
+    [
+     0.650791,
+     0.372997,
+     -0.66132,
+     -3.5
+    ],
+    [
+     -0.0,
+     0.87101,
+     0.491266,
+     3.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     3.0,
+     -3.5,
+     3.0
+    ],
+    "quat_wxyz": [
+     0.809864,
+     0.473021,
+     0.174982,
+     0.299588
+    ],
+    "rpy": [
+     1.057254,
+     -0.0,
+     0.708626
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     3.0,
+     -3.5,
+     3.0
+    ],
+    "quat_wxyz": [
+     0.809864,
+     0.473021,
+     0.174982,
+     0.299588
+    ],
+    "rpy": [
+     1.057254,
+     -0.0,
+     0.708626
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "finger_l": {
+   "type": "MESH",
+   "parent": "wrist",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.74
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.0755
+    ],
+    [
+     -1.0,
+     0.0,
+     0.0,
+     0.48
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.06
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0345
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.74,
+     -0.0755,
+     0.48
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.06,
+     0.0345,
+     -0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.108,
+    0.044,
+    0.04
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "finger_r": {
+   "type": "MESH",
+   "parent": "wrist",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.74
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.1445
+    ],
+    [
+     -1.0,
+     0.0,
+     0.0,
+     0.48
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.06
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.0345
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.74,
+     -0.1445,
+     0.48
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.06,
+     -0.0345,
+     -0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.108,
+    0.044,
+    0.04
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "floor": {
+   "type": "MESH",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.01
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.01
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     0.0,
+     -0.01
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     -0.01
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    30.0,
+    30.0,
+    0.02
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_ground"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "forearm": {
+   "type": "MESH",
+   "parent": "upper_arm",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.976715,
+     0.0,
+     0.214543,
+     -0.2028
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.11
+    ],
+    [
+     -0.214543,
+     0.0,
+     -0.976715,
+     0.658
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.992879,
+     0.0,
+     0.119124,
+     0.60001
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.11
+    ],
+    [
+     -0.119124,
+     0.0,
+     -0.992879,
+     -0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.2028,
+     -0.11,
+     0.658
+    ],
+    "quat_wxyz": [
+     0.107901,
+     0.0,
+     0.994162,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     2.925369,
+     -0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.60001,
+     -0.11,
+     -0.0
+    ],
+    "quat_wxyz": [
+     0.059668,
+     0.0,
+     0.998218,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     3.022185,
+     -0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.627,
+    0.1445,
+    0.084
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_white",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "front_ramp_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.9,
+     0.27,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.0,
+     -0.707107,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.9,
+     0.27,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.0,
+     -0.707107,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.315,
+    0.22,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "front_ramp_l_tip": {
+   "type": "MESH",
+   "parent": "front_ramp_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     1.0,
+     0.93
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.3
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     -1.0,
+     -0.03
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.93,
+     0.27,
+     0.45
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.3,
+     0.0,
+     -0.03
+    ],
+    "quat_wxyz": [
+     0.0,
+     -0.0,
+     -1.0,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -3.141593,
+     -0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.313,
+    0.22,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "front_ramp_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.9,
+     -0.27,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.0,
+     -0.707107,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.9,
+     -0.27,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.0,
+     -0.707107,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.315,
+    0.22,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "front_ramp_r_tip": {
+   "type": "MESH",
+   "parent": "front_ramp_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     1.0,
+     0.93
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.3
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     -1.0,
+     -0.03
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.93,
+     -0.27,
+     0.45
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.3,
+     0.0,
+     -0.03
+    ],
+    "quat_wxyz": [
+     0.0,
+     -0.0,
+     -1.0,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -3.141593,
+     -0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.313,
+    0.22,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "headlight_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.905
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.47
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.3
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.905
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.47
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.3
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.905,
+     0.47,
+     0.3
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.905,
+     0.47,
+     0.3
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.08,
+    0.02
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_light"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "headlight_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.905
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.47
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.3
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.905
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.47
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.3
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.905,
+     -0.47,
+     0.3
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.905,
+     -0.47,
+     0.3
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.08,
+    0.02
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_light"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "key_light": {
+   "type": "LIGHT",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Stage"
+   ],
+   "matrix_world": [
+    [
+     -0.836516,
+     0.493098,
+     -0.238945,
+     0.0
+    ],
+    [
+     -0.482963,
+     -0.457537,
+     0.746597,
+     0.0
+    ],
+    [
+     0.258819,
+     0.739942,
+     0.620885,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.836516,
+     0.493098,
+     -0.238945,
+     0.0
+    ],
+    [
+     -0.482963,
+     -0.457537,
+     0.746597,
+     0.0
+    ],
+    [
+     0.258819,
+     0.739942,
+     0.620885,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     0.285846,
+     -0.00582,
+     -0.435343,
+     -0.85366
+    ],
+    "rpy": [
+     0.872665,
+     -0.261799,
+     -2.617994
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     0.285846,
+     -0.00582,
+     -0.435343,
+     -0.85366
+    ],
+    "rpy": [
+     0.872665,
+     -0.261799,
+     -2.617994
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "lidar": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Sensors"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.86
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.48
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     1.04
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.86
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.48
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     1.04
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.86,
+     -0.48,
+     1.04
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.86,
+     -0.48,
+     1.04
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.121,
+    0.121,
+    0.08
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint_glow"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "logo_l": {
+   "type": "FONT",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.275
+    ],
+    [
+     -0.0,
+     0.0,
+     1.0,
+     0.5285
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.275
+    ],
+    [
+     -0.0,
+     0.0,
+     1.0,
+     0.5285
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.275,
+     0.5285,
+     0.275
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     -0.707107,
+     -0.707107
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     -3.141593
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.275,
+     0.5285,
+     0.275
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     -0.707107,
+     -0.707107
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     -3.141593
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.506314,
+    0.06,
+    0.003
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "logo_r": {
+   "type": "FONT",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.275
+    ],
+    [
+     0.0,
+     -0.0,
+     -1.0,
+     -0.5285
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.275
+    ],
+    [
+     0.0,
+     -0.0,
+     -1.0,
+     -0.5285
+    ],
+    [
+     0.0,
+     1.0,
+     -0.0,
+     0.275
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.275,
+     -0.5285,
+     0.275
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.275,
+     -0.5285,
+     0.275
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.506314,
+    0.06,
+    0.003
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "mast": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Sensors"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.86
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.48
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.86
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.48
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.86,
+     -0.48,
+     0.45
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.86,
+     -0.48,
+     0.45
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.08,
+    0.08,
+    0.55
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_white",
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "outrigger_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.35
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.525
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.35
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.525
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.35,
+     0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.35,
+     0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.429,
+    0.05,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "outrigger_l_foot": {
+   "type": "MESH",
+   "parent": "outrigger_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.05
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.525
+    ],
+    [
+     0.0,
+     -1.0,
+     0.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.4
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.05,
+     0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     -1.570796,
+     0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.4,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     -1.570796,
+     0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.12,
+    0.12,
+    0.02
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_mint",
+    "mat_rubber"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "outrigger_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.35
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.525
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.35
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.525
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.35,
+     -0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.35,
+     -0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.429,
+    0.05,
+    0.05
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "outrigger_r_foot": {
+   "type": "MESH",
+   "parent": "outrigger_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.05
+    ],
+    [
+     0.0,
+     0.0,
+     -1.0,
+     -0.525
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.2
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.4
+    ],
+    [
+     0.0,
+     0.0,
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.05,
+     -0.525,
+     0.2
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.4,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.707107,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     1.570796,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.12,
+    0.12,
+    0.02
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_mint",
+    "mat_rubber"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "rail_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.158
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.158
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.25,
+     0.27,
+     0.158
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.25,
+     0.27,
+     0.158
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.3,
+    0.12,
+    0.044
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "rail_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Body"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.158
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.158
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.25,
+     -0.27,
+     0.158
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.25,
+     -0.27,
+     0.158
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.3,
+    0.12,
+    0.044
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ramp": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     1.0,
+     -0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.0,
+     1.0,
+     -0.9
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     -1.0,
+     0.0,
+     -0.0,
+     0.15
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.9,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.9,
+     0.0,
+     0.15
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.325,
+    0.84,
+    0.06
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_dark",
+    "mat_rubber",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ramp_tip": {
+   "type": "MESH",
+   "parent": "ramp",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     -0.93
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     1.0,
+     0.0,
+     -0.0,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -1.0,
+     0.0,
+     0.0,
+     -0.3
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     -0.0,
+     0.0,
+     -1.0,
+     -0.03
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.93,
+     0.0,
+     0.45
+    ],
+    "quat_wxyz": [
+     0.707107,
+     -0.0,
+     -0.707107,
+     -0.0
+    ],
+    "rpy": [
+     -0.0,
+     -1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.3,
+     0.0,
+     -0.03
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     3.141593,
+     -0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.31,
+    0.84,
+    0.06
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_mint",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ref_scooter_l": {
+   "type": "EMPTY",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.65,
+     0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "empty_display": "ARROWS"
+  },
+  "ref_scooter_l_geo": {
+   "type": "MESH",
+   "parent": "ref_scooter_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.167306,
+    0.472,
+    1.2032
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_metal",
+    "mat_scooter",
+    "mat_mint_glow",
+    "mat_light",
+    "mat_orange"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ref_scooter_l_stand": {
+   "type": "MESH",
+   "parent": "ref_scooter_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     0.677199,
+     -0.395033,
+     0.620766,
+     0.35
+    ],
+    [
+     0.395033,
+     0.906957,
+     0.14621,
+     0.355
+    ],
+    [
+     -0.620766,
+     0.14621,
+     0.770242,
+     0.237
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.677199,
+     -0.395033,
+     0.620766,
+     -0.3
+    ],
+    [
+     0.395033,
+     0.906957,
+     0.14621,
+     0.085
+    ],
+    [
+     -0.620766,
+     0.14621,
+     0.770242,
+     -0.04
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.35,
+     0.355,
+     0.237
+    ],
+    "quat_wxyz": [
+     0.915751,
+     0.0,
+     0.338938,
+     0.215688
+    ],
+    "rpy": [
+     0.187591,
+     0.669719,
+     0.528074
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.3,
+     0.085,
+     -0.04
+    ],
+    "quat_wxyz": [
+     0.915751,
+     0.0,
+     0.338938,
+     0.215688
+    ],
+    "rpy": [
+     0.187591,
+     0.669719,
+     0.528074
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.1056,
+    0.028,
+    0.028
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "QUATERNION",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ref_scooter_r": {
+   "type": "EMPTY",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     -0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.65,
+     -0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "empty_display": "ARROWS"
+  },
+  "ref_scooter_r_geo": {
+   "type": "MESH",
+   "parent": "ref_scooter_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.277
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     -0.27,
+     0.277
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    1.167306,
+    0.472,
+    1.2032
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_metal",
+    "mat_scooter",
+    "mat_mint_glow",
+    "mat_light",
+    "mat_orange"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "ref_scooter_r_stand": {
+   "type": "MESH",
+   "parent": "ref_scooter_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Reference"
+   ],
+   "matrix_world": [
+    [
+     0.677199,
+     -0.395033,
+     0.620766,
+     0.35
+    ],
+    [
+     0.395033,
+     0.906957,
+     0.14621,
+     -0.185
+    ],
+    [
+     -0.620766,
+     0.14621,
+     0.770242,
+     0.237
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.677199,
+     -0.395033,
+     0.620766,
+     -0.3
+    ],
+    [
+     0.395033,
+     0.906957,
+     0.14621,
+     0.085
+    ],
+    [
+     -0.620766,
+     0.14621,
+     0.770242,
+     -0.04
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.35,
+     -0.185,
+     0.237
+    ],
+    "quat_wxyz": [
+     0.915751,
+     0.0,
+     0.338938,
+     0.215688
+    ],
+    "rpy": [
+     0.187591,
+     0.669719,
+     0.528074
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.3,
+     0.085,
+     -0.04
+    ],
+    "quat_wxyz": [
+     0.915751,
+     0.0,
+     0.338938,
+     0.215688
+    ],
+    "rpy": [
+     0.187591,
+     0.669719,
+     0.528074
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.1056,
+    0.028,
+    0.028
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "QUATERNION",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "robot_root": {
+   "type": "EMPTY",
+   "parent": null,
+   "parent_type": null,
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {},
+   "empty_display": "PLAIN_AXES"
+  },
+  "shuttle_fgate_l_a": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.77
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.313
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.12
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.77,
+     0.313,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.12,
+     0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.043776,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_fgate_l_b": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.77
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.227
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.12
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.77,
+     0.227,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.12,
+     -0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.043776,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_fgate_r_a": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.77
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.227
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.12
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.77,
+     -0.227,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.12,
+     0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.043776,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_fgate_r_b": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.77
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.313
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.12
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.77,
+     -0.313,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.12,
+     -0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.043776,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_gate_l_a": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.545
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.313
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.105
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.545,
+     0.313,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.105,
+     0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.044,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_gate_l_b": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_l",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.545
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.227
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.105
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.545,
+     0.227,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.105,
+     -0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.044,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_gate_r_a": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.545
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.227
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.105
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.545,
+     -0.227,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.105,
+     0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.044,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "shuttle_gate_r_b": {
+   "type": "MESH",
+   "parent": "wheel_shuttle_r",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.545
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.313
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.182
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.105
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.043
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.035
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.545,
+     -0.313,
+     0.182
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.105,
+     -0.043,
+     0.035
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.01,
+    0.044,
+    0.03
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_lo_l_a": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.379134
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.082302
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.379134
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.082302
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.379134,
+     0.317503,
+     1.082302
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.379134,
+     0.317503,
+     1.082302
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_lo_l_b": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.511094
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.115203
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.511094
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.115203
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.511094,
+     0.317503,
+     1.115203
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.511094,
+     0.317503,
+     1.115203
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_lo_r_a": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.511094
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.115203
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.511094
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.115203
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.511094,
+     -0.317503,
+     1.115203
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.511094,
+     -0.317503,
+     1.115203
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_lo_r_b": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.379134
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.082302
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.379134
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.082302
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.379134,
+     -0.317503,
+     1.082302
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.379134,
+     -0.317503,
+     1.082302
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_up_l_a": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.401936
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     0.990848
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.401936
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     0.990848
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.401936,
+     0.317503,
+     0.990848
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.401936,
+     0.317503,
+     0.990848
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_up_l_b": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.533896
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.023749
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.0,
+     -0.970296,
+     -0.241922,
+     0.533896
+    ],
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.317503
+    ],
+    [
+     0.0,
+     -0.241922,
+     0.970296,
+     1.023749
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.533896,
+     0.317503,
+     1.023749
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.533896,
+     0.317503,
+     1.023749
+    ],
+    "quat_wxyz": [
+     0.701836,
+     -0.086175,
+     -0.086175,
+     0.701836
+    ],
+    "rpy": [
+     -0.244346,
+     -0.0,
+     1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_up_r_a": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.533896
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.023749
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.533896
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     1.023749
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.533896,
+     -0.317503,
+     1.023749
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.533896,
+     -0.317503,
+     1.023749
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "stem_clamp_up_r_b": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.401936
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     0.990848
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     -0.0,
+     0.970296,
+     -0.241922,
+     0.401936
+    ],
+    [
+     -1.0,
+     -0.0,
+     -0.0,
+     -0.317503
+    ],
+    [
+     -0.0,
+     0.241922,
+     0.970296,
+     0.990848
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.401936,
+     -0.317503,
+     0.990848
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.401936,
+     -0.317503,
+     0.990848
+    ],
+    "quat_wxyz": [
+     0.701836,
+     0.086175,
+     -0.086175,
+     -0.701836
+    ],
+    "rpy": [
+     0.244346,
+     0.0,
+     -1.570796
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.107,
+    0.078,
+    0.061837
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "upper_arm": {
+   "type": "MESH",
+   "parent": "arm_base",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.995317,
+     0.0,
+     -0.096665,
+     -0.8
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.096665,
+     0.0,
+     0.995317,
+     0.6
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.995317,
+     0.0,
+     -0.096665,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.096665,
+     0.0,
+     0.995317,
+     0.45
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.8,
+     0.0,
+     0.6
+    ],
+    "quat_wxyz": [
+     0.998829,
+     0.0,
+     -0.048389,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.096816,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.0,
+     0.0,
+     0.45
+    ],
+    "quat_wxyz": [
+     0.998829,
+     0.0,
+     -0.048389,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.096816,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.703,
+    0.11,
+    0.11
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_white"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_fl": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.62,
+     0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.62,
+     0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.25,
+    0.086,
+    0.25
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_fr": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.62,
+     -0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.62,
+     -0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.25,
+    0.086,
+    0.25
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_rl": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.62,
+     0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.62,
+     0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.25,
+    0.086,
+    0.25
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_rr": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     -0.62
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.475
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.125
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.62,
+     -0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     -0.62,
+     -0.475,
+     0.125
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.25,
+    0.086,
+    0.25
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "modifiers": [],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_shuttle_l": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.147
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.147
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     0.27,
+     0.147
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.65,
+     0.27,
+     0.147
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.282,
+    0.096,
+    0.083
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wheel_shuttle_r": {
+   "type": "MESH",
+   "parent": "robot_root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.147
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.65
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.27
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.147
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     0.65,
+     -0.27,
+     0.147
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.65,
+     -0.27,
+     0.147
+    ],
+    "quat_wxyz": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.282,
+    0.096,
+    0.083
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  },
+  "wrist": {
+   "type": "MESH",
+   "parent": "forearm",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "collections": [
+    "Mechanisms"
+   ],
+   "matrix_world": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     -0.74
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.11
+    ],
+    [
+     -1.0,
+     0.0,
+     0.0,
+     0.54
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "matrix_parent_rel": [
+    [
+     0.214543,
+     0.0,
+     -0.976715,
+     0.550007
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.976715,
+     0.0,
+     0.214543,
+     -0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "world": {
+    "xyz": [
+     -0.74,
+     -0.11,
+     0.54
+    ],
+    "quat_wxyz": [
+     0.707107,
+     0.0,
+     0.707107,
+     0.0
+    ],
+    "rpy": [
+     -0.0,
+     1.570796,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "parent_rel": {
+    "xyz": [
+     0.550007,
+     0.0,
+     -0.0
+    ],
+    "quat_wxyz": [
+     0.779276,
+     0.0,
+     -0.626681,
+     0.0
+    ],
+    "rpy": [
+     0.0,
+     -1.354573,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "dimensions": [
+    0.103,
+    0.1,
+    0.076
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "modifiers": [
+    {
+     "name": "Bevel",
+     "type": "BEVEL",
+     "show_render": true
+    }
+   ],
+   "constraints": [],
+   "rotation_mode": "XYZ",
+   "has_animation": false,
+   "custom_props": {}
+  }
+ },
+ "mesh_stats": {
+  "arch_trim_l": {
+   "file": "robot/meshes/arch_trim_l.obj",
+   "verts": 168,
+   "tris": 404,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.765,
+     -0.01,
+     -0.075
+    ],
+    [
+     0.765,
+     0.01,
+     0.07
+    ]
+   ]
+  },
+  "arch_trim_r": {
+   "file": "robot/meshes/arch_trim_r.obj",
+   "verts": 168,
+   "tris": 404,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.765,
+     -0.01,
+     -0.075
+    ],
+    [
+     0.765,
+     0.01,
+     0.07
+    ]
+   ]
+  },
+  "arm_base": {
+   "file": "robot/meshes/arm_base.obj",
+   "verts": 720,
+   "tris": 1428,
+   "materials": [
+    "mat_white",
+    "mat_mint",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.0805,
+     -0.0805,
+     0.0
+    ],
+    [
+     0.0805,
+     0.0805,
+     0.45
+    ]
+   ]
+  },
+  "arm_rail": {
+   "file": "robot/meshes/arm_rail.obj",
+   "verts": 24,
+   "tris": 36,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.88,
+     -0.065,
+     -0.001
+    ],
+    [
+     0.87,
+     0.065,
+     0.003
+    ]
+   ]
+  },
+  "bay_floor": {
+   "file": "robot/meshes/bay_floor.obj",
+   "verts": 280,
+   "tris": 556,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.65,
+     -0.425,
+     -0.04
+    ],
+    [
+     0.65,
+     0.425,
+     0.04
+    ]
+   ]
+  },
+  "body_front": {
+   "file": "robot/meshes/body_front.obj",
+   "verts": 1298,
+   "tris": 2600,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_glass",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.25,
+     -0.525,
+     -0.175
+    ],
+    [
+     0.25,
+     0.525,
+     0.175
+    ]
+   ]
+  },
+  "body_side_l": {
+   "file": "robot/meshes/body_side_l.obj",
+   "verts": 567,
+   "tris": 1130,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.65,
+     -0.05,
+     -0.145
+    ],
+    [
+     0.65,
+     0.05,
+     0.145
+    ]
+   ]
+  },
+  "body_side_r": {
+   "file": "robot/meshes/body_side_r.obj",
+   "verts": 567,
+   "tris": 1130,
+   "materials": [
+    "mat_white",
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.65,
+     -0.05,
+     -0.145
+    ],
+    [
+     0.65,
+     0.05,
+     0.145
+    ]
+   ]
+  },
+  "cam_front": {
+   "file": "robot/meshes/cam_front.obj",
+   "verts": 248,
+   "tris": 484,
+   "materials": [
+    "mat_glass",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.0125,
+     -0.06,
+     -0.02
+    ],
+    [
+     0.0175,
+     0.06,
+     0.02
+    ]
+   ]
+  },
+  "cam_wrist": {
+   "file": "robot/meshes/cam_wrist.obj",
+   "verts": 32,
+   "tris": 56,
+   "materials": [
+    "mat_dark",
+    "mat_glass"
+   ],
+   "bbox_local": [
+    [
+     0.015,
+     -0.02,
+     0.035
+    ],
+    [
+     0.05,
+     0.02,
+     0.06
+    ]
+   ]
+  },
+  "dock_clamp_mount_l": {
+   "file": "robot/meshes/dock_clamp_mount_l.obj",
+   "verts": 112,
+   "tris": 216,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.156992,
+     -0.008,
+     0.189008
+    ],
+    [
+     0.054011,
+     0.014,
+     0.381258
+    ]
+   ]
+  },
+  "dock_clamp_mount_r": {
+   "file": "robot/meshes/dock_clamp_mount_r.obj",
+   "verts": 112,
+   "tris": 216,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.156992,
+     -0.014,
+     0.189008
+    ],
+    [
+     0.054011,
+     0.008,
+     0.381258
+    ]
+   ]
+  },
+  "dock_holder_l": {
+   "file": "robot/meshes/dock_holder_l.obj",
+   "verts": 168,
+   "tris": 324,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     0.023957,
+     -0.091,
+     -0.019113
+    ],
+    [
+     0.06685,
+     0.091,
+     0.054274
+    ]
+   ]
+  },
+  "dock_holder_lo_l": {
+   "file": "robot/meshes/dock_holder_lo_l.obj",
+   "verts": 168,
+   "tris": 324,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     0.023957,
+     -0.091,
+     -0.019113
+    ],
+    [
+     0.06685,
+     0.091,
+     0.054274
+    ]
+   ]
+  },
+  "dock_holder_lo_r": {
+   "file": "robot/meshes/dock_holder_lo_r.obj",
+   "verts": 168,
+   "tris": 324,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     0.023957,
+     -0.091,
+     -0.019113
+    ],
+    [
+     0.06685,
+     0.091,
+     0.054274
+    ]
+   ]
+  },
+  "dock_holder_r": {
+   "file": "robot/meshes/dock_holder_r.obj",
+   "verts": 168,
+   "tris": 324,
+   "materials": [
+    "mat_dark",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     0.023957,
+     -0.091,
+     -0.019113
+    ],
+    [
+     0.06685,
+     0.091,
+     0.054274
+    ]
+   ]
+  },
+  "dock_side_l": {
+   "file": "robot/meshes/dock_side_l.obj",
+   "verts": 398,
+   "tris": 768,
+   "materials": [
+    "mat_mint",
+    "mat_white",
+    "mat_light",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.227211,
+     -0.052,
+     -0.3
+    ],
+    [
+     0.274459,
+     0.052,
+     0.448
+    ]
+   ]
+  },
+  "dock_side_r": {
+   "file": "robot/meshes/dock_side_r.obj",
+   "verts": 398,
+   "tris": 768,
+   "materials": [
+    "mat_mint",
+    "mat_white",
+    "mat_light",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.227211,
+     -0.052,
+     -0.3
+    ],
+    [
+     0.274459,
+     0.052,
+     0.448
+    ]
+   ]
+  },
+  "finger_l": {
+   "file": "robot/meshes/finger_l.obj",
+   "verts": 32,
+   "tris": 48,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     0.0,
+     -0.034,
+     -0.02
+    ],
+    [
+     0.108,
+     0.01,
+     0.02
+    ]
+   ]
+  },
+  "finger_r": {
+   "file": "robot/meshes/finger_r.obj",
+   "verts": 32,
+   "tris": 48,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     0.0,
+     -0.01,
+     -0.02
+    ],
+    [
+     0.108,
+     0.034,
+     0.02
+    ]
+   ]
+  },
+  "forearm": {
+   "file": "robot/meshes/forearm.obj",
+   "verts": 720,
+   "tris": 1424,
+   "materials": [
+    "mat_dark",
+    "mat_white",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.042,
+     -0.0345,
+     -0.042
+    ],
+    [
+     0.585,
+     0.11,
+     0.042
+    ]
+   ]
+  },
+  "front_ramp_l": {
+   "file": "robot/meshes/front_ramp_l.obj",
+   "verts": 360,
+   "tris": 700,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.015,
+     -0.13,
+     -0.03
+    ],
+    [
+     0.3,
+     0.09,
+     0.02
+    ]
+   ]
+  },
+  "front_ramp_l_tip": {
+   "file": "robot/meshes/front_ramp_l_tip.obj",
+   "verts": 256,
+   "tris": 496,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.013,
+     -0.13,
+     0.0
+    ],
+    [
+     0.3,
+     0.09,
+     0.05
+    ]
+   ]
+  },
+  "front_ramp_r": {
+   "file": "robot/meshes/front_ramp_r.obj",
+   "verts": 360,
+   "tris": 700,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.015,
+     -0.13,
+     -0.03
+    ],
+    [
+     0.3,
+     0.09,
+     0.02
+    ]
+   ]
+  },
+  "front_ramp_r_tip": {
+   "file": "robot/meshes/front_ramp_r_tip.obj",
+   "verts": 256,
+   "tris": 496,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.013,
+     -0.13,
+     0.0
+    ],
+    [
+     0.3,
+     0.09,
+     0.05
+    ]
+   ]
+  },
+  "headlight_l": {
+   "file": "robot/meshes/headlight_l.obj",
+   "verts": 8,
+   "tris": 12,
+   "materials": [
+    "mat_light"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.01
+    ],
+    [
+     0.005,
+     0.04,
+     0.01
+    ]
+   ]
+  },
+  "headlight_r": {
+   "file": "robot/meshes/headlight_r.obj",
+   "verts": 8,
+   "tris": 12,
+   "materials": [
+    "mat_light"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.01
+    ],
+    [
+     0.005,
+     0.04,
+     0.01
+    ]
+   ]
+  },
+  "lidar": {
+   "file": "robot/meshes/lidar.obj",
+   "verts": 480,
+   "tris": 952,
+   "materials": [
+    "mat_dark",
+    "mat_mint_glow"
+   ],
+   "bbox_local": [
+    [
+     -0.0605,
+     -0.0605,
+     -0.04
+    ],
+    [
+     0.0605,
+     0.0605,
+     0.04
+    ]
+   ]
+  },
+  "logo_l": {
+   "file": "robot/meshes/logo_l.obj",
+   "verts": 2516,
+   "tris": 2496,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.251443,
+     -0.026486,
+     -0.0015
+    ],
+    [
+     0.254871,
+     0.033514,
+     0.0015
+    ]
+   ]
+  },
+  "logo_r": {
+   "file": "robot/meshes/logo_r.obj",
+   "verts": 2516,
+   "tris": 2496,
+   "materials": [
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.251443,
+     -0.026486,
+     -0.0015
+    ],
+    [
+     0.254871,
+     0.033514,
+     0.0015
+    ]
+   ]
+  },
+  "mast": {
+   "file": "robot/meshes/mast.obj",
+   "verts": 88,
+   "tris": 168,
+   "materials": [
+    "mat_white",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.04,
+     -0.04,
+     0.0
+    ],
+    [
+     0.04,
+     0.04,
+     0.55
+    ]
+   ]
+  },
+  "outrigger_l": {
+   "file": "robot/meshes/outrigger_l.obj",
+   "verts": 280,
+   "tris": 544,
+   "materials": [
+    "mat_dark",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.02,
+     -0.025,
+     -0.025
+    ],
+    [
+     0.409,
+     0.025,
+     0.025
+    ]
+   ]
+  },
+  "outrigger_l_foot": {
+   "file": "robot/meshes/outrigger_l_foot.obj",
+   "verts": 96,
+   "tris": 184,
+   "materials": [
+    "mat_mint",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     -0.06,
+     -0.06,
+     -0.01
+    ],
+    [
+     0.06,
+     0.06,
+     0.01
+    ]
+   ]
+  },
+  "outrigger_r": {
+   "file": "robot/meshes/outrigger_r.obj",
+   "verts": 280,
+   "tris": 544,
+   "materials": [
+    "mat_dark",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.02,
+     -0.025,
+     -0.025
+    ],
+    [
+     0.409,
+     0.025,
+     0.025
+    ]
+   ]
+  },
+  "outrigger_r_foot": {
+   "file": "robot/meshes/outrigger_r_foot.obj",
+   "verts": 96,
+   "tris": 184,
+   "materials": [
+    "mat_mint",
+    "mat_rubber"
+   ],
+   "bbox_local": [
+    [
+     -0.06,
+     -0.06,
+     -0.01
+    ],
+    [
+     0.06,
+     0.06,
+     0.01
+    ]
+   ]
+  },
+  "rail_l": {
+   "file": "robot/meshes/rail_l.obj",
+   "verts": 384,
+   "tris": 576,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.65,
+     -0.06,
+     -0.022
+    ],
+    [
+     0.65,
+     0.06,
+     0.022
+    ]
+   ]
+  },
+  "rail_r": {
+   "file": "robot/meshes/rail_r.obj",
+   "verts": 384,
+   "tris": 576,
+   "materials": [
+    "mat_metal",
+    "mat_dark"
+   ],
+   "bbox_local": [
+    [
+     -0.65,
+     -0.06,
+     -0.022
+    ],
+    [
+     0.65,
+     0.06,
+     0.022
+    ]
+   ]
+  },
+  "ramp": {
+   "file": "robot/meshes/ramp.obj",
+   "verts": 1496,
+   "tris": 2892,
+   "materials": [
+    "mat_metal",
+    "mat_dark",
+    "mat_rubber",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.31,
+     -0.42,
+     -0.04
+    ],
+    [
+     0.015,
+     0.42,
+     0.02
+    ]
+   ]
+  },
+  "ramp_tip": {
+   "file": "robot/meshes/ramp_tip.obj",
+   "verts": 752,
+   "tris": 1452,
+   "materials": [
+    "mat_metal",
+    "mat_rubber",
+    "mat_mint",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.3,
+     -0.42,
+     -0.01
+    ],
+    [
+     0.01,
+     0.42,
+     0.05
+    ]
+   ]
+  },
+  "ref_scooter_l_geo": {
+   "file": "robot/meshes/ref_scooter_l_geo.obj",
+   "verts": 2160,
+   "tris": 4160,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_metal",
+    "mat_scooter",
+    "mat_mint_glow",
+    "mat_light",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -1.04,
+     -0.236,
+     -0.127
+    ],
+    [
+     0.127306,
+     0.236,
+     1.0762
+    ]
+   ]
+  },
+  "ref_scooter_l_stand": {
+   "file": "robot/meshes/ref_scooter_l_stand.obj",
+   "verts": 80,
+   "tris": 148,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.011,
+     -0.014,
+     -0.014
+    ],
+    [
+     0.0946,
+     0.014,
+     0.014
+    ]
+   ]
+  },
+  "ref_scooter_r_geo": {
+   "file": "robot/meshes/ref_scooter_r_geo.obj",
+   "verts": 2160,
+   "tris": 4160,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_metal",
+    "mat_scooter",
+    "mat_mint_glow",
+    "mat_light",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -1.04,
+     -0.236,
+     -0.127
+    ],
+    [
+     0.127306,
+     0.236,
+     1.0762
+    ]
+   ]
+  },
+  "ref_scooter_r_stand": {
+   "file": "robot/meshes/ref_scooter_r_stand.obj",
+   "verts": 80,
+   "tris": 148,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.011,
+     -0.014,
+     -0.014
+    ],
+    [
+     0.0946,
+     0.014,
+     0.014
+    ]
+   ]
+  },
+  "shuttle_fgate_l_a": {
+   "file": "robot/meshes/shuttle_fgate_l_a.obj",
+   "verts": 196,
+   "tris": 384,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.015
+    ],
+    [
+     0.005,
+     0.003776,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_fgate_l_b": {
+   "file": "robot/meshes/shuttle_fgate_l_b.obj",
+   "verts": 196,
+   "tris": 384,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.003776,
+     -0.015
+    ],
+    [
+     0.005,
+     0.04,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_fgate_r_a": {
+   "file": "robot/meshes/shuttle_fgate_r_a.obj",
+   "verts": 196,
+   "tris": 384,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.015
+    ],
+    [
+     0.005,
+     0.003776,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_fgate_r_b": {
+   "file": "robot/meshes/shuttle_fgate_r_b.obj",
+   "verts": 196,
+   "tris": 384,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.003776,
+     -0.015
+    ],
+    [
+     0.005,
+     0.04,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_gate_l_a": {
+   "file": "robot/meshes/shuttle_gate_l_a.obj",
+   "verts": 116,
+   "tris": 224,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.015
+    ],
+    [
+     0.005,
+     0.004,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_gate_l_b": {
+   "file": "robot/meshes/shuttle_gate_l_b.obj",
+   "verts": 116,
+   "tris": 224,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.004,
+     -0.015
+    ],
+    [
+     0.005,
+     0.04,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_gate_r_a": {
+   "file": "robot/meshes/shuttle_gate_r_a.obj",
+   "verts": 116,
+   "tris": 224,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.04,
+     -0.015
+    ],
+    [
+     0.005,
+     0.004,
+     0.015
+    ]
+   ]
+  },
+  "shuttle_gate_r_b": {
+   "file": "robot/meshes/shuttle_gate_r_b.obj",
+   "verts": 116,
+   "tris": 224,
+   "materials": [
+    "mat_metal",
+    "mat_orange"
+   ],
+   "bbox_local": [
+    [
+     -0.005,
+     -0.004,
+     -0.015
+    ],
+    [
+     0.005,
+     0.04,
+     0.015
+    ]
+   ]
+  },
+  "stem_clamp_lo_l_a": {
+   "file": "robot/meshes/stem_clamp_lo_l_a.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.066,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.012,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_lo_l_b": {
+   "file": "robot/meshes/stem_clamp_lo_l_b.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.012,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.066,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_lo_r_a": {
+   "file": "robot/meshes/stem_clamp_lo_r_a.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.066,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.012,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_lo_r_b": {
+   "file": "robot/meshes/stem_clamp_lo_r_b.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.012,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.066,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_up_l_a": {
+   "file": "robot/meshes/stem_clamp_up_l_a.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.066,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.012,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_up_l_b": {
+   "file": "robot/meshes/stem_clamp_up_l_b.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.012,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.066,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_up_r_a": {
+   "file": "robot/meshes/stem_clamp_up_r_a.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.066,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.012,
+     0.030918
+    ]
+   ]
+  },
+  "stem_clamp_up_r_b": {
+   "file": "robot/meshes/stem_clamp_up_r_b.obj",
+   "verts": 320,
+   "tris": 620,
+   "materials": [
+    "mat_dark",
+    "mat_rubber",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.095,
+     -0.012,
+     -0.030918
+    ],
+    [
+     0.012,
+     0.066,
+     0.030918
+    ]
+   ]
+  },
+  "upper_arm": {
+   "file": "robot/meshes/upper_arm.obj",
+   "verts": 576,
+   "tris": 1140,
+   "materials": [
+    "mat_dark",
+    "mat_white"
+   ],
+   "bbox_local": [
+    [
+     -0.055,
+     -0.055,
+     -0.055
+    ],
+    [
+     0.648,
+     0.055,
+     0.055
+    ]
+   ]
+  },
+  "wheel_fl": {
+   "file": "robot/meshes/wheel_fl.obj",
+   "verts": 400,
+   "tris": 740,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.125,
+     -0.043,
+     -0.125
+    ],
+    [
+     0.125,
+     0.043,
+     0.125
+    ]
+   ]
+  },
+  "wheel_fr": {
+   "file": "robot/meshes/wheel_fr.obj",
+   "verts": 400,
+   "tris": 740,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.125,
+     -0.043,
+     -0.125
+    ],
+    [
+     0.125,
+     0.043,
+     0.125
+    ]
+   ]
+  },
+  "wheel_rl": {
+   "file": "robot/meshes/wheel_rl.obj",
+   "verts": 400,
+   "tris": 740,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.125,
+     -0.043,
+     -0.125
+    ],
+    [
+     0.125,
+     0.043,
+     0.125
+    ]
+   ]
+  },
+  "wheel_rr": {
+   "file": "robot/meshes/wheel_rr.obj",
+   "verts": 400,
+   "tris": 740,
+   "materials": [
+    "mat_rubber",
+    "mat_dark",
+    "mat_mint",
+    "mat_metal"
+   ],
+   "bbox_local": [
+    [
+     -0.125,
+     -0.043,
+     -0.125
+    ],
+    [
+     0.125,
+     0.043,
+     0.125
+    ]
+   ]
+  },
+  "wheel_shuttle_l": {
+   "file": "robot/meshes/wheel_shuttle_l.obj",
+   "verts": 280,
+   "tris": 540,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.17,
+     -0.048,
+     -0.004
+    ],
+    [
+     0.112,
+     0.048,
+     0.079
+    ]
+   ]
+  },
+  "wheel_shuttle_r": {
+   "file": "robot/meshes/wheel_shuttle_r.obj",
+   "verts": 280,
+   "tris": 540,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.17,
+     -0.048,
+     -0.004
+    ],
+    [
+     0.112,
+     0.048,
+     0.079
+    ]
+   ]
+  },
+  "wrist": {
+   "file": "robot/meshes/wrist.obj",
+   "verts": 566,
+   "tris": 1116,
+   "materials": [
+    "mat_dark",
+    "mat_mint"
+   ],
+   "bbox_local": [
+    [
+     -0.038,
+     -0.05,
+     -0.038
+    ],
+    [
+     0.065,
+     0.05,
+     0.038
+    ]
+   ]
+  }
+ },
+ "source_version": "v19"
+}

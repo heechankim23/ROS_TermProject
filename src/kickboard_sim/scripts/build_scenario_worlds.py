@@ -6,7 +6,8 @@
   - 범위: 킥보드 · 이벤트 위치 · 관련 구역(킥보드마다 가까운 일반·충전 구역 2곳씩 + 시나리오에 나오는 구역) · 로봇 도크 + 여유 40 m
   - 로봇 도크: 시나리오 킥보드들 가운데 근처 길가로 옮긴다 (원래 도크는 본관 옆)
   - 바닥: 충돌은 평면 하나, 보이는 바닥은 캠퍼스 텍스처를 잘라 쓴다. 건물·거치대는 범위 안의 것만
-  - 주행 지도·경로 그래프는 캠퍼스 전체 것을 그대로 쓴다 (좌표 동일)
+  - 경로 그래프는 캠퍼스 전체 것을 그대로 쓴다 (좌표 동일). 주행·라이다 지도는 캠퍼스 지도에 이 시나리오의
+    로봇 충전소(차고) 벽을 더해 시나리오마다 따로 저장한다 (maps/knu_<시나리오>.png, _lidar.png)
 
   python3 scripts/build_scenario_worlds.py            # config/scenarios_knu 의 k* 전부
   python3 scripts/build_scenario_worlds.py k08 k13
@@ -96,14 +97,10 @@ def local_dock(L, g, M, clear, pts, zones_all):
     c = np.median(np.array(pts), axis=0)
     taken = [z['rack']['center'] for z in zones_all if z['rack']]
     for radius in (60, 120, 250):
-        rack = K.place_rack(L, g, M, clear, c, 3.0, depth=1.2, radius=radius, taken=taken)
+        rack = K.place_rack(L, g, M, clear, c, K.GARAGE_W + 0.6, depth=K.GARAGE_LEN, radius=radius, taken=taken)
         if rack is not None:
             break
-    out = rack['out']
-    body = rack['center'] + out * 0.3
-    normal = -out
-    tag = body + normal * 0.152
-    return {'body': body, 'yaw': math.atan2(normal[1], normal[0]), 'tag': tag, 'dock': tag + normal * 1.0}
+    return K.garage_from_rack(rack, '시나리오 근처 길가')
 
 
 def write_meshes(L, T, sid, zones, bbox, gbounds):
@@ -159,11 +156,14 @@ def write_world(sid, name, zones, dock, bbox):
     cols = []
     for z in zones:
         r = z['rack']
+        if z['type'] == 'charging':                 # Kickspot 모델이 충돌체를 가짐
+            continue
         c = r['center']
         cols.append(f'        <collision name="{z["id"]}_rack"><pose>{c[0]:.3f} {c[1]:.3f} 0.4 0 0 {r["yaw"]:.4f}</pose>'
                     f'<geometry><box><size>{r["length"] + 0.2:.2f} 0.3 0.8</size></box></geometry></collision>')
     bx, by = dock['body']
     nl = '\n'
+    kicks = K.kickspot_includes(zones)
     sdf = f'''<?xml version="1.0"?>
 <!-- 시나리오 {sid} 전용 작은 캠퍼스 ({x1 - x0:.0f} x {y1 - y0:.0f} m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/{name}.yaml -->
@@ -212,10 +212,12 @@ def write_world(sid, name, zones, dock, bbox):
 {nl.join(cols)}
       </link>
     </model>
+{kicks}
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>{bx:.3f} {by:.3f} 0 0 0 {dock['yaw']:.4f}</pose>
+      <pose>{bx:.3f} {by:.3f} 0 0 0 {dock['yaw_in']:.4f}</pose>
     </include>
   </world>
 </sdf>
@@ -230,17 +232,20 @@ def write_config(name, sid, zones, dock, base_cfg):
     cfg['charging_zones'] = [z for z in cfg.get('charging_zones', []) if z['name'] in keep]
     yaw = math.degrees(dock['yaw'])
     cfg['robot_spawn'] = {'x': round(float(dock['dock'][0]), 3), 'y': round(float(dock['dock'][1]), 3),
-                          'yaw_deg': round((yaw + 180) % 360, 1)}
+                          'z': dock['floor_z'], 'yaw_deg': round((yaw + 180) % 360, 1)}
     cfg['charger']['tag_pose'] = {'x': round(float(dock['tag'][0]), 3), 'y': round(float(dock['tag'][1]), 3),
                                   'yaw_deg': round(yaw, 1)}
+    cfg['charger']['dock_distance'] = round(dock['dock_distance'], 2)
+    cfg['charger']['pre_dock_distance'] = round(dock['pre_dock_distance'], 2)
+    cfg['charger']['station'] = {'model': 'scootover_robot_station', 'x': round(float(dock['body'][0]), 3),
+                                 'y': round(float(dock['body'][1]), 3),
+                                 'yaw_deg': round(math.degrees(dock['yaw_in']), 1)}
     cfg['terrain'] = {'flat': True}
     with open(os.path.join(PKG, 'config', 'maps', f'{name}.yaml'), 'w') as f:
         f.write(f'# 시나리오 {sid} 전용 작은 캠퍼스 맵 설정. scripts/build_scenario_worlds.py 가 만든 파일.\n'
                 f'# 구역은 이 시나리오에 필요한 {len(keep)}곳만, 로봇 도크는 시나리오 근처 길가.\n')
         yaml.safe_dump(cfg, f, allow_unicode=True, sort_keys=False, default_flow_style=None, width=200)
-    for suffix in ('', '_lidar'):
-        with open(os.path.join(PKG, 'maps', f'{name}{suffix}.yaml'), 'w') as f:
-            f.write(open(os.path.join(PKG, 'maps', f'{K.NAME}{suffix}.yaml')).read())
+
 
 
 def main():
@@ -248,6 +253,8 @@ def main():
     print('캠퍼스 배치 계산 (약 20초)')
     L, gbounds, T, g, M, clear, zones_all = setup()
     base_cfg = os.path.join(PKG, 'config', 'maps', f'{K.NAME}_flat.yaml')
+    gn = K.Grid(gbounds, K.RES_NAV)                  # 시나리오 주행 지도 = 캠퍼스 지도 + 이 시나리오 차고 벽
+    Mn = K.build_masks(L, gn)
     for sid in names:
         sc = yaml.safe_load(open(os.path.join(SC_DIR, sid + '.yaml')))
         name = f'knu_{sid}'
@@ -261,6 +268,7 @@ def main():
         nb = write_meshes(L, T, sid, zones, bbox, gbounds)
         write_world(sid, name, zones, dock, bbox)
         write_config(name, sid, zones, dock, base_cfg)
+        K.write_nav_maps(Mn, gn, zones_all, dock, name=name)
         print(f'{name:<9} {bbox[2] - bbox[0]:>5.0f} x {bbox[3] - bbox[1]:<5.0f} m  구역 {len(zones):>2}  건물 {nb:>2}  '
               f'도크 ({dock["dock"][0]:.0f}, {dock["dock"][1]:.0f})')
 

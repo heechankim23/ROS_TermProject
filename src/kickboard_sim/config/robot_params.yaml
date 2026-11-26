@@ -11,7 +11,7 @@ queue_manager:
 
 mission_manager:
   ros__parameters:
-    capacity: 4        # 적재함 4칸
+    capacity: 2        # 적재 레인 2개 (SCOOTOVER v19)
     return_battery_pct: 20.0
     charge_target_pct: 80.0
     start_docked: true
@@ -30,7 +30,7 @@ battery_manager:
 
 collector:
   ros__parameters:
-    approach_standoff: 1.6     # 로봇 중심 -> 킥보드 GPS 점 (로봇 1.7 x 0.9 m)
+    approach_standoff: 1.8     # 로봇 중심 -> 킥보드 GPS 점 (로봇 1.94 x 1.05 m, 램프 포함)
     verify_timeout_sec: 10.0
     align_distance: 1.35       # 로봇 중심 -> 킥보드 중심. 로봇팔이 발판에 닿는 거리 (자리는 nav_bridge 가 고름)
     align_yaw_tol_deg: 10.0
@@ -48,8 +48,8 @@ nav_bridge:
     sensor_wait_timeout_sec: 5.0  # 센서 복구 대기 한도: 실제 시간 기준
     max_retries: 2
     goal_timeout_sec: 120.0
-    goal_clearance: 1.1        # 목표 지점에서 장애물(벽 + 라이다)까지 최소 거리: 회전 반경 0.98 + 격자(0.1 m) 오차
-    inflation_radius: 1.1      # 경로가 장애물과 되도록 지키는 거리 (로봇을 덮는 원 + 격자 오차)
+    goal_clearance: 1.2        # 목표 지점에서 장애물(벽 + 라이다)까지 최소 거리: 회전 반경 1.11 + 격자(0.1 m) 오차
+    inflation_radius: 1.2      # 경로가 장애물과 되도록 지키는 거리 (로봇을 덮는 원 + 격자 오차)
     obstacle_stop_dist: 0.15   # 안전장치: 라이다 바로 앞 이 거리 안에 뭔가 있으면 정지 (회피는 경로 계획)
 
 scooter_fleet_sim:
@@ -69,7 +69,7 @@ sim_tag_detector:
   ros__parameters:
     hfov_deg: 62.2
     max_range: 3.0
-    camera_offset_x: 0.76      # 카메라 = 캡 앞면 (model.sdf camera_link)
+    camera_offset_x: 0.9125    # 앞 카메라 = 차체 앞면 cam_front (Blender SCOOTOVER, model.sdf camera_link)
 
 arm_loader:
   ros__parameters:

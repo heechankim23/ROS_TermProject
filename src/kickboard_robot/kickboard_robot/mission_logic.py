@@ -343,12 +343,12 @@ class ResolveWatch:
 
 
 # ---------------- 도크에서 출발: 확인하며 후진 ----------------
-UNDOCK_BODY_X0 = -0.92          # 차체 뒤끝 (base_footprint 기준, collector_logic.BODY_X 와 같게)
-UNDOCK_HALF_W = 0.47            # 차체 반폭 + 여유
+UNDOCK_BODY_X0 = -0.98          # 차체 뒤끝 (base_footprint 기준, collector_logic.BODY_X 와 같게)
+UNDOCK_HALF_W = 0.55            # 차체 반폭 0.525 + 여유 (차고 문 반폭 0.70, 지도 격자 번짐 고려)
 
 
 def scan_to_body_points(ranges, angle_min, angle_inc, range_min, range_max, off_x=0.80,
-                        body=(-0.92, 0.89, 0.47)):
+                        body=(-0.98, 0.96, 0.58)):
     """LaserScan 거리값 -> 로봇 기준(base_footprint) 점 [(x, y)]. 측정 끝값·차체 안 점(자기 몸)은 뺀다."""
     pts = []
     for k, r in enumerate(ranges):
@@ -366,3 +366,37 @@ def rear_clear(points, dist, margin=0.3, body_x0=UNDOCK_BODY_X0, half_w=UNDOCK_H
     """뒤로 dist m 물러날 통로(차체 뒤끝에서 dist + margin, 폭 ±half_w)에 점이 하나도 없으면 True."""
     x_lo = body_x0 - max(0.0, dist) - margin
     return not any(x_lo <= x < body_x0 and abs(y) < half_w for x, y in points)
+
+
+# ---------------- 충전소(차고) 안인가 / 똑바로 후진 ----------------
+STATION_REGION = (-0.45, 2.62, 0.88)   # 차고 영역 (스테이션 좌표: 램프 앞끝 x, 뒷벽 x, 반폭). +x = 안쪽
+BODY = (-0.98, 0.96, 0.525)            # 로봇 차체 (x 최소, x 최대, 반폭) base_footprint 기준 (램프 포함)
+
+
+def to_station(station, x, y):
+    """world 점 -> 스테이션 좌표 (sx, sy)"""
+    c, s = math.cos(station[2]), math.sin(station[2])
+    dx, dy = x - station[0], y - station[1]
+    return c * dx + s * dy, -s * dx + c * dy
+
+
+def body_in_station(pose, station, margin=0.2, region=STATION_REGION, body=BODY):
+    """로봇 차체 네 모서리·중심 중 하나라도 차고 영역(+ margin) 안이면 True. 다 나와야 False"""
+    c, s = math.cos(pose[2]), math.sin(pose[2])
+    x0, x1, hw = region
+    for bx, by in ((body[0], -body[2]), (body[0], body[2]), (body[1], -body[2]), (body[1], body[2]), (0.0, 0.0)):
+        sx, sy = to_station(station, pose[0] + c * bx - s * by, pose[1] + s * bx + c * by)
+        if x0 - margin <= sx <= x1 + margin and abs(sy) <= hw + margin:
+            return True
+    return False
+
+
+def undock_twist(pose, station, speed, k_y=0.6, k_yaw=1.5, max_tilt=0.2, w_max=0.4):
+    """차고 축(스테이션 +x)을 따라 똑바로 후진하는 (v, w). 방향은 안쪽(스테이션 yaw)을 본 채로,
+    옆으로 벗어나면(sy) 살짝 틀어 축으로 돌아온다 (후진이라 sy 를 줄이려면 차체를 sy 쪽으로 기울임)."""
+    v = -abs(speed)
+    _, sy = to_station(station, pose[0], pose[1])
+    err_yaw = math.atan2(math.sin(pose[2] - station[2]), math.cos(pose[2] - station[2]))
+    want = max(-max_tilt, min(max_tilt, k_y * sy))
+    w = max(-w_max, min(w_max, k_yaw * (want - err_yaw)))
+    return v, w

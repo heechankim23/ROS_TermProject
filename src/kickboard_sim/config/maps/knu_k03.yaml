@@ -4,13 +4,14 @@ mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: 70.905, y: 219.711, yaw_deg: 269.0}
+robot_spawn: {x: 67.037, y: 217.782, z: 0.1, yaw_deg: 268.8}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: 70.887, y: 218.711, yaw_deg: 89.0}
-  dock_distance: 1.0
-  pre_dock_distance: 2.0
+  tag_pose: {x: 67.014, y: 216.642, yaw_deg: 88.8}
+  dock_distance: 1.14
+  pre_dock_distance: 4.44
+  station: {model: scootover_robot_station, x: 67.063, y: 219.082, yaw_deg: -91.2}
 parking_zones:
 - name: P02
   site: 120 예술대학 인근
@@ -23,16 +24,16 @@ parking_zones:
   rack: {x: 115.97, y: 303.38, yaw_deg: -1.9, length: 7.0, road: service}
   robot_access: {x: 115.91, y: 301.63, yaw_deg: -1.9}
   slots:
-  - {id: P02-01, x: 112.82, y: 303.48, z: -9.21, yaw_deg: 88.1, role: normal}
-  - {id: P02-02, x: 113.52, y: 303.46, z: -9.18, yaw_deg: 88.1, role: normal}
-  - {id: P02-03, x: 114.22, y: 303.43, z: -9.15, yaw_deg: 88.1, role: normal}
-  - {id: P02-04, x: 114.92, y: 303.41, z: -9.13, yaw_deg: 88.1, role: normal}
-  - {id: P02-05, x: 115.62, y: 303.39, z: -9.1, yaw_deg: 88.1, role: normal}
-  - {id: P02-06, x: 116.32, y: 303.36, z: -9.07, yaw_deg: 88.1, role: normal}
-  - {id: P02-07, x: 117.02, y: 303.34, z: -9.04, yaw_deg: 88.1, role: normal}
-  - {id: P02-08, x: 117.72, y: 303.32, z: -9.01, yaw_deg: 88.1, role: normal}
-  - {id: P02-09, x: 118.42, y: 303.3, z: -8.98, yaw_deg: -91.9, role: broken}
-  - {id: P02-10, x: 119.12, y: 303.27, z: -8.95, yaw_deg: -91.9, role: broken}
+  - {id: P02-01, x: 112.82, y: 303.48, z: -9.31, yaw_deg: 88.1, role: normal}
+  - {id: P02-02, x: 113.52, y: 303.46, z: -9.29, yaw_deg: 88.1, role: normal}
+  - {id: P02-03, x: 114.22, y: 303.43, z: -9.26, yaw_deg: 88.1, role: normal}
+  - {id: P02-04, x: 114.92, y: 303.41, z: -9.23, yaw_deg: 88.1, role: normal}
+  - {id: P02-05, x: 115.62, y: 303.39, z: -9.2, yaw_deg: 88.1, role: normal}
+  - {id: P02-06, x: 116.32, y: 303.36, z: -9.17, yaw_deg: 88.1, role: normal}
+  - {id: P02-07, x: 117.02, y: 303.34, z: -9.14, yaw_deg: 88.1, role: normal}
+  - {id: P02-08, x: 117.72, y: 303.32, z: -9.11, yaw_deg: 88.1, role: normal}
+  - {id: P02-09, x: 118.42, y: 303.3, z: -9.08, yaw_deg: -91.9, role: broken}
+  - {id: P02-10, x: 119.12, y: 303.27, z: -9.05, yaw_deg: -91.9, role: broken}
 - name: P05
   site: 108 첨성인미래관 인근
   origin: image
@@ -48,23 +49,23 @@ parking_zones:
   rack: {x: -81.45, y: 192.09, yaw_deg: -164.4, length: 7.0, road: service}
   robot_access: {x: -80.98, y: 190.41, yaw_deg: -164.4}
   slots:
-  - {id: P05-01, x: -78.42, y: 192.94, z: -10.17, yaw_deg: 105.6, role: normal}
-  - {id: P05-02, x: -79.09, y: 192.75, z: -10.16, yaw_deg: 105.6, role: normal}
-  - {id: P05-03, x: -79.77, y: 192.57, z: -10.14, yaw_deg: 105.6, role: normal}
-  - {id: P05-04, x: -80.44, y: 192.38, z: -10.13, yaw_deg: 105.6, role: normal}
-  - {id: P05-05, x: -81.11, y: 192.19, z: -10.11, yaw_deg: 105.6, role: normal}
-  - {id: P05-06, x: -81.79, y: 192.0, z: -10.1, yaw_deg: 105.6, role: normal}
-  - {id: P05-07, x: -82.46, y: 191.81, z: -10.08, yaw_deg: 105.6, role: normal}
-  - {id: P05-08, x: -83.14, y: 191.62, z: -10.07, yaw_deg: 105.6, role: normal}
-  - {id: P05-09, x: -83.81, y: 191.43, z: -10.05, yaw_deg: -74.4, role: broken}
-  - {id: P05-10, x: -84.48, y: 191.25, z: -10.03, yaw_deg: -74.4, role: broken}
+  - {id: P05-01, x: -78.42, y: 192.94, z: -10.27, yaw_deg: 105.6, role: normal}
+  - {id: P05-02, x: -79.09, y: 192.75, z: -10.26, yaw_deg: 105.6, role: normal}
+  - {id: P05-03, x: -79.77, y: 192.57, z: -10.25, yaw_deg: 105.6, role: normal}
+  - {id: P05-04, x: -80.44, y: 192.38, z: -10.23, yaw_deg: 105.6, role: normal}
+  - {id: P05-05, x: -81.11, y: 192.19, z: -10.22, yaw_deg: 105.6, role: normal}
+  - {id: P05-06, x: -81.79, y: 192.0, z: -10.2, yaw_deg: 105.6, role: normal}
+  - {id: P05-07, x: -82.46, y: 191.81, z: -10.19, yaw_deg: 105.6, role: normal}
+  - {id: P05-08, x: -83.14, y: 191.62, z: -10.17, yaw_deg: 105.6, role: normal}
+  - {id: P05-09, x: -83.81, y: 191.43, z: -10.16, yaw_deg: -74.4, role: broken}
+  - {id: P05-10, x: -84.48, y: 191.25, z: -10.14, yaw_deg: -74.4, role: broken}
 charging_zones: []
 params:
-  request_gateway: {max_range_m: 1200.0}
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
+  request_gateway: {max_range_m: 1200.0}
   sim_lidar: {range_max: 12.0}
   collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
-  mission_manager: {return_battery_pct: 20.0}
+  mission_manager: {return_battery_pct: 20.0, undock_distance: 3.0}
   scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

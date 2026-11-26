@@ -20,7 +20,7 @@ pass_criteria:
   - "조치 없음: #1,2,3,4,5,6 → 수거하지 않음 (위치 변화 0.2 m 이하)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: 309.497, y: -137.968, yaw_deg: 62.8, battery_pct: 64, slot: P18-01, place: slot, where: "P18 305 복지관 인근 01번 칸"}
   - {id: 2, x: 310.12, y: -138.288, yaw_deg: 62.8, battery_pct: 68, slot: P18-02, place: slot, where: "P18 305 복지관 인근 02번 칸"}

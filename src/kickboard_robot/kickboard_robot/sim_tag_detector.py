@@ -15,6 +15,7 @@ from rclpy.node import Node
 from kickboard_interfaces.msg import ScooterTruthArray, TagDetection, TagDetectionArray
 
 from .collector import tag_id_of
+from .collector_logic import face_tag_id
 from .common import PoseTracker
 from .gz_utils import SCOOTER_L, SCOOTER_W
 from .motion import quat_from_yaw, wrap, yaw_from_quat
@@ -89,12 +90,12 @@ class SimTagDetector(Node):
         out.header.stamp = self.get_clock().now().to_msg()
         for sid, x, y, yaw in self.truth:
             best = None
-            for f in self.faces(x, y, yaw):
+            for k, f in enumerate(self.faces(x, y, yaw)):
                 v = self.visible(cam, f)
                 if v and (best is None or v[1] < best[1][1]):
-                    best = (f, v)
-            if best:
-                out.detections.append(self.detection(tag_id_of(sid), best[0], best[1][0]))
+                    best = (f, v, k)
+            if best:     # 면마다 다른 ID (collector 가 킥보드 방향을 앎)
+                out.detections.append(self.detection(face_tag_id(tag_id_of(sid), best[2]), best[0], best[1][0]))
         v = self.visible(cam, self.charger_face)
         if v:
             out.detections.append(self.detection(self.charger_id, self.charger_face, v[0]))

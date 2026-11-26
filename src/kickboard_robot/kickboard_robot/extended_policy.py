@@ -45,7 +45,7 @@ def integrate(pose, v, w, dt):
 
 def scan_collision(points, v, w, horizon=0.8):
     """Sweep padded footprint in scan/base frame; points inside the body are self returns."""
-    points = [(x, y) for x, y in points if not (-0.92 < x < 0.89 and abs(y) < 0.50)]
+    points = [(x, y) for x, y in points if not (-0.98 < x < 0.96 and abs(y) < 0.58)]
     for k in range(1, 9):
         x, y, a = integrate((0, 0, 0), v, w, horizon * k / 8)
         c, s = math.cos(a), math.sin(a)

@@ -46,7 +46,7 @@ from .drop_zones import charger_spots, choose_plan, clear_plans, edge_plans, nea
 # IDLE 은 여기서 쓰지 않지만 mission_manager_campus / _station 이 이 모듈에서 가져가므로 남겨 둔다
 from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, DROPPING, FAILED, IDLE,  # noqa: F401
                             LOADING, LYING_STATUSES,
-                            NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots,
+                            NAVIGATING, NEEDS_HUMAN, PARKING, RETURNING, SELECTING, VERIFYING, Cargo, ChargerSlots, body_in_station, to_station, undock_twist,
                             EnergyModel, MissionParams, ResolveWatch, WaitGuard, affordable, charge_needed,
                             classify_failure,
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
@@ -110,8 +110,12 @@ class MissionManager(Node):
         self.declare_parameter('undock_speed', 0.2)
         self.declare_parameter('undock_margin', 0.3)
         self.declare_parameter('undock_wait_sec', 10.0)
-        self.declare_parameter('undock_near_dock_m', 0.6)               # 도크 자리에서 이만큼 안이면 '도크에서 출발'
-        self.declare_parameter('scan_offset_x', 0.80)                   # 라이다(base_scan) 위치, nav_bridge 와 같게
+        self.declare_parameter('undock_near_dock_m', 0.6)               # 도크 자리에서 이만큼 안이면 '도크에서 출발' (차고 정보 없는 맵)
+        # 차고(map_config charger.station) 가 있으면: 차체가 차고 영역 안이면 무조건 차고 축을 따라 똑바로 후진하고,
+        # 차체가 다 나온 뒤에만 목표를 보낸다. 막혀도 포기하지 않고 멈춰 기다린다 (undock_wait_sec 마다 경고).
+        self.declare_parameter('station_region', [-0.45, 2.62, 0.88])   # 차고 영역 (스테이션 좌표 램프 앞끝 x, 뒷벽 x, 반폭)
+        self.declare_parameter('station_clear_margin', 0.2)             # 이만큼 더 나와야 '빠져나옴'
+        self.declare_parameter('scan_offset_x', 0.86)                   # 라이다(base_scan) 위치, nav_bridge 와 같게
         self._mp = None                                    # MissionParams 캐시 (파라미터가 바뀌면 None)
         self.add_on_set_parameters_callback(self.on_set_params)
         # 근처 주차구역: 대상을 고르기 전에 이 거리(m) 안에 하역 위치가 있으면 들러서 내림. 0 = 끔 (main 5c92abe)
@@ -502,18 +506,60 @@ class MissionManager(Node):
 
     # ---------------- 도크에서 출발 ----------------
     def depart(self, send):
-        """도크 자리에서 출발하면 먼저 뒤쪽을 확인하며 undock_distance 만큼 후진한 뒤 send() (목표 전송). 아니면 바로 send()."""
-        pose = self.pose.get()
-        d = self.p('undock_distance')
-        dock = self.dock_position()
-        if (d <= 0.0 or pose is None or dock is None
-                or math.dist(pose[:2], dock) > self.p('undock_near_dock_m')):
-            send()
+        """출발 절차: 차체가 충전소(차고) 안이면 먼저 똑바로 후진해 완전히 빠져나온 뒤 send() (목표 전송).
+        차고 정보가 없는 맵은 예전처럼 도크 자리 undock_near_dock_m 안일 때 undock_distance 만큼 후진.
+        위치(TF)를 아직 모르면 보내지 않고 0.5초 뒤 다시 확인한다."""
+        if self.undock is not None:                  # 이미 후진 중: 끝나면 이 목표를 보냄
+            self.undock['send'] = send
             return
+        pose = self.pose.get()
+        st = self.station_pose()
+        if pose is None:
+            self.pending = True
+            if not getattr(self, '_depart_wait_warned', False):
+                self._depart_wait_warned = True
+                self.get_logger().warn('출발 보류: 로봇 위치(TF) 아직 없음 -> 0.5초마다 다시 확인')
+            tm = []
+
+            def retry():
+                tm[0].cancel()
+                self.destroy_timer(tm[0])
+                self.depart(send)
+            tm.append(self.create_timer(0.5, retry, callback_group=self.cb))
+            return
+        self._depart_wait_warned = False
+        d = self.p('undock_distance')
+        if st is not None:
+            if not self.in_station(pose, st):
+                send()
+                return
+        else:
+            dock = self.dock_position()
+            if d <= 0.0 or dock is None or math.dist(pose[:2], dock) > self.p('undock_near_dock_m'):
+                send()
+                return
         self.pending = True
-        self.undock = {'send': send, 'start': pose[:2], 't0': now_sec(self), 'blocked': None, 'waited': 0.0}
-        self.get_logger().info(f'도크에서 출발: 뒤쪽을 확인하며 {d:.1f} m 후진')
+        self.undock = {'send': send, 'start': pose[:2], 't0': now_sec(self), 'blocked': None, 'waited': 0.0,
+                       'station': st, 'warned': 0.0}
+        self.get_logger().info('충전소 안에서 출발: 차고 축을 따라 똑바로 후진, 차체가 다 나오면 목표로'
+                               if st is not None else f'도크에서 출발: 뒤쪽을 확인하며 {d:.1f} m 후진')
         self.undock['timer'] = self.create_timer(0.1, self.undock_step, callback_group=self.cb)
+
+    def station_pose(self):
+        """충전소 차고 pose (x, y, yaw), +x = 안쪽. map_config charger.station. 없으면 None"""
+        if not hasattr(self, '_station'):
+            self._station = None
+            try:
+                with open(self.p('map_config_file')) as f:
+                    st = ((yaml.safe_load(f) or {}).get('charger') or {}).get('station')
+                if st:
+                    self._station = (float(st['x']), float(st['y']), math.radians(float(st['yaw_deg'])))
+            except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError):
+                pass
+        return self._station
+
+    def in_station(self, pose, st):
+        return body_in_station(pose, st, self.p('station_clear_margin'), tuple(self.p('station_region')))
 
     def dock_position(self):
         """도킹 위치 (x, y) — 도크 후진 판단용. 상속 노드(campus 등)가 load_drop_plans 를 바꿔 dock_xy 를 안 채우면
@@ -536,29 +582,51 @@ class MissionManager(Node):
         if u is None:
             return
         now, pose = now_sec(self), self.pose.get()
+        st = u['station']
         d = self.p('undock_distance')
         moved = 0.0 if pose is None else math.dist(pose[:2], u['start'])
-        if moved >= d:
-            return self.undock_end('done', moved)
-        if now - u['t0'] > d / max(0.05, self.p('undock_speed')) * 3.0 + self.p('undock_wait_sec'):
-            return self.undock_end('timeout', moved)
+        if st is None:                                   # 차고 정보 없음: 예전 방식 (거리)
+            if moved >= d:
+                return self.undock_end('done', moved)
+            if now - u['t0'] > d / max(0.05, self.p('undock_speed')) * 3.0 + self.p('undock_wait_sec'):
+                return self.undock_end('timeout', moved)
+            remain = d - moved
+        else:
+            if pose is None:                             # 위치 모름: 멈춰 기다림 (출발 안 함)
+                self.cmd_pub.publish(Twist())
+                return
+            if not self.in_station(pose, st):
+                return self.undock_end('done', moved)
+            # 남은 후진 거리 = 차체 앞끝이 차고 영역 앞(램프 끝 - 여유)을 지날 때까지
+            fx, _ = to_station(st, pose[0] + 0.96 * math.cos(pose[2]), pose[1] + 0.96 * math.sin(pose[2]))
+            remain = max(0.3, fx - (self.p('station_region')[0] - self.p('station_clear_margin')))
         clear = False
         if self.last_scan is not None and now - self.last_scan[0] < 0.5:
             m = self.last_scan[1]
             pts = scan_to_body_points(m.ranges, m.angle_min, m.angle_increment, m.range_min, m.range_max,
                                       self.p('scan_offset_x'))
-            clear = rear_clear(pts, d - moved, self.p('undock_margin'))
+            clear = rear_clear(pts, remain, self.p('undock_margin'))
         cmd = Twist()
         if clear:
-            cmd.linear.x = -abs(self.p('undock_speed'))
+            if st is not None:
+                cmd.linear.x, cmd.angular.z = undock_twist(pose, st, self.p('undock_speed'))
+            else:
+                cmd.linear.x = -abs(self.p('undock_speed'))
+            if u['blocked'] is not None:
+                self.get_logger().info(f'도크 후진 다시 시작 ({now - u["blocked"]:.0f}초 기다림)')
             u['blocked'] = None
         elif u['blocked'] is None:
-            u['blocked'] = now
+            u['blocked'] = u['warned'] = now
             why = '라이다 없음' if self.last_scan is None or now - self.last_scan[0] >= 0.5 else '뒤에 장애물'
-            self.get_logger().warn(f'도크 후진 멈춤 ({why}) -> 비켜나길 기다림 (최대 {self.p("undock_wait_sec"):.0f}초)')
+            self.get_logger().warn(f'도크 후진 멈춤 ({why}) -> 비켜나길 기다림'
+                                   + ('' if st is not None else f' (최대 {self.p("undock_wait_sec"):.0f}초)'))
             self.ev.emit('undock_blocked', why=why, moved=round(moved, 2))
-        elif now - u['blocked'] > self.p('undock_wait_sec'):
+        elif st is None and now - u['blocked'] > self.p('undock_wait_sec'):
             return self.undock_end('blocked', moved)
+        elif st is not None and now - u['warned'] > self.p('undock_wait_sec'):
+            u['warned'] = now                            # 충전소 안: 포기하고 출발하지 않음, 계속 기다리며 경고
+            self.get_logger().warn(f'도크 후진 계속 막힘 ({now - u["blocked"]:.0f}초) — 충전소 안이라 출발하지 않고 기다림')
+            self.alert('undock', 'blocked', f'충전소 출구 막힘 {now - u["blocked"]:.0f}초')
         self.cmd_pub.publish(cmd)
 
     def undock_end(self, how, moved):

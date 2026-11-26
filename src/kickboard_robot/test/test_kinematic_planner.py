@@ -19,6 +19,22 @@ def corridor_map():
     return cm
 
 
+def curvature_profile(path):
+    """같은 방향으로 이어 달리는 연속 자세 사이 곡률들 (구간마다 리스트)"""
+    segs, cur = [], []
+    for a, b in zip(path[:-1], path[1:]):
+        ds = math.hypot(b[0] - a[0], b[1] - a[1])
+        if a[3] == 0 or b[3] == 0 or a[3] != b[3] or ds < 1e-6:
+            if cur:
+                segs.append(cur)
+            cur = []
+            continue
+        cur.append(wrap(b[2] - a[2]) / ds)
+    if cur:
+        segs.append(cur)
+    return segs
+
+
 def mid_path_pivots(path):
     return sum(1 for k, q in enumerate(path) if q[3] == 0 and 0 < k < len(path) - 1
                and path[k - 1][3] != 0 and path[k + 1][3] != 0)
@@ -50,6 +66,19 @@ def test_plan_respects_curvature_and_footprint():
     assert cross and all(4.8 < q[1] < 7.2 for q in cross)
 
 
+def test_planned_curvature_is_continuous():
+    """곡률이 계단처럼 튀지 않는다 (완화 곡선): 0.1 m 마다 곡률 변화 <= kmax * 0.1 / blend_len 의 1.5배 정도"""
+    cm = corridor_map()
+    p = KinematicParams()
+    for start, goal in (((3.0, 2.0, math.pi / 2), (17.0, 9.0, 0.0)), ((5.0, 3.0, 0.0), (5.0, 9.0, math.pi))):
+        path = plan_path(cm, start, goal, 0.0, p)
+        assert path is not None and not path_collides(cm, path, 0.0, p)
+        assert max_curvature(path) <= p.kmax + 0.05
+        jumps = [abs(b - a) for seg in curvature_profile(path) for a, b in zip(seg[:-1], seg[1:])]
+        assert jumps and max(jumps) <= 0.2                 # 연속화 전에는 1.0 (0 -> 1/R 한 번에)
+        assert math.hypot(path[-1][0] - goal[0], path[-1][1] - goal[1]) <= p.goal_pos_tol
+
+
 def test_no_path_through_closed_wall():
     cm = corridor_map()
     cm.static[48:72, 98:102] = True                         # 틈 막음
@@ -73,14 +102,20 @@ def test_tracker_follows_within_turn_radius():
     for v_max, w_max in ((0.22, 1.2), (1.5, 1.0)):
         tr = PathTracker(path, v_max=v_max, w_max=w_max, min_turn_radius=p.min_turn_radius)
         x, y, th = start
-        worst_k, worst_dev = 0.0, 0.0
+        worst_k, worst_dev, k_prev, worst_dk = 0.0, 0.0, None, 0.0
         for _ in range(20000):
-            v, w, done = tr.step((x, y, th))
+            v, w, done = tr.step((x, y, th), dt=0.05)
             if done:
                 break
             assert abs(v) <= v_max + 1e-9 and abs(w) <= w_max + 1e-9
             if abs(v) > 0.05:
                 worst_k = max(worst_k, abs(w / v))
+                k = w / v
+                if k_prev is not None:
+                    worst_dk = max(worst_dk, abs(k - k_prev))
+                k_prev = k
+            else:
+                k_prev = None
             th = wrap(th + w * 0.05)
             x += v * math.cos(th) * 0.05
             y += v * math.sin(th) * 0.05
@@ -89,6 +124,7 @@ def test_tracker_follows_within_turn_radius():
         assert abs(wrap(th - goal[2])) < math.radians(10)
         assert worst_k <= 1.0 / p.min_turn_radius + 1e-6     # 주행 중에도 최소 회전 반경을 지킴
         assert worst_dev < 0.25
+        assert worst_dk <= tr.k_rate_max * 0.05 + 1e-6     # 조향 속도 한계 (명령 곡률이 한 주기에 튀지 않음)
 
 
 def test_footprint_circles_cover_body():

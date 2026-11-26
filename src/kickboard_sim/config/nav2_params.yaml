@@ -1,5 +1,5 @@
 # Nav2 (Humble) 파라미터 — nav:=nav2 일 때. TODO(A/D): 실제 주행해 보며 튜닝
-# 로봇: 1.7 x 0.9 m 수거 로봇 (footprint 사각형), 스캔 /scan, base_footprint
+# 로봇: 1.94 x 1.05 m 수거 로봇 SCOOTOVER v19 (footprint 사각형), 스캔 /scan, base_footprint
 amcl:
   ros__parameters:
     use_sim_time: True
@@ -141,7 +141,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      footprint: "[[0.84, 0.45], [0.84, -0.45], [-0.87, -0.45], [-0.87, 0.45]]"
+      footprint: "[[0.96, 0.525], [0.96, -0.525], [-0.98, -0.525], [-0.98, 0.525]]"
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -158,7 +158,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.6
       always_send_full_costmap: True
 
 global_costmap:
@@ -169,7 +169,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_footprint
-      footprint: "[[0.84, 0.45], [0.84, -0.45], [-0.87, -0.45], [-0.87, 0.45]]"
+      footprint: "[[0.96, 0.525], [0.96, -0.525], [-0.98, -0.525], [-0.98, 0.525]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -191,7 +191,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.6
       always_send_full_costmap: True
 
 map_server:

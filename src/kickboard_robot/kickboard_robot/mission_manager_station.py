@@ -119,8 +119,9 @@ class StationMissionManager(MissionManager):
         o = target.pose.orientation
         o.x, o.y, o.z, o.w = quat_from_yaw(ryaw)
         self.pending = True
-        f = self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0))
-        f.add_done_callback(self.on_station_nav_accepted)
+        # 충전소 안에서 출발하면 depart 가 먼저 똑바로 후진해 빠져나온 뒤 보냄
+        self.depart(lambda: self.nav_ac.send_goal_async(GoToPose.Goal(target_pose=target, standoff=0.0))
+                    .add_done_callback(self.on_station_nav_accepted))
         return True
 
     def on_station_nav_accepted(self, f):

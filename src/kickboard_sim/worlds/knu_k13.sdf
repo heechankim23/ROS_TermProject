@@ -43,18 +43,22 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k13.obj</uri></mesh></geometry></visual>
-        <collision name="C1_rack"><pose>200.695 134.714 0.4 0 0 1.5095</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
-        <collision name="C3_rack"><pose>238.996 -115.277 0.4 0 0 -3.0508</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
-        <collision name="C4_rack"><pose>95.508 218.293 0.4 0 0 -0.0191</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
         <collision name="P06_rack"><pose>207.297 212.685 0.4 0 0 -0.0535</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P08_rack"><pose>262.508 127.872 0.4 0 0 -1.5623</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P11_rack"><pose>326.677 57.348 0.4 0 0 2.6915</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
+    <include><uri>model://kickspot_4</uri><name>C1_kickspot_1</name><pose>200.181 133.193 0.000 0 0 3.0803</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C1_kickspot_2</name><pose>200.370 136.287 0.000 0 0 3.0803</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C3_kickspot_1</name><pose>240.502 -114.718 0.000 0 0 1.6616</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C3_kickspot_2</name><pose>237.414 -114.999 0.000 0 0 1.6616</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C4_kickspot_1</name><pose>93.950 217.902 0.000 0 0 -1.5899</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C4_kickspot_2</name><pose>97.050 217.843 0.000 0 0 -1.5899</pose></include>
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>235.822 97.189 0 0 0 1.5503</pose>
+      <pose>194.298 85.258 0 0 0 -1.2220</pose>
     </include>
   </world>
 </sdf>

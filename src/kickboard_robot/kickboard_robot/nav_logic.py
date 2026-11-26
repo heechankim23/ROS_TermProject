@@ -60,7 +60,7 @@ def choose_goal(target, target_yaw, robot_xy, standoff, clearance, now, cm=None,
 @dataclass
 class FollowParams:
     v_max: float = 0.22
-    w_max: float = 1.2
+    w_max: float = 1.0                  # Gazebo DiffDrive max_angular_velocity
     pos_tol: float = 0.08
     yaw_tol_deg: float = 8.0
     obstacle_stop_dist: float = 0.15

@@ -1,4 +1,4 @@
-image: knu_campus_lidar.png
+image: knu_k22_lidar.png
 mode: trinary
 resolution: 0.25
 origin: [-620.0, -640.0, 0.0]

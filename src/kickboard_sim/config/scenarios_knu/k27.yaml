@@ -13,7 +13,7 @@ pass_criteria:
   - "일반 주차구역 슬롯: #1 → 일반 구역 슬롯에 정상 방향으로 섬 (슬롯 중심 ±0.3 m, 방향 ±15°)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 gps_noise_sigma: 6.0
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: 215.24, y: -346.93, yaw_deg: 30.4, battery_pct: 58, silent: true, place: walkway, where: "IT대학1호관 앞 보행로"}

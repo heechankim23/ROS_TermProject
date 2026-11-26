@@ -13,6 +13,53 @@ def tag_id_of(scooter_id):
         return abs(hash(scooter_id)) % 90 + 1
 
 
+# ---------------- 태그 면 구분 (킥보드 방향을 알아야 뒤로 붙을 수 있음) ----------------
+# 킥보드 한 대에 태그 4장: 앞·뒤·왼·오른 면. ID = 기본 ID + FACE_ID_STEP * 면 번호 (AprilTag 36h11 은 0~586)
+FACE_ID_STEP = 150
+FACE_NORMAL = (0.0, math.pi, math.pi / 2, -math.pi / 2)   # 면 법선 (킥보드 기준 각)
+FACE_DEPTH = (0.30, 0.30, 0.085, 0.085)                  # 면 -> 킥보드 중심 (gz_utils SCOOTER_L/2, SCOOTER_W/2)
+
+
+def face_tag_id(base, face):
+    return base + FACE_ID_STEP * face
+
+
+def split_tag_id(tid):
+    """태그 ID -> (기본 ID, 면 번호 0~3)"""
+    face = tid // FACE_ID_STEP
+    return (tid % FACE_ID_STEP, face) if face < 4 else (tid, 0)
+
+
+def scooter_from_face(fx, fy, fyaw, face):
+    """태그 면 pose + 면 번호 -> 킥보드 (중심 x, 중심 y, 진행 방향 yaw)"""
+    d = FACE_DEPTH[face]
+    return fx - d * math.cos(fyaw), fy - d * math.sin(fyaw), wrap_angle(fyaw - FACE_NORMAL[face])
+
+
+# ---------------- v19 후진 적재 자리 ----------------
+# 적재 애니메이션 시작 때 킥보드 앞바퀴 축은 로봇 기준 (-1.65, 레인 y), 킥보드 앞이 로봇 뒤를 봄 (같은 방향).
+LOAD_AXLE_X = -1.65          # scootover_rig.json ref_scooter_l@robot 첫 프레임
+G30_AXLE_X = 0.42            # 킥보드 모델 원점(바퀴 축 사이 가운데) -> 앞바퀴 축
+LANE_Y = (0.27, -0.27)       # 레인 0 = 왼쪽, 1 = 오른쪽 (arm_loader)
+ENTRY_DIST = G30_AXLE_X - LOAD_AXLE_X   # 킥보드 중심 -> 로봇 중심 (진행 방향으로) 2.07 m
+
+
+def reverse_entry_pose(cx, cy, heading, lane=0, extra=0.0):
+    """킥보드 (중심, 방향) -> 로봇이 서야 할 자리 (x, y, yaw). 로봇은 킥보드와 같은 방향, 킥보드 앞쪽에 서서 뒤를 댄다.
+    extra: 진행 방향으로 더 떨어진 자리 (후보용)"""
+    ax, ly = ENTRY_DIST + extra, -LANE_Y[lane]
+    c, s = math.cos(heading), math.sin(heading)
+    return cx + c * ax - s * ly, cy + s * ax + c * ly, wrap_angle(heading)
+
+
+def entry_error(robot, cx, cy, heading, lane=0):
+    """로봇 pose 와 후진 적재 자리의 차이 (앞뒤, 옆, yaw) — 적재 자리 기준 좌표"""
+    tx, ty, tyaw = reverse_entry_pose(cx, cy, heading, lane)
+    dx, dy = robot[0] - tx, robot[1] - ty
+    c, s = math.cos(tyaw), math.sin(tyaw)
+    return c * dx + s * dy, -s * dx + c * dy, wrap_angle(robot[2] - tyaw)
+
+
 def arrived_by_tag(tag_distance, standoff, margin):
     """이동 중 태그가 standoff + margin 안에서 보이면 접근 완료로 본다 (GPS 오차로 목표가 너무 붙었을 때)."""
     return tag_distance <= standoff + margin
@@ -81,8 +128,8 @@ def mean_center(centers, last_n=None):
 # 검사: 몸체(실제 직사각형)가 장애물과 안 겹침 / 경로 계획이 받아 주는 자리(장애물에서 로봇 반폭 이상)
 #       / 팔 회전축 -> 킥보드 사이가 비어 있음 / 지금 자리에서 격자를 따라 갈 수 있음.
 # 점수: 갈 길이 + 기본 반경에서 벗어난 정도 + 장애물에 붙은 정도. 낮을수록 좋다.
-BODY_X = (-0.92, 0.89)       # 로봇 차체 x 범위 (base_footprint 기준, nav_bridge footprint 와 같게)
-BODY_HALF_W = 0.47           # 차체 반폭 0.37 + 여유 0.1
+BODY_X = (-0.98, 0.96)       # 로봇 차체 x 범위 (v19: 접힌 램프 포함, base_footprint 기준, nav_bridge footprint 와 같게)
+BODY_HALF_W = 0.58           # 차체 반폭 0.525 + 여유
 ARM_PIVOT_X = 0.50           # 팔 회전축 (model.sdf arm_turret)
 ARM_HALF_W = 0.15            # 팔이 지나가는 띠의 반폭
 SCOOTER_KEEP = 0.6           # 킥보드 중심에서 이 안의 점은 킥보드 자신 (팔 경로 검사에서 뺌)
@@ -187,10 +234,12 @@ def _geodesic(passable, start, res):
 
 
 def plan_align_spots(grid, cx, cy, robot_xy, dist, radii, step_deg=10.0, inscribed=0.47,
-                     keep_clear=None, w_radial=2.0, w_room=3.0, room=1.1):
+                     keep_clear=None, w_radial=2.0, w_room=3.0, room=1.1, entry=None):
     """팔이 닿는 자리 후보를 검사·채점한다.
     -> (후보 목록, 탈락 사유별 개수). 후보 = dict(x, y, yaw, a(킥보드에서 본 각도), r, score, geo, room), 점수 오름차순.
-    keep_clear: 진입 금지 경계와 로봇 중심 사이 최소 거리 (None 이면 진입 금지 구역을 벽처럼 취급)."""
+    keep_clear: 진입 금지 경계와 로봇 중심 사이 최소 거리 (None 이면 진입 금지 구역을 벽처럼 취급).
+    entry=(heading, lane): v19 후진 적재 — 후보는 reverse_entry_pose 자리(radii = 진행 방향 추가 거리)만,
+    팔 띠 대신 로봇 뒤끝 -> 킥보드 사이(램프가 펴지는 자리)를 검사한다."""
     import numpy as np
     from scipy import ndimage
     phys = grid.wall | grid.scan
@@ -209,52 +258,55 @@ def plan_align_spots(grid, cx, cy, robot_xy, dist, radii, step_deg=10.0, inscrib
     by = np.arange(-BODY_HALF_W, BODY_HALF_W + 1e-9, grid.res)
     BX, BY = [v.ravel() for v in np.meshgrid(bx, by)]
     out, why = [], {'map_edge': 0, 'unreachable': 0, 'too_close': 0, 'body': 0, 'arm': 0}
-    for r in radii:
-        k = int(round(360.0 / step_deg))
-        for m in range(k):
-            a = math.radians(m * step_deg)
-            x, y, yaw = align_pose(cx, cy, r, a)
-            j, i = grid.cell(x, y)
-            if not grid.inside(j, i):
-                why['map_edge'] += 1
-                continue
-            if d_phys[j, i] < inscribed + 0.03 or (keep_clear is not None and d_keep is not None
-                                                   and d_keep[j, i] < keep_clear):
-                why['too_close'] += 1
-                continue
-            if not math.isfinite(geo[j, i]):
-                why['unreachable'] += 1
-                continue
-            c, s = math.cos(yaw), math.sin(yaw)
-            pj = np.floor((y + BX * s + BY * c - grid.y0) / grid.res).astype(int)
-            pi = np.floor((x + BX * c - BY * s - grid.x0) / grid.res).astype(int)
-            ok = (pj >= 0) & (pj < grid.n) & (pi >= 0) & (pi < grid.n)
-            if (~ok).any() or hard[pj, pi].any():
-                why['body'] += 1
-                continue
-            # 팔 회전축 -> 킥보드 중심 사이 띠 (킥보드 자신의 점은 뺌)
-            ax, ay = x + ARM_PIVOT_X * c, y + ARM_PIVOT_X * s
-            L = math.hypot(cx - ax, cy - ay)
-            ts = np.arange(0.0, L, grid.res / 2)
-            ux, uy = (cx - ax) / max(L, 1e-9), (cy - ay) / max(L, 1e-9)
-            blocked = False
-            for off in (-ARM_HALF_W, 0.0, ARM_HALF_W):
-                qx = ax + ts * ux - off * uy
-                qy = ay + ts * uy + off * ux
-                far = np.hypot(qx - cx, qy - cy) > SCOOTER_KEEP
-                qj = np.floor((qy[far] - grid.y0) / grid.res).astype(int)
-                qi = np.floor((qx[far] - grid.x0) / grid.res).astype(int)
-                okq = (qj >= 0) & (qj < grid.n) & (qi >= 0) & (qi < grid.n)
-                if phys[qj[okq], qi[okq]].any():
-                    blocked = True
-                    break
-            if blocked:
-                why['arm'] += 1
-                continue
-            rm = float(d_room[j, i])
-            score = float(geo[j, i]) + w_radial * abs(r - dist) + w_room * max(0.0, room - rm)
-            out.append({'x': x, 'y': y, 'yaw': yaw, 'a': wrap_angle(a), 'r': r, 'score': score,
-                        'geo': float(geo[j, i]), 'room': rm})
+    if entry is None:
+        poses = [(r, math.radians(m * step_deg), *align_pose(cx, cy, r, math.radians(m * step_deg)))
+                 for r in radii for m in range(int(round(360.0 / step_deg)))]
+        pivot = ARM_PIVOT_X
+    else:
+        poses = [(dist + ex, entry[0], *reverse_entry_pose(cx, cy, entry[0], entry[1], ex)) for ex in radii]
+        pivot = BODY_X[0]
+    for r, a, x, y, yaw in poses:
+        j, i = grid.cell(x, y)
+        if not grid.inside(j, i):
+            why['map_edge'] += 1
+            continue
+        if d_phys[j, i] < inscribed + 0.03 or (keep_clear is not None and d_keep is not None
+                                               and d_keep[j, i] < keep_clear):
+            why['too_close'] += 1
+            continue
+        if not math.isfinite(geo[j, i]):
+            why['unreachable'] += 1
+            continue
+        c, s = math.cos(yaw), math.sin(yaw)
+        pj = np.floor((y + BX * s + BY * c - grid.y0) / grid.res).astype(int)
+        pi = np.floor((x + BX * c - BY * s - grid.x0) / grid.res).astype(int)
+        ok = (pj >= 0) & (pj < grid.n) & (pi >= 0) & (pi < grid.n)
+        if (~ok).any() or hard[pj, pi].any():
+            why['body'] += 1
+            continue
+        # 팔 회전축 -> 킥보드 중심 사이 띠 (킥보드 자신의 점은 뺌)
+        ax, ay = x + pivot * c, y + pivot * s
+        L = math.hypot(cx - ax, cy - ay)
+        ts = np.arange(0.0, L, grid.res / 2)
+        ux, uy = (cx - ax) / max(L, 1e-9), (cy - ay) / max(L, 1e-9)
+        blocked = False
+        for off in (-ARM_HALF_W, 0.0, ARM_HALF_W):
+            qx = ax + ts * ux - off * uy
+            qy = ay + ts * uy + off * ux
+            far = np.hypot(qx - cx, qy - cy) > SCOOTER_KEEP
+            qj = np.floor((qy[far] - grid.y0) / grid.res).astype(int)
+            qi = np.floor((qx[far] - grid.x0) / grid.res).astype(int)
+            okq = (qj >= 0) & (qj < grid.n) & (qi >= 0) & (qi < grid.n)
+            if phys[qj[okq], qi[okq]].any():
+                blocked = True
+                break
+        if blocked:
+            why['arm'] += 1
+            continue
+        rm = float(d_room[j, i])
+        score = float(geo[j, i]) + w_radial * abs(r - dist) + w_room * max(0.0, room - rm)
+        out.append({'x': x, 'y': y, 'yaw': yaw, 'a': wrap_angle(a), 'r': r, 'score': score,
+                    'geo': float(geo[j, i]), 'room': rm})
     out.sort(key=lambda o: o['score'])
     return out, why
 

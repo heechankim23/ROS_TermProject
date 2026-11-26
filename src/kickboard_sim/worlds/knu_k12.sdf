@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- 시나리오 k12 전용 작은 캠퍼스 (144 x 192 m). scripts/build_scenario_worlds.py 가 만든 파일.
+<!-- 시나리오 k12 전용 작은 캠퍼스 (148 x 208 m). scripts/build_scenario_worlds.py 가 만든 파일.
      좌표는 캠퍼스 전체 world 와 같다. 바닥 충돌은 평면, 건물·거치대는 이 범위 안의 것만. 맵 설정: config/maps/knu_k12.yaml -->
 <sdf version="1.9">
   <world name="knu_k12">
@@ -28,7 +28,7 @@
     <model name="terrain">
       <static>true</static>
       <link name="link">
-        <collision name="c"><pose>232.0 156.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>184 232</size></plane></geometry></collision>
+        <collision name="c"><pose>230.0 148.0 0 0 0 0</pose><geometry><plane><normal>0 0 1</normal><size>188 248</size></plane></geometry></collision>
         <visual name="v"><pose>0 0 0.005 0 0 0</pose><geometry><mesh><uri>model://knu_campus/meshes/terrain_k12.obj</uri></mesh></geometry></visual>
       </link>
     </model>
@@ -43,15 +43,17 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k12.obj</uri></mesh></geometry></visual>
-        <collision name="C1_rack"><pose>200.695 134.714 0.4 0 0 1.5095</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
         <collision name="P06_rack"><pose>207.297 212.685 0.4 0 0 -0.0535</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P08_rack"><pose>262.508 127.872 0.4 0 0 -1.5623</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
+    <include><uri>model://kickspot_4</uri><name>C1_kickspot_1</name><pose>200.181 133.193 0.000 0 0 3.0803</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C1_kickspot_2</name><pose>200.370 136.287 0.000 0 0 3.0803</pose></include>
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>235.822 97.189 0 0 0 1.5503</pose>
+      <pose>194.298 85.258 0 0 0 -1.2220</pose>
     </include>
   </world>
 </sdf>

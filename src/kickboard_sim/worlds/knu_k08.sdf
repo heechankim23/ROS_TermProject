@@ -43,17 +43,20 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k08.obj</uri></mesh></geometry></visual>
-        <collision name="C2_rack"><pose>372.286 -176.041 0.4 0 0 -0.9674</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
-        <collision name="C3_rack"><pose>238.996 -115.277 0.4 0 0 -3.0508</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
         <collision name="P17_rack"><pose>468.847 -66.162 0.4 0 0 2.6140</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P18_rack"><pose>312.299 -139.407 0.4 0 0 -0.4744</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P26_rack"><pose>231.399 -286.942 0.4 0 0 -0.6390</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
+    <include><uri>model://kickspot_4</uri><name>C2_kickspot_1</name><pose>371.752 -174.527 0.000 0 0 0.6034</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C2_kickspot_2</name><pose>373.511 -177.079 0.000 0 0 0.6034</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C3_kickspot_1</name><pose>240.502 -114.718 0.000 0 0 1.6616</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C3_kickspot_2</name><pose>237.414 -114.999 0.000 0 0 1.6616</pose></include>
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>340.857 -153.848 0 0 0 -2.0452</pose>
+      <pose>340.367 -154.102 0 0 0 1.0964</pose>
     </include>
   </world>
 </sdf>

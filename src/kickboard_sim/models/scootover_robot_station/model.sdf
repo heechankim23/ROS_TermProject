@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!-- 자동 생성 (build_blender_models.py). SCOOTOVER 로봇 충전소 (컨테이너 차고), 셔터 열림.
+     원점 = 문 앞 지면 가운데. 문은 -x, 로봇은 +x 로 들어감. 충전 위치: 로봇 원점 (1.30, 0, 0.10), +x 방향.
+     뒷벽 충전 접점판 x 2.44. 도킹 태그(tag 100) = 뒷벽 (2.44, 0) 을 기준으로 맵 설정에 넣는다 -->
+<sdf version="1.9">
+  <model name="scootover_robot_station">
+    <static>true</static>
+    <link name="body">
+      <collision name="wall_l"><pose>1.3200 0.8200 1.0000 0.00000 0.00000 0.00000</pose><geometry><box><size>2.6000 0.1200 2.0000</size></box></geometry></collision>
+      <collision name="wall_r"><pose>1.3200 -0.8200 1.0000 0.00000 0.00000 0.00000</pose><geometry><box><size>2.6000 0.1200 2.0000</size></box></geometry></collision>
+      <collision name="wall_back"><pose>2.5700 0.0000 1.0000 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1000 1.7600 2.0000</size></box></geometry></collision>
+      <collision name="roof"><pose>1.3200 0.0000 1.9700 0.00000 0.00000 0.00000</pose><geometry><box><size>2.6000 1.7600 0.1000</size></box></geometry></collision>
+      <collision name="door_l"><pose>0.0500 0.7800 1.0000 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1200 0.1600 2.0000</size></box></geometry></collision>
+      <collision name="door_r"><pose>0.0500 -0.7800 1.0000 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1200 0.1600 2.0000</size></box></geometry></collision>
+      <collision name="door_top"><pose>0.0500 0.0000 1.7500 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1200 1.4000 0.5000</size></box></geometry></collision>
+      <collision name="floor"><pose>1.3000 0.0000 0.0500 0.00000 0.00000 0.00000</pose><geometry><box><size>2.5600 1.5200 0.1000</size></box></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
+      <collision name="ramp"><pose>-0.2250 0.0000 -0.0012 0.00000 -0.21867 0.00000</pose><geometry><box><size>0.4610 1.4000 0.1000</size></box></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
+      <visual name="shutter_curtain"><pose>0.000000 0.000000 0.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/shutter_curtain.obj</uri></mesh></geometry></visual>
+      <visual name="shutter_housing"><pose>0.140000 0.000000 1.520000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/shutter_housing.obj</uri></mesh></geometry></visual>
+      <visual name="station_fittings"><pose>1.800000 0.000000 0.600000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/station_fittings.obj</uri></mesh></geometry></visual>
+      <visual name="station_frame"><pose>1.300000 0.000000 1.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/station_frame.obj</uri></mesh></geometry></visual>
+      <visual name="station_front"><pose>0.000000 0.000000 1.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/station_front.obj</uri></mesh></geometry></visual>
+      <visual name="station_shell"><pose>1.300000 0.000000 1.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/station_shell.obj</uri></mesh></geometry></visual>
+      <visual name="station_sign_text"><pose>-0.036000 0.185000 1.840000 1.570796 -0.000000 -1.570796</pose><geometry><mesh><uri>model://scootover_robot_station/meshes/station_sign_text.obj</uri></mesh></geometry></visual>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!-- 자동 생성 (build_blender_models.py). Kickspot 4구 킥보드 충전소.
+     원점 = 1·4번 슬롯 가운데 지면, +x = 기둥 쪽 (킥보드는 +x 를 보고 앞바퀴부터 꽂힘).
+     슬롯 y = -0.93, -0.31, +0.31, +0.93. 꽂힌 킥보드 앞바퀴 축 (0, 슬롯 y, 0.187), 4.1° 들림 -->
+<sdf version="1.9">
+  <model name="kickspot_4">
+    <static>true</static>
+    <link name="body">
+      <collision name="holder_1"><pose>-0.2308 -0.9300 0.9995 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1796 0.1300 0.1348</size></box></geometry></collision>
+      <collision name="holder_2"><pose>-0.2308 -0.3100 0.9995 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1796 0.1300 0.1348</size></box></geometry></collision>
+      <collision name="holder_3"><pose>-0.2308 0.3100 0.9995 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1796 0.1300 0.1348</size></box></geometry></collision>
+      <collision name="holder_4"><pose>-0.2308 0.9300 0.9995 0.00000 0.00000 0.00000</pose><geometry><box><size>0.1796 0.1300 0.1348</size></box></geometry></collision>
+      <collision name="base"><pose>0.1500 0.0000 0.0300 0.00000 0.00000 0.00000</pose><geometry><box><size>0.9000 2.4800 0.0600</size></box></geometry></collision>
+      <collision name="post_1"><pose>0.2024 -0.9300 0.5500 0.00000 -0.31400 0.00000</pose><geometry><box><size>0.3000 0.2600 1.0000</size></box></geometry></collision>
+      <collision name="post_2"><pose>0.2024 -0.3100 0.5500 0.00000 -0.31400 0.00000</pose><geometry><box><size>0.3000 0.2600 1.0000</size></box></geometry></collision>
+      <collision name="post_3"><pose>0.2024 0.3100 0.5500 0.00000 -0.31400 0.00000</pose><geometry><box><size>0.3000 0.2600 1.0000</size></box></geometry></collision>
+      <collision name="post_4"><pose>0.2024 0.9300 0.5500 0.00000 -0.31400 0.00000</pose><geometry><box><size>0.3000 0.2600 1.0000</size></box></geometry></collision>
+      <collision name="ramp_front"><pose>-0.4100 0.0000 0.0107 0.00000 -0.26625 0.00000</pose><geometry><box><size>0.2290 2.4800 0.0400</size></box></geometry></collision>
+      <visual name="holder_1"><pose>-0.213386 -0.930000 1.000982 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/holder_1.obj</uri></mesh></geometry></visual>
+      <visual name="holder_2"><pose>-0.213386 -0.310000 1.000982 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/holder_2.obj</uri></mesh></geometry></visual>
+      <visual name="holder_3"><pose>-0.213386 0.310000 1.000982 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/holder_3.obj</uri></mesh></geometry></visual>
+      <visual name="holder_4"><pose>-0.213386 0.930000 1.000982 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/holder_4.obj</uri></mesh></geometry></visual>
+      <visual name="kickspot_base"><pose>0.000000 0.000000 0.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/kickspot_base.obj</uri></mesh></geometry></visual>
+      <visual name="kickspot_ramp"><pose>0.000000 0.000000 0.000000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/kickspot_ramp.obj</uri></mesh></geometry></visual>
+      <visual name="latch_1"><pose>-0.302737 -0.968000 0.971784 0.000000 -0.315836 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/latch_1.obj</uri></mesh></geometry></visual>
+      <visual name="latch_2"><pose>-0.302737 -0.348000 0.971784 0.000000 -0.315836 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/latch_2.obj</uri></mesh></geometry></visual>
+      <visual name="latch_3"><pose>-0.302737 0.272000 0.971784 0.000000 -0.315836 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/latch_3.obj</uri></mesh></geometry></visual>
+      <visual name="latch_4"><pose>-0.302737 0.892000 0.971784 -0.314712 0.027075 1.653767</pose><geometry><mesh><uri>model://kickspot_4/meshes/latch_4.obj</uri></mesh></geometry></visual>
+      <visual name="post_1"><pose>0.300000 -0.930000 0.500000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/post_1.obj</uri></mesh></geometry></visual>
+      <visual name="post_2"><pose>0.300000 -0.310000 0.500000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/post_2.obj</uri></mesh></geometry></visual>
+      <visual name="post_3"><pose>0.300000 0.310000 0.500000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/post_3.obj</uri></mesh></geometry></visual>
+      <visual name="post_4"><pose>0.300000 0.930000 0.500000 0.000000 -0.000000 0.000000</pose><geometry><mesh><uri>model://kickspot_4/meshes/post_4.obj</uri></mesh></geometry></visual>
+    </link>
+  </model>
+</sdf>

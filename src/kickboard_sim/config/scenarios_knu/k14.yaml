@@ -58,47 +58,47 @@ pass_criteria:
   - "조치 없음: #1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38 → 수거하지 않음 (위치 변화 0.2 m 이하)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 overrides: {charging_capacity: 5}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 200.512, y: 131.745, yaw_deg: 176.5, battery_pct: 33, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
-  - {id: 2, x: 200.565, y: 132.593, yaw_deg: 176.5, battery_pct: 36, slot: C1-02, charging: true, place: slot, where: "C1 중앙도서관 앞 02번 칸"}
-  - {id: 3, x: 200.617, y: 133.442, yaw_deg: 176.5, battery_pct: 39, slot: C1-03, charging: true, place: slot, where: "C1 중앙도서관 앞 03번 칸"}
-  - {id: 4, x: 200.669, y: 134.29, yaw_deg: 176.5, battery_pct: 42, slot: C1-04, charging: true, place: slot, where: "C1 중앙도서관 앞 04번 칸"}
-  - {id: 5, x: 200.721, y: 135.138, yaw_deg: 176.5, battery_pct: 45, slot: C1-05, charging: true, place: slot, where: "C1 중앙도서관 앞 05번 칸"}
-  - {id: 6, x: 370.598, y: -173.592, yaw_deg: 34.6, battery_pct: 33, slot: C2-01, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 01번 칸"}
-  - {id: 7, x: 371.08, y: -174.292, yaw_deg: 34.6, battery_pct: 36, slot: C2-02, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 02번 칸"}
-  - {id: 8, x: 371.563, y: -174.992, yaw_deg: 34.6, battery_pct: 39, slot: C2-03, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 03번 칸"}
-  - {id: 9, x: 372.045, y: -175.692, yaw_deg: 34.6, battery_pct: 42, slot: C2-04, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 04번 칸"}
-  - {id: 10, x: 372.527, y: -176.391, yaw_deg: 34.6, battery_pct: 45, slot: C2-05, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 05번 칸"}
-  - {id: 11, x: 241.959, y: -115.007, yaw_deg: 95.2, battery_pct: 33, slot: C3-01, charging: true, place: slot, where: "C3 일청담–사범대 사이 01번 칸"}
-  - {id: 12, x: 241.112, y: -115.084, yaw_deg: 95.2, battery_pct: 36, slot: C3-02, charging: true, place: slot, where: "C3 일청담–사범대 사이 02번 칸"}
-  - {id: 13, x: 240.266, y: -115.161, yaw_deg: 95.2, battery_pct: 39, slot: C3-03, charging: true, place: slot, where: "C3 일청담–사범대 사이 03번 칸"}
-  - {id: 14, x: 239.419, y: -115.238, yaw_deg: 95.2, battery_pct: 42, slot: C3-04, charging: true, place: slot, where: "C3 일청담–사범대 사이 04번 칸"}
-  - {id: 15, x: 92.534, y: 218.35, yaw_deg: -91.1, battery_pct: 33, slot: C4-01, charging: true, place: slot, where: "C4 글로벌플라자 광장 01번 칸"}
-  - {id: 16, x: 93.383, y: 218.333, yaw_deg: -91.1, battery_pct: 36, slot: C4-02, charging: true, place: slot, where: "C4 글로벌플라자 광장 02번 칸"}
-  - {id: 17, x: 94.233, y: 218.317, yaw_deg: -91.1, battery_pct: 39, slot: C4-03, charging: true, place: slot, where: "C4 글로벌플라자 광장 03번 칸"}
-  - {id: 18, x: 95.083, y: 218.301, yaw_deg: -91.1, battery_pct: 42, slot: C4-04, charging: true, place: slot, where: "C4 글로벌플라자 광장 04번 칸"}
-  - {id: 19, x: 95.933, y: 218.285, yaw_deg: -91.1, battery_pct: 45, slot: C4-05, charging: true, place: slot, where: "C4 글로벌플라자 광장 05번 칸"}
-  - {id: 20, x: -7.551, y: 110.027, yaw_deg: 109.7, battery_pct: 33, slot: C5-01, charging: true, place: slot, where: "C5 인문대 쪽 01번 칸"}
-  - {id: 21, x: -8.351, y: 109.742, yaw_deg: 109.7, battery_pct: 36, slot: C5-02, charging: true, place: slot, where: "C5 인문대 쪽 02번 칸"}
-  - {id: 22, x: -9.151, y: 109.456, yaw_deg: 109.7, battery_pct: 39, slot: C5-03, charging: true, place: slot, where: "C5 인문대 쪽 03번 칸"}
-  - {id: 23, x: -9.952, y: 109.17, yaw_deg: 109.7, battery_pct: 42, slot: C5-04, charging: true, place: slot, where: "C5 인문대 쪽 04번 칸"}
-  - {id: 24, x: -10.752, y: 108.884, yaw_deg: 109.7, battery_pct: 45, slot: C5-05, charging: true, place: slot, where: "C5 인문대 쪽 05번 칸"}
-  - {id: 25, x: -160.91, y: -400.533, yaw_deg: 88.7, battery_pct: 33, slot: C6-01, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 01번 칸"}
-  - {id: 26, x: -161.76, y: -400.513, yaw_deg: 88.7, battery_pct: 36, slot: C6-02, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 02번 칸"}
-  - {id: 27, x: -162.61, y: -400.494, yaw_deg: 88.7, battery_pct: 39, slot: C6-03, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 03번 칸"}
-  - {id: 28, x: -163.46, y: -400.474, yaw_deg: 88.7, battery_pct: 42, slot: C6-04, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 04번 칸"}
-  - {id: 29, x: -164.309, y: -400.455, yaw_deg: 88.7, battery_pct: 45, slot: C6-05, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 05번 칸"}
-  - {id: 30, x: -36.386, y: -173.367, yaw_deg: 82.5, battery_pct: 33, slot: C7-01, charging: true, place: slot, where: "C7 테니스장 쪽 01번 칸"}
-  - {id: 31, x: -35.543, y: -173.478, yaw_deg: 82.5, battery_pct: 36, slot: C7-02, charging: true, place: slot, where: "C7 테니스장 쪽 02번 칸"}
-  - {id: 32, x: -34.701, y: -173.59, yaw_deg: 82.5, battery_pct: 39, slot: C7-03, charging: true, place: slot, where: "C7 테니스장 쪽 03번 칸"}
-  - {id: 33, x: -33.858, y: -173.701, yaw_deg: 82.5, battery_pct: 42, slot: C7-04, charging: true, place: slot, where: "C7 테니스장 쪽 04번 칸"}
-  - {id: 34, x: -267.919, y: -259.223, yaw_deg: -173.0, battery_pct: 33, slot: C8-01, charging: true, place: slot, where: "C8 대운동장 쪽 01번 칸"}
-  - {id: 35, x: -268.023, y: -258.38, yaw_deg: -173.0, battery_pct: 36, slot: C8-02, charging: true, place: slot, where: "C8 대운동장 쪽 02번 칸"}
-  - {id: 36, x: -268.127, y: -257.536, yaw_deg: -173.0, battery_pct: 39, slot: C8-03, charging: true, place: slot, where: "C8 대운동장 쪽 03번 칸"}
-  - {id: 37, x: -268.231, y: -256.692, yaw_deg: -173.0, battery_pct: 42, slot: C8-04, charging: true, place: slot, where: "C8 대운동장 쪽 04번 칸"}
-  - {id: 38, x: -268.335, y: -255.849, yaw_deg: -173.0, battery_pct: 45, slot: C8-05, charging: true, place: slot, where: "C8 대운동장 쪽 05번 칸"}
+  - {id: 1, x: 200.540, y: 132.240, yaw_deg: 176.5, battery_pct: 33, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
+  - {id: 2, x: 200.580, y: 132.860, yaw_deg: 176.5, battery_pct: 36, slot: C1-02, charging: true, place: slot, where: "C1 중앙도서관 앞 02번 칸"}
+  - {id: 3, x: 200.620, y: 133.480, yaw_deg: 176.5, battery_pct: 39, slot: C1-03, charging: true, place: slot, where: "C1 중앙도서관 앞 03번 칸"}
+  - {id: 4, x: 200.660, y: 134.100, yaw_deg: 176.5, battery_pct: 42, slot: C1-04, charging: true, place: slot, where: "C1 중앙도서관 앞 04번 칸"}
+  - {id: 5, x: 200.730, y: 135.330, yaw_deg: 176.5, battery_pct: 45, slot: C1-05, charging: true, place: slot, where: "C1 중앙도서관 앞 05번 칸"}
+  - {id: 6, x: 370.880, y: -174.000, yaw_deg: 34.6, battery_pct: 33, slot: C2-01, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 01번 칸"}
+  - {id: 7, x: 371.230, y: -174.510, yaw_deg: 34.6, battery_pct: 36, slot: C2-02, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 02번 칸"}
+  - {id: 8, x: 371.580, y: -175.020, yaw_deg: 34.6, battery_pct: 39, slot: C2-03, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 03번 칸"}
+  - {id: 9, x: 371.930, y: -175.530, yaw_deg: 34.6, battery_pct: 42, slot: C2-04, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 04번 칸"}
+  - {id: 10, x: 372.640, y: -176.550, yaw_deg: 34.6, battery_pct: 45, slot: C2-05, charging: true, place: slot, where: "C2 편의점 인근 (복지관) 05번 칸"}
+  - {id: 11, x: 241.470, y: -115.050, yaw_deg: 95.2, battery_pct: 33, slot: C3-01, charging: true, place: slot, where: "C3 일청담–사범대 사이 01번 칸"}
+  - {id: 12, x: 240.850, y: -115.110, yaw_deg: 95.2, battery_pct: 36, slot: C3-02, charging: true, place: slot, where: "C3 일청담–사범대 사이 02번 칸"}
+  - {id: 13, x: 240.230, y: -115.160, yaw_deg: 95.2, battery_pct: 39, slot: C3-03, charging: true, place: slot, where: "C3 일청담–사범대 사이 03번 칸"}
+  - {id: 14, x: 239.610, y: -115.220, yaw_deg: 95.2, battery_pct: 42, slot: C3-04, charging: true, place: slot, where: "C3 일청담–사범대 사이 04번 칸"}
+  - {id: 15, x: 93.030, y: 218.340, yaw_deg: -91.1, battery_pct: 33, slot: C4-01, charging: true, place: slot, where: "C4 글로벌플라자 광장 01번 칸"}
+  - {id: 16, x: 93.650, y: 218.330, yaw_deg: -91.1, battery_pct: 36, slot: C4-02, charging: true, place: slot, where: "C4 글로벌플라자 광장 02번 칸"}
+  - {id: 17, x: 94.270, y: 218.320, yaw_deg: -91.1, battery_pct: 39, slot: C4-03, charging: true, place: slot, where: "C4 글로벌플라자 광장 03번 칸"}
+  - {id: 18, x: 94.890, y: 218.300, yaw_deg: -91.1, battery_pct: 42, slot: C4-04, charging: true, place: slot, where: "C4 글로벌플라자 광장 04번 칸"}
+  - {id: 19, x: 96.130, y: 218.280, yaw_deg: -91.1, battery_pct: 45, slot: C4-05, charging: true, place: slot, where: "C4 글로벌플라자 광장 05번 칸"}
+  - {id: 20, x: -8.020, y: 109.860, yaw_deg: 109.7, battery_pct: 33, slot: C5-01, charging: true, place: slot, where: "C5 인문대 쪽 01번 칸"}
+  - {id: 21, x: -8.600, y: 109.650, yaw_deg: 109.7, battery_pct: 36, slot: C5-02, charging: true, place: slot, where: "C5 인문대 쪽 02번 칸"}
+  - {id: 22, x: -9.180, y: 109.440, yaw_deg: 109.7, battery_pct: 39, slot: C5-03, charging: true, place: slot, where: "C5 인문대 쪽 03번 칸"}
+  - {id: 23, x: -9.770, y: 109.240, yaw_deg: 109.7, battery_pct: 42, slot: C5-04, charging: true, place: slot, where: "C5 인문대 쪽 04번 칸"}
+  - {id: 24, x: -10.940, y: 108.820, yaw_deg: 109.7, battery_pct: 45, slot: C5-05, charging: true, place: slot, where: "C5 인문대 쪽 05번 칸"}
+  - {id: 25, x: -161.410, y: -400.520, yaw_deg: 88.7, battery_pct: 33, slot: C6-01, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 01번 칸"}
+  - {id: 26, x: -162.020, y: -400.510, yaw_deg: 88.7, battery_pct: 36, slot: C6-02, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 02번 칸"}
+  - {id: 27, x: -162.640, y: -400.490, yaw_deg: 88.7, battery_pct: 39, slot: C6-03, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 03번 칸"}
+  - {id: 28, x: -163.260, y: -400.480, yaw_deg: 88.7, battery_pct: 42, slot: C6-04, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 04번 칸"}
+  - {id: 29, x: -164.500, y: -400.450, yaw_deg: 88.7, battery_pct: 45, slot: C6-05, charging: true, place: slot, where: "C6 공식당 쪽 (공대9호관) 05번 칸"}
+  - {id: 30, x: -35.900, y: -173.430, yaw_deg: 82.5, battery_pct: 33, slot: C7-01, charging: true, place: slot, where: "C7 테니스장 쪽 01번 칸"}
+  - {id: 31, x: -35.280, y: -173.510, yaw_deg: 82.5, battery_pct: 36, slot: C7-02, charging: true, place: slot, where: "C7 테니스장 쪽 02번 칸"}
+  - {id: 32, x: -34.670, y: -173.590, yaw_deg: 82.5, battery_pct: 39, slot: C7-03, charging: true, place: slot, where: "C7 테니스장 쪽 03번 칸"}
+  - {id: 33, x: -34.050, y: -173.680, yaw_deg: 82.5, battery_pct: 42, slot: C7-04, charging: true, place: slot, where: "C7 테니스장 쪽 04번 칸"}
+  - {id: 34, x: -267.980, y: -258.730, yaw_deg: -173.0, battery_pct: 33, slot: C8-01, charging: true, place: slot, where: "C8 대운동장 쪽 01번 칸"}
+  - {id: 35, x: -268.060, y: -258.120, yaw_deg: -173.0, battery_pct: 36, slot: C8-02, charging: true, place: slot, where: "C8 대운동장 쪽 02번 칸"}
+  - {id: 36, x: -268.130, y: -257.500, yaw_deg: -173.0, battery_pct: 39, slot: C8-03, charging: true, place: slot, where: "C8 대운동장 쪽 03번 칸"}
+  - {id: 37, x: -268.210, y: -256.890, yaw_deg: -173.0, battery_pct: 42, slot: C8-04, charging: true, place: slot, where: "C8 대운동장 쪽 04번 칸"}
+  - {id: 38, x: -268.360, y: -255.660, yaw_deg: -173.0, battery_pct: 45, slot: C8-05, charging: true, place: slot, where: "C8 대운동장 쪽 05번 칸"}
   - {id: 39, x: 41.11, y: 73.03, yaw_deg: -172.5, battery_pct: 4, place: walkway, where: "인문대학 앞 보행로"}
   - {id: 40, x: 7.92, y: -61.54, yaw_deg: -173.2, battery_pct: 5, place: walkway, where: "대학원동 앞 보행로"}
   - {id: 41, x: -211.3, y: -84.18, yaw_deg: 159.6, battery_pct: 6, place: walkway, where: "제1과학관 앞 보행로"}

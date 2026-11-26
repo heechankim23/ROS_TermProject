@@ -90,9 +90,19 @@ SITE_MATCH_M = 45.0
 
 # 거치대 규격
 PARK_SLOTS, BROKEN_SLOTS, PARK_PITCH = 8, 2, 0.7        # 일반: 정상 8칸 + 고장 분류 2칸 (반대 방향), 칸 간격 0.7 m
-CHARGE_SLOTS, CHARGE_PITCH = 8, 0.85                    # 충전: 충전 스탠드 8칸
+CHARGE_SLOTS, CHARGE_PITCH = 8, 0.85                    # 충전: Kickspot 2대 = 8칸. 자리 찾기 길이는 예전 그대로 8 x 0.85 (일반 구역 배치가 바뀌지 않게)
 RACK_DEPTH = 1.4                                        # 킥보드 길이 1.2 m + 거치대
 ROBOT_DOCK_ANCHOR = ('bldg', 100)                       # 로봇 도크 = 캠퍼스 중앙 본관(100) 옆 (차고 123 은 OSM 에 없음)
+
+# Blender 에셋 치수 (scripts/build_blender_models.py -> config/blender_assets.json)
+with open(os.path.join(PKG, 'config', 'blender_assets.json')) as _f:
+    ASSETS = json.load(_f)
+KS = ASSETS['kickspot_4']                                # Kickspot 4구: 슬롯 y, 원점 = 슬롯 줄의 앞바퀴 축
+KS_UNIT_W = 2.48                                         # 한 대 받침대 폭 (슬롯 4개, 간격 0.62)
+KS_UNITS = (-1.55, 1.55)                                 # 충전구역 거치대 1곳 = Kickspot 2대 (8칸), 거치대 축 방향 위치
+KS_AXLE = ASSETS['g30']['front_axle'][0]                 # 킥보드 중심(모델 원점) -> 앞바퀴 축 0.42
+GS = ASSETS['robot_station']                             # 로봇 충전소 차고: 원점 = 문 앞 지면, +x 안쪽
+GARAGE_LEN, GARAGE_W = GS['footprint'][1][0] - GS['footprint'][0][0], GS['footprint'][1][1] - GS['footprint'][0][1]
 
 RES_NAV = 0.25        # 주행 지도 해상도 (m/px)
 RES_GRID = 0.5        # 배치 계산용 격자
@@ -430,19 +440,49 @@ def place_rack(L, g, M, clear, target, length, depth=RACK_DEPTH, zone_poly=None,
 def make_slots(rack, kind):
     c, t, out = rack['center'], rack['axis'], rack['out']
     slots = []
-    if kind == 'charging':
-        n, pitch = CHARGE_SLOTS, CHARGE_PITCH
-        roles = ['charge'] * n
-    else:
-        n, pitch = PARK_SLOTS + BROKEN_SLOTS, PARK_PITCH
-        roles = ['normal'] * PARK_SLOTS + ['broken'] * BROKEN_SLOTS
     head = math.atan2(out[1], out[0])                   # 킥보드 앞(+x)이 거치대 안쪽(도로 반대)을 향한다
+    if kind == 'charging':                              # Kickspot 2대: 칸 = 슬롯 줄 (킥보드 중심 = 앞바퀴 축 - 0.42)
+        return [{'xy': c + t * (u0 + sy), 'yaw': head, 'role': 'charge'}
+                for u0 in KS_UNITS for sy in KS['slots_y']]
+    n, pitch = PARK_SLOTS + BROKEN_SLOTS, PARK_PITCH
+    roles = ['normal'] * PARK_SLOTS + ['broken'] * BROKEN_SLOTS
     for i in range(n):
         u = (i - (n - 1) / 2) * pitch
         p = c + t * u
         yaw = head + (math.pi if roles[i] == 'broken' else 0.0)   # 고장 칸: 반대 방향
         slots.append({'xy': p, 'yaw': math.atan2(math.sin(yaw), math.cos(yaw)), 'role': roles[i]})
     return slots
+
+
+def kickspot_poses(rack):
+    """충전 거치대 -> Kickspot 2대의 원점 (x, y, yaw). 원점 = 슬롯 줄 앞바퀴 축 (킥보드 중심 + out * 0.42), +x = out"""
+    c, t, out = rack['center'], rack['axis'], rack['out']
+    yaw = math.atan2(out[1], out[0])
+    return [(*(c + t * u0 + out * KS_AXLE), yaw) for u0 in KS_UNITS]
+
+
+def garage_from_rack(rack, near=''):
+    """길가 자리(rack: center, out) -> 로봇 충전소 차고 배치.
+    문은 길 쪽(-out), 로봇은 out 방향으로 들어가 차고 안 (1.30, 0) 에서 충전한다. 태그(tag 100) = 뒷벽 접점판 (2.44, 0)"""
+    out = rack['out']
+    t = np.array([-out[1], out[0]])
+    x0, x1 = GS['footprint'][0][0], GS['footprint'][1][0]
+    origin = rack['center'] - out * ((x0 + x1) / 2)            # 경사 앞끝 ~ 뒷벽 가운데 = 자리 가운데
+    yaw_in = math.atan2(out[1], out[0])
+    dx, dy, _ = GS['dock_robot_pose']
+    dock = origin + out * dx + t * dy
+    tag = origin + out * GS['tag_x']
+    normal = -out                                               # 태그 바깥쪽 법선 = 문 쪽
+    hw = GS['footprint'][1][1]
+    # 지도에 넣을 벽 (x0, x1, y0, y1) 차고 좌표. 지도 격자(0.25 m)는 닿은 칸을 다 칠하므로 옆벽·문기둥은 바깥 4 cm 띠만 그린다
+    # (문 반폭 0.70, 로봇 반폭 0.525 -> 그대로 그리면 칸이 문 안쪽 0.45 까지 번져 도크 후진·경로가 막힘)
+    walls = []
+    wy = max(GS['door_half_width'], hw - 0.04)
+    for (a0, a1, b0, b1) in ((0.0, 2.62, wy, hw), (0.0, 2.62, -hw, -wy), (2.50, 2.62, -hw, hw)):
+        walls.append(np.array([origin + out * a + t * b for a, b in ((a0, b0), (a1, b0), (a1, b1), (a0, b1))]))
+    return {'body': origin, 'yaw': math.atan2(normal[1], normal[0]), 'yaw_in': yaw_in, 'tag': tag, 'dock': dock,
+            'dock_distance': float(GS['tag_x'] - dx), 'pre_dock_distance': float(GS['tag_x'] + 2.0),
+            'floor_z': GS['floor_z'], 'walls': walls, 'road_kind': rack['road_kind'], 'near': near}
 
 
 def nearest_building_name(L, pt, numbered_only=True):
@@ -520,17 +560,10 @@ def build_zones(L, g, M, clear):
 
 
 def place_dock(L, g, M, clear):
+    """로봇 충전소(차고)를 본관 옆 길가에 둔다. 문이 길 쪽"""
     a = anchor_point(ROBOT_DOCK_ANCHOR, L)
-    rack = place_rack(L, g, M, clear, a, 3.0, depth=1.2, radius=80)
-    out = rack['out']
-    # 충전소 몸체(0.3 x 0.6)를 거치대 자리 안쪽에 두고, 태그는 도로 쪽(-out)을 향한다
-    body = rack['center'] + out * 0.3
-    normal = -out
-    yaw = math.atan2(normal[1], normal[0])
-    tag = body + normal * 0.152
-    dock = tag + normal * 1.0
-    return {'body': body, 'yaw': yaw, 'tag': tag, 'dock': dock, 'road_kind': rack['road_kind'],
-            'near': f"{ROBOT_DOCK_ANCHOR[1]} {GUIDE[ROBOT_DOCK_ANCHOR[1]]}"}
+    rack = place_rack(L, g, M, clear, a, GARAGE_W + 0.6, depth=GARAGE_LEN, radius=80)
+    return garage_from_rack(rack, f"{ROBOT_DOCK_ANCHOR[1]} {GUIDE[ROBOT_DOCK_ANCHOR[1]]}")
 
 
 # =============================================================================================
@@ -649,14 +682,7 @@ def rack_geometry(obj, zones, gates, dock, T, flat):
                         p[0], p[1], z0 + 0.06, 0.18, 0.62, 0.12, yaw)      # 바퀴 거치: 축 방향 0.18, 깊이 0.62
             k = c + t * (L_ / 2 + 0.45) + out * (r['depth'] / 2 - 0.35)
             obj.box('rack_kiosk', k[0], k[1], z0 + 0.6, 0.5, 0.5, 1.2, yaw)
-        else:
-            # 1·2번 사진: 칸마다 세워진 충전 스탠드 + 끝에 파란 'P' 표지
-            for s in z['slots']:
-                p = s['xy'] + out * (r['depth'] / 2 - 0.08)
-                obj.box('charge_teal', p[0], p[1], z0 + 0.6, 0.32, 0.16, 1.2, yaw)
-                obj.box('charge_dark', p[0], p[1], z0 + 1.22, 0.20, 0.10, 0.06, yaw)
-            k = c + t * (L_ / 2 + 0.5) + out * (r['depth'] / 2 - 0.3)
-            obj.box('charge_sign', k[0], k[1], z0 + 0.9, 0.12, 0.7, 1.8, yaw)
+        # 충전구역: Kickspot 4구 2대를 world 에 include 한다 (write_world). 여기서는 그리지 않음
     for gte in gates:
         x, y = gte['xy']
         z0 = zf(x, y)
@@ -848,7 +874,7 @@ def write_world(L, T, zones, dock, flat):
     rack_cols = []
     for z in zones:
         r = z['rack']
-        if not r:
+        if not r or z['type'] == 'charging':
             continue
         c = r['center']
         rack_cols.append(
@@ -856,6 +882,7 @@ def write_world(L, T, zones, dock, flat):
             f'<geometry><box><size>{r["length"] + 0.2:.2f} 0.3 0.8</size></box></geometry></collision>')
     bx, by = dock['body']
     dz = zf(bx, by)
+    kicks = kickspot_includes(zones, zf)
     sdf = f'''<?xml version="1.0"?>
 <!-- 경북대학교 대구캠퍼스 ({'평지' if flat else '지형 포함'}). scripts/build_knu_campus.py 가 만든 파일 — 직접 고치지 말고 스크립트를 고칠 것.
      world 프레임 = map 프레임 (+x 동, +y 북, 원점 위도 {LAT0} 경도 {LON0}). 맵 설정: config/maps/{NAME}.yaml
@@ -916,11 +943,13 @@ def write_world(L, T, zones, dock, flat):
 {chr(10).join(rack_cols)}
       </link>
     </model>
-    <!-- 로봇 충전 도크 ({dock['near']} 옆) -->
+    <!-- 킥보드 충전구역: Kickspot 4구 x 2 (Blender) -->
+{kicks}
+    <!-- 로봇 충전소 차고 ({dock['near']} 옆, Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>{bx:.3f} {by:.3f} {dz:.3f} 0 0 {dock['yaw']:.4f}</pose>
+      <pose>{bx:.3f} {by:.3f} {dz:.3f} 0 0 {dock['yaw_in']:.4f}</pose>
     </include>
   </world>
 </sdf>
@@ -929,6 +958,17 @@ def write_world(L, T, zones, dock, flat):
     with open(path, 'w') as f:
         f.write(sdf)
     return path
+
+
+def kickspot_includes(zones, zf=lambda x, y: 0.0):
+    out = []
+    for z in zones:
+        if z['type'] != 'charging' or not z['rack']:
+            continue
+        for k, (x, y, yaw) in enumerate(kickspot_poses(z['rack'])):
+            out.append(f'    <include><uri>model://kickspot_4</uri><name>{z["id"]}_kickspot_{k + 1}</name>'
+                       f'<pose>{x:.3f} {y:.3f} {zf(x, y):.3f} 0 0 {yaw:.4f}</pose></include>')
+    return '\n'.join(out)
 
 
 def rack_boxes(zones):
@@ -940,6 +980,11 @@ def rack_boxes(zones):
         if not r:
             continue
         c, t, o, L = r['center'], r['axis'], r['out'], r['length']
+        if z['type'] == 'charging':                 # Kickspot: 기둥 줄 (앞바퀴 축 앞 0 ~ 0.6 m)
+            for x, y, _ in kickspot_poses(r):
+                p = np.array([x, y]) + o * 0.30
+                out.append((p[0], p[1], KS_UNIT_W, 0.6, r['yaw']))
+            continue
         back = c + o * (r['depth'] / 2 - 0.12)
         out.append((back[0], back[1], L + 0.2, 0.3, r['yaw']))
         k = c + t * (L / 2 + 0.47) + o * (r['depth'] / 2 - 0.32)
@@ -947,8 +992,11 @@ def rack_boxes(zones):
     return out
 
 
-def write_nav_maps(M, g, zones=()):
+def write_nav_maps(M, g, zones=(), dock=None, name=None):
+    """dock: 차고 벽을 그려 넣음. name: 다른 이름으로 저장 (시나리오 전용 맵)"""
     racks = g.blank()
+    for w in (dock or {}).get('walls', []):
+        g.fill(racks, w)
     for cx, cy, L, W, yaw in rack_boxes(zones):
         t, n = np.array([math.cos(yaw), math.sin(yaw)]), np.array([-math.sin(yaw), math.cos(yaw)])
         c = np.array([cx, cy])
@@ -956,12 +1004,13 @@ def write_nav_maps(M, g, zones=()):
                                 c + t * L / 2 + n * W / 2, c - t * L / 2 + n * W / 2]))
     occ_l = M['solid'] | (racks > 0)
     occ_n = occ_l | M['pitch'] | M['steps']
+    base = name or NAME
     for suffix, occ in (('', occ_n), ('_lidar', occ_l)):
         img = np.where(occ, 0, 254).astype(np.uint8)
-        Image.fromarray(img).save(os.path.join(PKG, 'maps', f'{NAME}{suffix}.png'), optimize=True)
-        for name in (NAME, NAME + '_flat'):          # 평지 world 도 같은 지도를 쓴다
-            with open(os.path.join(PKG, 'maps', f'{name}{suffix}.yaml'), 'w') as f:
-                f.write(f'image: {NAME}{suffix}.png\nmode: trinary\nresolution: {g.res}\n'
+        Image.fromarray(img).save(os.path.join(PKG, 'maps', f'{base}{suffix}.png'), optimize=True)
+        for nm in ((base,) if name else (NAME, NAME + '_flat')):          # 평지 world 도 같은 지도를 쓴다
+            with open(os.path.join(PKG, 'maps', f'{nm}{suffix}.yaml'), 'w') as f:
+                f.write(f'image: {base}{suffix}.png\nmode: trinary\nresolution: {g.res}\n'
                         f'origin: [{g.x0:.1f}, {g.y0:.1f}, 0.0]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.25\n')
 
 
@@ -998,30 +1047,35 @@ def write_config(zones, dock, T, bounds):
           f'  lat: {LAT0}', f'  lon: {LON0}', '',
           'terrain:               # 지형 높이: maps/knu_campus.json 의 elevation 격자 (world z = 해발 - datum)',
           f'  datum_elev_m: {T.datum:.2f}', '  source: SRTM 30 m (OpenTopoData), 가우시안 평활 48 m', '',
-          f'robot_spawn:           # = 도킹 pose ({dock["near"]} 옆)',
-          f'  x: {sx:.3f}', f'  y: {sy:.3f}', f'  yaw_deg: {(yaw_out + 180) % 360:.1f}', '',
+          f'robot_spawn:           # = 도킹 pose: 로봇 충전소 차고 안 ({dock["near"]} 옆), 바닥 높이 z',
+          f'  x: {sx:.3f}', f'  y: {sy:.3f}', f'  z: {dock["floor_z"]:.2f}', f'  yaw_deg: {(yaw_out + 180) % 360:.1f}', '',
           'charger:', '  station_id: station_1', '  tag_id: 100',
-          f'  tag_pose: {{x: {tx:.3f}, y: {ty:.3f}, yaw_deg: {yaw_out:.1f}}}   # 태그 면 중심, yaw = 바깥쪽 법선',
-          '  dock_distance: 1.0', '  pre_dock_distance: 2.0', '',
+          f'  tag_pose: {{x: {tx:.3f}, y: {ty:.3f}, yaw_deg: {yaw_out:.1f}}}   # 차고 뒷벽 접점판, yaw = 바깥쪽 법선 (문 쪽)',
+          f'  dock_distance: {dock["dock_distance"]:.2f}      # 충전 위치 (차고 안 1.30) ~ 뒷벽 접점판 (2.44)',
+          f'  pre_dock_distance: {dock["pre_dock_distance"]:.2f}  # 문 앞 2 m',
+          '  station: {model: scootover_robot_station, '
+          f'x: {dock["body"][0]:.3f}, y: {dock["body"][1]:.3f}, yaw_deg: {math.degrees(dock["yaw_in"]):.1f}}}   # 차고 원점 = 문 앞 지면', '',
           f'# 일반 주차구역 {len(gen)}곳: 킥보드 앱의 주차 가능 구역(사용자 제공 이미지) 그대로. 거치대 1개 = 정상 {PARK_SLOTS}칸 + 고장 분류 {BROKEN_SLOTS}칸',
           'parking_zones:']
     for z in gen:
         L_ += zone_yaml(z)
-    L_ += ['', f'# 충전 주차구역 {len(chg)}곳: 사람이 많이 오가는 곳 (사용자 지정 8곳). 충전 스탠드 {CHARGE_SLOTS}칸',
+    L_ += ['', f'# 충전 주차구역 {len(chg)}곳: 사람이 많이 오가는 곳 (사용자 지정 8곳). Kickspot 4구 x 2 = {CHARGE_SLOTS}칸.',
+           '# 칸 x, y = 꽂힌 킥보드 중심 (앞바퀴 축 - 0.42), yaw = 기둥 쪽',
            'charging_zones:']
     for z in chg:
         L_ += zone_yaml(z)
     L_ += ['', 'params:                # 이 맵에서 덮어쓸 노드 파라미터 (launch/system.launch.py 가 적용)',
            '  nav_bridge:', '    v_max: 1.5', '    w_max: 1.0', '    lookahead: 1.2', '    goal_timeout_sec: 1200.0',
-           '    replan_sec: 3.0', f'    costmap_res: {RES_NAV}', '    goal_clearance: 1.1', '    inflation_radius: 1.1',
+           '    replan_sec: 3.0', f'    costmap_res: {RES_NAV}', '    goal_clearance: 1.2', '    inflation_radius: 1.2',
            '    window_m: 70.0', '    max_retries: 2',
            '  battery_manager:', '    k1_pct_per_m: 0.02', '    k2_pct_per_s: 0.01',
            '  queue_manager:          # 경북대 맵 가중치 (2026-11-23, B): 거리·넘어짐 중심, 1점 = 1 m',
            '    w_r: 100.0', '    w_t: 0.5', '    w_d: 1.0', '    d_max: 1200.0',
-           '  request_gateway:', '    max_range_m: 1200.0',
+           '  request_gateway:', '    max_range_m: 1200.0      # 캠퍼스 전체 (원점에서 서쪽 끝까지 약 600 m)',
            '  sim_lidar:', '    range_max: 12.0',
            '  collector:', '    align_timeout_sec: 120.0', '    search_radius_m: 10.5      # 확장 탐색 (GPS 오차 큰 신고)',
            '  mission_manager:', '    return_battery_pct: 20.0',
+           '    undock_distance: 3.0          # 차고 안 충전 위치에서 문 밖까지 후진 (문 1.30 + 경사 0.45 + 여유)',
            '  scooter_fleet_sim:', '    charge_rate_pct_per_s: 0.2']
     path = os.path.join(PKG, 'config', 'maps', f'{NAME}.yaml')
     with open(path, 'w') as f:
@@ -1289,7 +1343,7 @@ def main():
     print('[5] 주행 지도 · 맵 설정 · JSON · 2D 지도')
     gn = Grid(bounds, RES_NAV)
     Mn = build_masks(L, gn)
-    write_nav_maps(Mn, gn, zones)
+    write_nav_maps(Mn, gn, zones, dock)
     write_config(zones, dock, T, bounds)
     _, data = write_json(L, T, zones, dock, bounds)
     write_viewer(data)

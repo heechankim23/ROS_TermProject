@@ -17,7 +17,7 @@ pass_criteria:
   - "고장 분류 칸 (반대 방향): #1,2,3,4,5 → 고장 분류 칸에 반대 방향으로 섬"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: -111.09, y: -271.77, yaw_deg: 37.9, battery_pct: 40, fault: brake, place: walkway, where: "공대2호관 앞 보행로"}
   - {id: 2, x: -111.58, y: -307.09, yaw_deg: 53.7, battery_pct: 47, fault: tire, place: walkway, where: "공대1호관 앞 보행로"}

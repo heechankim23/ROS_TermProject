@@ -54,14 +54,16 @@ class KinematicParams:
     pivot_penalty: float = 0.6        # 제자리 회전 1 rad 비용 (m 환산)
     goal_pos_tol: float = 0.15        # 도착 위치 허용
     smooth_margin: float = 0.15       # 다듬기(Dubins 건너뛰기) 때 장애물과 더 두는 여유 (m)
+    blend_len: float = 0.8            # m. 곡률 연속화(G2): 곡률이 0 -> k 로 바뀌는 데 쓰는 길이 (완화 곡선)
+    blend_max_shift: float = 0.15     # m. 연속화한 경로가 원래 경로에서 이보다 멀어지면 그 구간은 원래 경로 유지
     goal_yaw_tol_deg: float = 10.0    # 도착 방향 허용 (pivot_at_ends 면 도착 후 회전으로 맞춤)
     max_expansions: int = 30000
     time_budget_sec: float = 2.5      # 실제 시간
     heuristic_weight: float = 1.4     # weighted A* (빠르게, 최적에 가깝게)
     # 차체 (base_footprint 기준): x 범위와 반폭, 여유
-    body_x_min: float = -0.92
-    body_x_max: float = 0.89
-    body_half_width: float = 0.37
+    body_x_min: float = -0.98
+    body_x_max: float = 0.96
+    body_half_width: float = 0.525
     safety_margin: float = 0.05
     n_circles: int = 3
 
@@ -360,7 +362,8 @@ def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False
         while n is not None:
             out = list(n.poses) + out
             n = n.parent
-        return smooth_path(start, out, cg, R, deadline=t_start + p.time_budget_sec + 1.0, margin=p.smooth_margin)
+        out = smooth_path(start, out, cg, R, deadline=t_start + p.time_budget_sec + 1.0, margin=p.smooth_margin)
+        return curvature_smooth(start, out, cg, kmax, p.blend_len, p.blend_max_shift)
 
     def try_shot(n):
         """Dubins 로 목표 자세에 바로 연결 (충돌 없으면). 도착 방향이 자유면 도착 방향 몇 개 시도"""
@@ -475,6 +478,72 @@ def smooth_path(start, path, cg, R, deadline=None, margin=0.0):
     return out[1:]
 
 
+def curvature_smooth(start, path, cg, kmax, blend=0.8, max_shift=0.15):
+    """직선·원호를 이은 경로(G1: 방향은 이어지지만 곡률이 계단처럼 0 -> k 로 튐)를 곡률도 이어지는 경로(G2)로 바꾼다.
+    실제 차량은 조향을 한순간에 꺾을 수 없으니, 곡률이 blend 길이에 걸쳐 직선으로 변하게(완화 곡선, clothoid) 한다.
+    방법: 같은 방향(전진/후진) 구간마다 곡률을 호 길이 blend 창으로 이동 평균 -> 다시 적분.
+      - 이동 평균은 원래 곡률들의 볼록 결합이라 최대 곡률을 넘지 않는다 (아주 작은 보정분은 kmax 로 다시 확인)
+      - 구간 끝 방향은 정확히 보존(전체 방향 변화를 맞추는 상수 보정). 완화 곡선마다 경로가 조금씩(~blend²k/24) 안쪽으로
+        밀려 끝 위치가 어긋나는데, 이 오차는 구간 길이에 비례해 나눠 없앤다 (방향 어긋남 3% = 1.7° 이하일 때만)
+      - 원래 경로에서 max_shift 넘게 벗어나거나, 곡률이 kmax 넘거나, 차체가 장애물과 겹치면 그 구간은 원래 경로 그대로
+    제자리 회전(dir 0)과 전·후진 전환점(정지)은 그대로 둔다 — 멈춘 상태에선 곡률이 끊겨도 된다."""
+    if not path or blend <= 0.0:
+        return path
+    pts = [(start[0], start[1], start[2], 0)] + list(path)
+    out, k, n = [], 1, len(pts)
+    while k < n:
+        d = pts[k][3]
+        if d == 0:
+            out.append(pts[k])
+            k += 1
+            continue
+        e = k
+        while e + 1 < n and pts[e + 1][3] == d:
+            e += 1
+        seg = pts[k:e + 1]
+        for b in (blend, blend * 0.5):                 # 안 되면 완화 길이를 반으로 (밀림은 길이의 제곱에 비례 -> 1/4)
+            new = _g2_segment(pts[k - 1], seg, d, cg, kmax, b, max_shift)
+            if new is not seg:
+                break
+        out += new
+        k = e + 1
+    return out
+
+
+def _g2_segment(p0, seg, d, cg, kmax, blend, max_shift):
+    xs = np.array([p0[0]] + [q[0] for q in seg])
+    ys = np.array([p0[1]] + [q[1] for q in seg])
+    ths = [p0[2]] + [q[2] for q in seg]
+    ds = np.hypot(np.diff(xs), np.diff(ys))
+    dth = np.array([wrap(ths[i + 1] - ths[i]) for i in range(len(seg))])
+    S = float(ds.sum())
+    if len(seg) < 3 or S < blend or np.any(ds < 1e-6):
+        return seg
+    s = np.concatenate([[0.0], np.cumsum(ds)])            # 각 자세의 호 길이
+    Th = np.concatenate([[0.0], np.cumsum(dth)])          # 누적 방향 변화 (곡률의 적분)
+    mid = 0.5 * (s[:-1] + s[1:])
+    lo, hi = np.clip(mid - blend / 2, 0.0, S), np.clip(mid + blend / 2, 0.0, S)
+    ks = (np.interp(hi, s, Th) - np.interp(lo, s, Th)) / (hi - lo)   # 이동 평균 곡률 (구간 i)
+    ks += (Th[-1] - float(np.sum(ks * ds))) / S          # 끝 방향 보존
+    if np.max(np.abs(ks)) > kmax * 1.02 + 1e-6:
+        return seg
+    th = p0[2] + np.concatenate([[0.0], np.cumsum(ks * ds)])
+    thm = 0.5 * (th[:-1] + th[1:])
+    nx = p0[0] + np.concatenate([[0.0], np.cumsum(d * ds * np.cos(thm))])
+    ny = p0[1] + np.concatenate([[0.0], np.cumsum(d * ds * np.sin(thm))])
+    ex, ey = xs[-1] - nx[-1], ys[-1] - ny[-1]
+    if math.hypot(ex, ey) > 0.03 * S:
+        return seg
+    nx += ex * s / S                                     # 끝 위치 맞춤 (선형으로 나눠서 -> 곡률 연속 유지)
+    ny += ey * s / S
+    if np.max(np.hypot(nx - xs, ny - ys)) > max_shift:
+        return seg
+    new = [(float(nx[i]), float(ny[i]), wrap(float(th[i])), d) for i in range(1, len(s))]
+    if not all(cg.free(q[0], q[1], q[2]) for q in new):
+        return seg
+    return new
+
+
 def path_collides(cm, path, t, p: KinematicParams = None, from_index=0, start=None, escape=0.6):
     """남은 경로(촘촘한 자세)가 지금 장애물과 부딪히는지"""
     p = p or KinematicParams()
@@ -502,10 +571,12 @@ class PathTracker:
     - 방향이 바뀌는 점(cusp)에서는 멈췄다가 반대로
     - 제자리 회전 구간(dir 0, 출발·도착점에서만)은 그 방향이 될 때까지 회전만
     - 끝에 도착하면 마지막 자세 방향으로 맞춘다 (차동 구동, 도착점 회전 공간은 목표 선택이 보장)
-    - 비정상으로 크게 벗어나 목표점이 옆·뒤(60° 이상)에 있으면 회복용으로 제자리에서 돌려 세운다"""
+    - 비정상으로 크게 벗어나 목표점이 옆·뒤(60° 이상)에 있으면 회복용으로 제자리에서 돌려 세운다
+    - 조향 속도 한계: 달리는 동안 명령 곡률은 초당 k_rate_max 이상 바뀌지 않는다 (조향을 한순간에 꺾지 않음).
+      멈춘 상태(출발·cusp·제자리 회전 뒤)에서는 제한 없이 새로 시작"""
 
-    def __init__(self, path, v_max=0.22, w_max=1.2, min_turn_radius=0.8, lookahead=None, pos_tol=0.08,
-                 yaw_tol=math.radians(8.0), final_yaw=True):
+    def __init__(self, path, v_max=0.22, w_max=1.0, min_turn_radius=0.8, lookahead=None, pos_tol=0.08,
+                 yaw_tol=math.radians(8.0), final_yaw=True, k_rate_max=2.5):
         self.path = list(path)
         self.v_max, self.w_max = v_max, w_max
         self.kmax = 1.0 / max(1e-3, min_turn_radius)     # 추종도 최소 회전 반경을 지킨다
@@ -515,6 +586,9 @@ class PathTracker:
         self.i = 0
         self.v_prev = 0.0
         self.recovering = False
+        self.k_rate_max = k_rate_max                     # 1/(m·s). 명령 곡률 변화율 한계
+        self.k_prev = None                               # 직전 명령 곡률 (None = 멈춘 상태)
+        self._t_prev = None
         # 경로 각 점의 곡률 (앞쪽 곡선을 미리 보고 감속하는 데 씀)
         self.curv = [0.0] * len(self.path)
         for k in range(1, len(self.path)):
@@ -547,7 +621,12 @@ class PathTracker:
             return None
         return 0.0, max(-self.w_max, min(self.w_max, 1.8 * err)), False
 
-    def step(self, pose):
+    def step(self, pose, dt=None):
+        """dt: 이전 호출과의 간격(s). None 이면 실제 시간으로 잰다 (곡률 변화율 제한에 씀)"""
+        now = time.monotonic()
+        if dt is None:
+            dt = 0.05 if self._t_prev is None else min(0.2, max(0.01, now - self._t_prev))
+        self._t_prev = now
         x, y, th = pose
         if not self.path:
             return 0.0, 0.0, True
@@ -559,6 +638,7 @@ class PathTracker:
             return 0.0, 0.0, True
         q = self.path[self.i]
         if q[3] == 0:                                   # 제자리 회전 (출발·도착점)
+            self.k_prev = None
             r = self._turn_to(th, q[2])
             if r is not None:
                 return r
@@ -577,6 +657,7 @@ class PathTracker:
         if dist_end <= self.pos_tol or (self.i >= e and dist_end <= 3.0 * self.pos_tol):
             self.i = e + 1
             self.v_prev = 0.0
+            self.k_prev = None
             return 0.0, 0.0, False                      # cusp / 끝: 다음 주기에 이어서
         look = self.look_fixed or min(1.5, 0.35 + 0.6 * abs(self.v_prev))
         tgt = end
@@ -596,6 +677,7 @@ class PathTracker:
         if L > 0.25 and abs(ang) > math.radians(60 if not self.recovering else 15):
             self.recovering = True
             self.v_prev = 0.0
+            self.k_prev = None
             return 0.0, max(-self.w_max, min(self.w_max, 1.8 * ang * d)), False
         self.recovering = False
         # 경로 곡률(피드포워드) + 측면·방향 오차 피드백 (진행 방향 기준). 순수 pure pursuit 은 급한 원호에서 안쪽을 깎는다
@@ -608,6 +690,10 @@ class PathTracker:
         kff = self.curv[min(self.i + 1, len(self.curv) - 1)]
         k = kff - 1.6 * e_lat - 2.2 * math.sin(e_head)
         k = max(-self.kmax, min(self.kmax, k))
+        if self.k_prev is not None and self.v_prev > 0.0:  # 조향 속도 한계 (달리는 중)
+            dk = self.k_rate_max * dt
+            k = max(self.k_prev - dk, min(self.k_prev + dk, k))
+        self.k_prev = k
         v = self.v_max
         v = min(v, max(0.06, 1.0 * dist_end))          # 정지점(구간 끝)에서 감속
         if abs(k) > 1e-6:

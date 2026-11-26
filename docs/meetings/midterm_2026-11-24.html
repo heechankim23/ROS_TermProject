@@ -1,0 +1,336 @@
+<title>킥보드 로봇 중간점검</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: same blueprint-grey reading column as the structure guide; colour is reserved for ROS link types and status. */
+:root{
+ --bg:#EEF1F2;--panel:#FBFCFC;--fg:#16212B;--muted:#55636F;--line:#C6D0D6;--band:#EAEFF1;--band2:#F4F7F8;
+ --topic:#0A7C78;--srv:#B4560A;--act:#5A3DD0;--bad:#BE2F3C;--good:#2F7D4F;--brain:#16212B;--brain-fg:#F4F7F8;--simf:#F1EEF8;--sim:#7C6AA6;
+ --goodbg:#E3F1E8;--warnbg:#F8EBDD;--badbg:#F8E3E5;
+ --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+ --mono:"IBM Plex Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#10171D;--panel:#182129;--fg:#E5ECF0;--muted:#9DACB8;--line:#34424E;--band:#1F2A33;--band2:#1B252D;
+ --topic:#4CCFC6;--srv:#F2A65A;--act:#AB9BFF;--bad:#F2838C;--good:#6FD39A;--brain:#E5ECF0;--brain-fg:#10171D;--simf:#26233A;--sim:#A898D2;
+ --goodbg:#1C3327;--warnbg:#3A2B1C;--badbg:#3A1E23;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#10171D;--panel:#182129;--fg:#E5ECF0;--muted:#9DACB8;--line:#34424E;--band:#1F2A33;--band2:#1B252D;
+ --topic:#4CCFC6;--srv:#F2A65A;--act:#AB9BFF;--bad:#F2838C;--good:#6FD39A;--brain:#E5ECF0;--brain-fg:#10171D;--simf:#26233A;--sim:#A898D2;
+ --goodbg:#1C3327;--warnbg:#3A2B1C;--badbg:#3A1E23;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.7;word-break:keep-all}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px;display:grid;gap:64px}
+section,header{display:grid;gap:18px;min-width:0}
+h1{font-size:clamp(30px,4.4vw,44px);line-height:1.25;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:26px;line-height:1.35;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:18px;line-height:1.45;margin:0;font-weight:700}
+p{margin:0;max-width:72ch}
+.lead{font-size:18px}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.04em}
+code{font-family:var(--mono);font-size:.88em}
+p code,li code,td code{background:var(--band);padding:1px 5px;border-radius:3px;word-break:break-all}
+nav{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+nav a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+nav a:hover,nav a:focus-visible{color:var(--fg);border-color:var(--fg)}
+figure{margin:0;display:grid;gap:8px;min-width:0}
+.fig{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:var(--mw,760px);height:auto}
+figcaption{font-size:14px;color:var(--muted);max-width:90ch}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.legend>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:6px;align-content:start;min-width:0}
+.legend svg{width:100%;height:18px;display:block}
+.legend b{font-size:16px}
+.legend p,.legend li{font-size:14px}
+.note{border-left:3px solid var(--srv);padding:4px 0 4px 14px;display:grid;gap:4px}
+.note.bad{border-color:var(--bad)}
+ul,ol{margin:0;padding-left:20px;display:grid;gap:8px;max-width:84ch}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;color:var(--muted);font-size:13px;white-space:nowrap}
+td.n{font-family:var(--mono);font-size:13px;white-space:nowrap}
+td.who{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:12.5px;font-weight:600;padding:1px 9px;border-radius:10px;white-space:nowrap}
+.p-good{background:var(--goodbg);color:var(--good)}
+.p-warn{background:var(--warnbg);color:var(--srv)}
+.p-bad{background:var(--badbg);color:var(--bad)}
+.p-mock{background:var(--simf);color:var(--sim)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
+.cols>div{display:grid;gap:10px;align-content:start;min-width:0}
+.check{list-style:none;padding:0}
+.check li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+.check li::before{content:"";width:14px;height:14px;border:1.5px solid var(--muted);border-radius:3px;margin-top:6px}
+.b{stroke-width:1.2}
+.b-core{fill:var(--panel);stroke:var(--fg)}
+.b-brain{fill:var(--brain);stroke:var(--brain)}
+.b-sim{fill:var(--simf);stroke:var(--sim);stroke-dasharray:5 3}
+.b-ext{fill:var(--band);stroke:var(--line)}
+.b-badbox{fill:var(--panel);stroke:var(--bad);stroke-dasharray:5 3}
+.t-n{font:600 13px var(--mono);fill:var(--fg)}
+.t-d{font:400 11.5px var(--sans);fill:var(--muted)}
+.t-brain{fill:var(--brain-fg)}
+.t-m{font:500 11.5px var(--mono);fill:var(--muted)}
+.t-s{font:400 12px var(--sans);fill:var(--muted)}
+.t-l{font:600 12px var(--sans);fill:var(--fg)}
+.lbl{font:400 12px var(--sans);fill:var(--fg);paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.lbl-m{font:500 11.5px var(--mono);fill:var(--fg);paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.e{fill:none;stroke-linejoin:round}
+.e-plain{stroke:var(--fg);stroke-width:1.4}
+.e-topic{stroke:var(--topic);stroke-width:1.7}
+.e-srv{stroke:var(--srv);stroke-width:1.7;stroke-dasharray:6 4}
+.e-act{stroke:var(--act);stroke-width:2.8}
+.e-bad{stroke:var(--bad);stroke-width:1.4;stroke-dasharray:4 3}
+.e-ret{stroke:var(--muted);stroke-width:1.1;stroke-dasharray:3 3}
+.m-plain{fill:var(--fg)}.m-topic{fill:var(--topic)}.m-srv{fill:var(--srv)}.m-act{fill:var(--act)}.m-bad{fill:var(--bad)}.m-ret{fill:var(--muted)}
+.ll{stroke:var(--line);stroke-width:1;fill:none}
+.band-e{fill:var(--act)}.band-t{fill:var(--topic)}.band-s{fill:var(--srv)}
+.t-band{font:600 12px var(--sans);fill:var(--panel)}
+.meet{fill:var(--brain)}
+.ms{fill:var(--bad)}
+@media (max-width:820px){.wrap{gap:48px}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<main class="wrap">
+<header>
+ <div class="eyebrow">2026-11-24 (화) 정기 회의 · 발표까지 15일</div>
+ <h1>킥보드 로봇 중간점검</h1>
+ <p class="lead">지금까지 브랜치·커밋·회의 안건을 역할별로 확인했고, 남은 2주를 "코드는 E가 마무리하고, 문서는 모두 나눠 쓰는" 방식으로 다시 짰습니다. 정기 회의는 화요일 세 번(오늘, 12-1, 12-8)이고 발표는 12-9(수)입니다.</p>
+ <nav aria-label="목차"><a href="#grading">평가 기준 대비</a><a href="#plan">새 분담 방식</a><a href="#nodes">노드 구조</a><a href="#states">상태 흐름</a><a href="#doc">제출 문서 목차</a><a href="#kit">팀원 묶음</a><a href="#today">오늘 정할 것</a></nav>
+ <figure><div class="fig"><svg viewBox="0 0 1120 214" role="img" aria-label="11-24부터 12-9까지 일정. E 코드 마무리 11-24에서 11-30, 팀원 초안 검토 11-28에서 12-1, 확정과 연습 12-2에서 12-7, 화요일 회의 세 번과 12-9 발표" style="--mw:860px">
+  <text x="70" y="22" class="t-m">11월</text><text x="507" y="22" class="t-m">12월</text>
+  <line x1="60" y1="64" x2="1060" y2="64" class="ll"/>
+  <g class="t-m" text-anchor="middle">
+   <text x="70" y="46">24</text><text x="135" y="46">25</text><text x="200" y="46">26</text><text x="265" y="46">27</text><text x="330" y="46">28</text><text x="395" y="46">29</text><text x="460" y="46">30</text><text x="525" y="46">1</text><text x="590" y="46">2</text><text x="655" y="46">3</text><text x="720" y="46">4</text><text x="785" y="46">5</text><text x="850" y="46">6</text><text x="915" y="46">7</text><text x="980" y="46">8</text><text x="1045" y="46">9</text>
+  </g>
+  <rect x="62" y="58" width="16" height="12" rx="2" class="meet"/><rect x="517" y="58" width="16" height="12" rx="2" class="meet"/><rect x="972" y="58" width="16" height="12" rx="2" class="meet"/>
+  <circle cx="1045" cy="64" r="7" class="ms"/>
+  <rect x="62" y="84" width="430" height="24" rx="3" class="band-e"/><text x="74" y="100" class="t-band">E · 코드 마무리와 회귀</text>
+  <rect x="322" y="116" width="225" height="24" rx="3" class="band-t"/><text x="334" y="132" class="t-band">팀원 · 초안 검토</text>
+  <rect x="582" y="116" width="358" height="24" rx="3" class="band-s"/><text x="594" y="132" class="t-band">팀원 · 확정과 발표 연습</text>
+  <g class="lbl" text-anchor="middle">
+   <text x="200" y="172">코드 push 마감</text>
+   <text x="330" y="194">초안 배포</text>
+   <text x="525" y="172">검토본 · 기능 동결</text>
+   <text x="785" y="172">확정본 · 슬라이드 초안</text>
+   <text x="915" y="194">최종 검토</text>
+   <text x="980" y="172">리허설</text>
+   <text x="1045" y="194">발표</text>
+  </g>
+  <g class="e e-ret"><path d="M200 70V156"/><path d="M330 142V178"/><path d="M525 142V156"/><path d="M785 142V156"/><path d="M915 142V178"/><path d="M980 70V156"/><path d="M1045 72V178"/></g>
+ </svg></div><figcaption>검은 칸은 화요일 정기 회의, 빨간 점은 발표일입니다. 문서 마감은 두 번입니다. 팀원 검토본은 12-1, 확정본은 12-5입니다. 제출 기한이 발표 전으로 잡히면 12-5 확정본을 그대로 냅니다.</figcaption></figure>
+</header>
+
+<section id="grading">
+ <h2>평가 기준으로 본 현재 위치</h2>
+ <p>노드 구현은 이미 기본 기준을 넘었습니다. 남은 점수는 "보여주기"(문서와 데모)와 "답하기"(발표와 질의응답)에 걸려 있습니다.</p>
+ <div class="tw"><table>
+  <thead><tr><th>평가 항목</th><th>상태</th><th>근거와 남은 일</th></tr></thead>
+  <tbody>
+   <tr><td>topic · service · action 모두 사용, 데이터 구조 직접 설계</td><td><span class="pill p-good">충족</span></td><td><code>kickboard_interfaces</code>에 msg 8, srv 7, action 5개</td></tr>
+   <tr><td>기본: 제안 서비스의 ROS 노드 구현</td><td><span class="pill p-good">충족</span></td><td>서비스 핵심 노드 7개를 직접 구현했고 요청부터 충전까지 끝까지 돕니다</td></tr>
+   <tr><td>기본: 자율주행 등은 더미 데이터 허용</td><td><span class="pill p-good">충족</span></td><td>인식은 <code>sim_tag_detector</code>, 도킹은 애니메이션으로 처리. 문서에 모의라고 밝히면 됩니다</td></tr>
+   <tr><td>가점: 시뮬레이션 구성</td><td><span class="pill p-good">충족</span></td><td>Gazebo Harmonic, 도로 맵, 경북대 캠퍼스 맵, 시나리오 50여 개</td></tr>
+   <tr><td>가점: 전체 시스템 시연</td><td><span class="pill p-warn">영상 남음</span></td><td>시스템은 돕니다. 데모 시나리오 선정과 녹화(A, 11-29 이후)가 남았습니다</td></tr>
+   <tr><td>설계의 치밀함 · Document만 보고 이용 가능</td><td><span class="pill p-bad">문서 없음</span></td><td>README와 PRD가 개발자용입니다. 사용자 이용 가이드와 노드 명세가 필요합니다</td></tr>
+   <tr><td>발표 · 질의응답</td><td><span class="pill p-bad">시작 전</span></td><td>코드의 상당 부분을 Claude가 썼으니, 팀원이 자기 노드를 설명할 수 있게 준비해야 합니다</td></tr>
+  </tbody>
+ </table></div>
+</section>
+
+<section id="plan">
+ <h2>새 분담: 코드는 E, 문서는 모두</h2>
+ <p>남은 코드는 대부분 "합치고, 돌려 보고, 고치는" 일이라 한 사람이 쥐는 편이 빠릅니다. 문서는 그 부분을 만든 사람이 검토해야 정확하고, 그 과정이 곧 질의응답 준비가 됩니다.</p>
+ <div class="cols">
+  <div>
+   <h3>굴러가기 위한 전제</h3>
+   <ol>
+    <li><b>11-26(목) 코드 넘김.</b> 각자 로컬 작업을 모두 push. 이후 main에 코드를 넣는 사람은 E 한 명이고, 다른 사람 파일을 E가 고치면 담당자가 하루 안에 확인합니다. README 9장 규칙도 이렇게 바꿉니다.</li>
+    <li><b>E의 코드 범위를 줄입니다.</b> 새 기능보다 회귀가 모두 통과하고 데모가 매번 같은 결과로 끝나는 것이 우선입니다.</li>
+    <li><b>문서는 하나의 목차로.</b> E가 목차와 용어표를 먼저 깔고, 각자 자기 장을 채웁니다.</li>
+   </ol>
+  </div>
+  <div>
+   <h3>도킹은 애니메이션</h3>
+   <p><code>dock_controller</code> 노드와 <code>DockToCharger</code> 액션은 그대로 두고, 안쪽만 "정해진 경로로 몇 초 동안 도크까지 옮기고 성공 반환"으로 바꿉니다. <code>mission_manager</code>와 launch는 건드리지 않습니다.</p>
+   <p>문서에는 태그 기반 정밀 도킹의 설계안을 적고, 시연은 애니메이션이라고 밝힙니다. 회귀 기대값에서 도킹 실패 경로는 뺍니다.</p>
+  </div>
+ </div>
+ <div class="legend">
+  <div><span class="pill p-good">필수</span><b>E가 반드시 끝낼 것</b><ul><li>role_D 3커밋 병합</li><li>도킹 애니메이션 모드</li><li>k00 요청 재전송, k16 제한 110분</li><li>도로 s1~s19 + 경북대 k00~k32 전체 회귀</li></ul></div>
+  <div><span class="pill p-warn">가능하면</span><b>시간이 남으면</b><ul><li>출발 전 요청 "충전 중이면 취소"</li><li>정렬 전체 시간 상한 → 넘으면 나중에 다시(REQUEUE)</li></ul></div>
+  <div><span class="pill p-mock">보류</span><b>문서에 "향후 확장"으로만</b><ul><li>충전 이상 감지, 움직이는 장애물 구분</li><li>Nav2, 실제 카메라 + AprilTag</li><li>여러 대 운영</li></ul></div>
+ </div>
+</section>
+
+<section id="nodes">
+ <h2>노드 구조: 누가 무엇을 받고 내보내나</h2>
+ <p>위에서 아래로 읽습니다. 요청이 들어와 줄을 서고, 두뇌가 하나씩 골라 실행 노드에 일을 시키며, 맨 아래 모의 노드가 센서와 바퀴를 대신합니다. 선 모양은 구조 가이드와 같습니다.</p>
+ <div class="legend">
+  <div><svg viewBox="0 0 200 18" aria-hidden="true"><path d="M4 9H190" class="e e-topic"/></svg><b>토픽</b><p>계속 흐르는 상태. 보내는 쪽은 누가 받는지 모릅니다.</p></div>
+  <div><svg viewBox="0 0 200 18" aria-hidden="true"><path d="M4 9H190" class="e e-srv"/></svg><b>서비스</b><p>요청 한 번에 응답 한 번. 금방 끝나는 질문.</p></div>
+  <div><svg viewBox="0 0 200 18" aria-hidden="true"><path d="M4 9H190" class="e e-act"/></svg><b>액션</b><p>오래 걸리는 일. 진행 상황을 받고 취소할 수 있습니다.</p></div>
+ </div>
+ <figure><div class="fig"><svg viewBox="0 0 1120 640" role="img" aria-label="노드 계층: scooter_fleet_sim이 서비스로 request_gateway에 요청하고, queue_manager가 대기열을 mission_manager에 알리며, mission_manager가 액션으로 collector, nav_bridge, dock_controller, arm_loader에 일을 시킨다" style="--mw:900px">
+  <defs>
+   <marker id="n-topic" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" class="m-topic"/></marker>
+   <marker id="n-srv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" class="m-srv"/></marker>
+   <marker id="n-act" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" class="m-act"/></marker>
+  </defs>
+  <text x="20" y="22" class="t-m">① 바깥 세계 · ② 접수와 대기열</text>
+  <rect x="40" y="36" width="190" height="54" rx="5" class="b b-sim"/><text x="135" y="60" class="t-n" text-anchor="middle">scooter_fleet_sim</text><text x="135" y="77" class="t-d" text-anchor="middle">A · 킥보드 펌웨어 흉내</text>
+  <rect x="370" y="36" width="190" height="54" rx="5" class="b b-core"/><text x="465" y="60" class="t-n" text-anchor="middle">request_gateway</text><text x="465" y="77" class="t-d" text-anchor="middle">B · 요청 창구, GPS→지도</text>
+  <rect x="700" y="36" width="190" height="54" rx="5" class="b b-core"/><text x="795" y="60" class="t-n" text-anchor="middle">queue_manager</text><text x="795" y="77" class="t-d" text-anchor="middle">B · 점수, 병합, 자동 취소</text>
+  <path d="M230 63H368" class="e e-srv" marker-end="url(#n-srv)"/><text x="299" y="55" class="lbl-m" text-anchor="middle">/request_collection</text>
+  <path d="M560 63H698" class="e e-srv" marker-end="url(#n-srv)"/><text x="629" y="55" class="lbl-m" text-anchor="middle">/queue/enqueue</text>
+  <path d="M135 90V120H795V92" class="e e-topic" marker-end="url(#n-topic)"/><text x="465" y="136" class="lbl-m" text-anchor="middle">/scooter_states (자동 취소 판단)</text>
+
+  <text x="20" y="172" class="t-m">③ 두뇌</text>
+  <rect x="700" y="196" width="190" height="62" rx="5" class="b b-brain"/><text x="795" y="223" class="t-n t-brain" text-anchor="middle">mission_manager</text><text x="795" y="241" class="t-d t-brain" text-anchor="middle">D · 상태 기계</text>
+  <path d="M760 92V194" class="e e-topic" marker-end="url(#n-topic)"/><text x="752" y="160" class="lbl-m" text-anchor="end">/queue_status</text>
+  <path d="M830 194V94" class="e e-srv" marker-end="url(#n-srv)"/><text x="840" y="160" class="lbl-m">/queue/select_next · update_status</text>
+  <rect x="380" y="200" width="170" height="54" rx="5" class="b b-core"/><text x="465" y="224" class="t-n" text-anchor="middle">battery_manager</text><text x="465" y="241" class="t-d" text-anchor="middle">D · 소모·충전 계산</text>
+  <path d="M550 227H698" class="e e-topic" marker-end="url(#n-topic)"/><text x="624" y="219" class="lbl-m" text-anchor="middle">/battery_pct</text>
+  <path d="M890 227H1000" class="e e-topic" marker-end="url(#n-topic)"/><text x="1004" y="223" class="lbl-m">/robot_status</text><text x="1004" y="238" class="lbl-m">/admin_alerts</text>
+
+  <text x="20" y="296" class="t-m">④ 실행 노드</text>
+  <path d="M795 258V306" class="e e-act"/>
+  <path d="M135 306H1005" class="e e-act"/>
+  <path d="M135 306V348" class="e e-act" marker-end="url(#n-act)"/>
+  <path d="M415 306V348" class="e e-act" marker-end="url(#n-act)"/>
+  <path d="M705 306V348" class="e e-act" marker-end="url(#n-act)"/>
+  <path d="M1005 306V348" class="e e-act" marker-end="url(#n-act)"/>
+  <text x="140" y="328" class="lbl-m">/collect_scooter</text><text x="420" y="328" class="lbl-m">/go_to_pose</text><text x="710" y="328" class="lbl-m">/dock_to_charger</text><text x="1000" y="328" class="lbl-m" text-anchor="end">/unload</text>
+  <rect x="50" y="350" width="170" height="54" rx="5" class="b b-core"/><text x="135" y="374" class="t-n" text-anchor="middle">collector</text><text x="135" y="391" class="t-d" text-anchor="middle">D · 자리 고르기, 확인, 적재</text>
+  <rect x="330" y="350" width="170" height="54" rx="5" class="b b-core"/><text x="415" y="374" class="t-n" text-anchor="middle">nav_bridge</text><text x="415" y="391" class="t-d" text-anchor="middle">C · 경로 계획, 회피</text>
+  <rect x="620" y="350" width="170" height="54" rx="5" class="b b-sim"/><text x="705" y="374" class="t-n" text-anchor="middle">dock_controller</text><text x="705" y="391" class="t-d" text-anchor="middle">C · 애니메이션으로 변경</text>
+  <rect x="920" y="350" width="170" height="54" rx="5" class="b b-sim"/><text x="1005" y="374" class="t-n" text-anchor="middle">arm_loader</text><text x="1005" y="391" class="t-d" text-anchor="middle">A · 6관절 팔 (시뮬)</text>
+  <path d="M220 377H328" class="e e-act" marker-end="url(#n-act)"/><text x="274" y="369" class="lbl-m" text-anchor="middle">이동</text>
+  <path d="M135 404V436H1005V406" class="e e-act" marker-end="url(#n-act)"/><text x="570" y="452" class="lbl-m" text-anchor="middle">/arm_loader/load (실어)</text>
+
+  <text x="20" y="492" class="t-m">⑤ 센서와 몸 대체 (실제 로봇이라면 하드웨어)</text>
+  <rect x="30" y="504" width="1070" height="112" rx="6" class="b b-ext"/>
+  <rect x="60" y="540" width="200" height="54" rx="5" class="b b-sim"/><text x="160" y="564" class="t-n" text-anchor="middle">sim_lidar</text><text x="160" y="581" class="t-d" text-anchor="middle">C · 라이다 → /scan</text>
+  <rect x="320" y="540" width="200" height="54" rx="5" class="b b-sim"/><text x="420" y="564" class="t-n" text-anchor="middle">sim_tag_detector</text><text x="420" y="581" class="t-d" text-anchor="middle">A · 카메라 → /tag_detections</text>
+  <rect x="580" y="540" width="200" height="54" rx="5" class="b b-sim"/><text x="680" y="564" class="t-n" text-anchor="middle">fake_base</text><text x="680" y="581" class="t-d" text-anchor="middle">A · /cmd_vel → /odom</text>
+  <rect x="840" y="540" width="200" height="54" rx="5" class="b b-sim"/><text x="940" y="564" class="t-n" text-anchor="middle">sim_localizer</text><text x="940" y="581" class="t-d" text-anchor="middle">C · 위치 추정 (tf)</text>
+  <text x="565" y="524" class="t-s" text-anchor="middle">위의 실행 노드들은 /scan, /tag_detections, /odom 을 받고 /cmd_vel 을 보냅니다</text>
+ </svg></div><figcaption>실선 테두리는 직접 구현한 서비스 노드, 점선 보라 상자는 시뮬·모의 노드입니다. <code>/cmd_vel</code>은 <code>nav_bridge</code>, <code>collector</code>, <code>dock_controller</code> 세 노드가 같이 쓰며, 액션 순서상 한 번에 하나만 보냅니다. 질의응답에서 나올 만한 지점입니다.</figcaption></figure>
+
+ <h3>노드별 입력과 출력</h3>
+ <div class="tw"><table>
+  <thead><tr><th>노드</th><th>담당</th><th>하는 일</th><th>입력</th><th>출력</th><th>구현</th></tr></thead>
+  <tbody>
+   <tr><td class="n">scooter_fleet_sim</td><td>A</td><td>킥보드 위치·기울기·배터리·고장을 흉내 내고, 이상이 생기면 수거 요청</td><td><code>/scooter_loaded</code>, <code>/scooter_dropped</code></td><td><code>/scooter_states</code>, <code>/sim/scooter_truth</code>, <code>/sim/obstacles</code>, <code>/zone_occupancy</code> · 호출 <code>/request_collection</code></td><td><span class="pill p-mock">모의</span></td></tr>
+   <tr><td class="n">request_gateway</td><td>B</td><td>외부 요청 창구. 위경도를 지도 좌표로 바꿔 대기열에 넘김</td><td>srv <code>/request_collection</code> (ID, 위경도, 사유)</td><td>접수 여부, 대기 순번 · 호출 <code>/queue/enqueue</code></td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">queue_manager</td><td>B</td><td>우선순위 점수(사유·대기 시간·거리), 중복 병합, 상황이 풀리면 자동 취소</td><td>srv <code>/queue/enqueue</code>, <code>/queue/select_next</code>, <code>/queue/update_status</code>, <code>/cancel_request</code>, <code>/get_queue</code>, <code>/set_config</code> · <code>/scooter_states</code></td><td><code>/queue_status</code>, <code>/queue_markers</code></td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">mission_manager</td><td>D</td><td>상태 기계. 다음 대상, 하역 시점과 장소, 배터리 판단, 실패 처리</td><td><code>/queue_status</code>, <code>/battery_pct</code>, <code>/scooter_states</code></td><td><code>/robot_status</code>, <code>/admin_alerts</code>, <code>/scooter_dropped</code>, <code>/mission_events</code> · 액션 4종 호출</td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">collector</td><td>D</td><td>한 대 수거. 팔 닿는 자리 채점 → 이동 → 태그 확인 → 적재</td><td>action <code>/collect_scooter</code> · <code>/tag_detections</code>, <code>/scan</code>, <code>/robot_status</code></td><td>성공 여부, 실패 사유, 보정 위치 · <code>/scooter_loaded</code>, <code>/cmd_vel</code></td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">nav_bridge</td><td>C</td><td>목표 자세까지 주행. 경로 계획, 회피, 진입 금지 구역, 재시도</td><td>action <code>/nav_bridge/go_to_pose</code> · <code>/scan</code></td><td>성공 여부, 시도 횟수, 사유 · <code>/cmd_vel</code></td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">dock_controller</td><td>C</td><td>충전소에 붙기</td><td>action <code>/dock_to_charger</code></td><td>성공 여부, 오차</td><td><span class="pill p-mock">애니메이션 예정</span></td></tr>
+   <tr><td class="n">arm_loader</td><td>A</td><td>6관절 팔로 싣고 내림</td><td>action <code>/arm_loader/load</code>, <code>/unload</code> · <code>/robot_status</code>, <code>/joint_states</code></td><td>성공 여부, 적재 칸, 놓은 위치</td><td><span class="pill p-mock">시뮬</span></td></tr>
+   <tr><td class="n">battery_manager</td><td>D</td><td>이동 거리와 시간으로 소모, 충전 중이면 증가</td><td><code>/odom</code>, <code>/robot_status</code></td><td><code>/battery_pct</code>, <code>/battery_low</code></td><td><span class="pill p-good">구현</span></td></tr>
+   <tr><td class="n">sim_lidar · sim_tag_detector · fake_base · sim_localizer</td><td>A · C</td><td>라이다, 카메라 인식, 바퀴, 위치 추정 대신</td><td>정답 위치, <code>/cmd_vel</code></td><td><code>/scan</code>, <code>/tag_detections</code>, <code>/odom</code>, tf</td><td><span class="pill p-mock">모의</span></td></tr>
+  </tbody>
+ </table></div>
+</section>
+
+<section id="states">
+ <h2>상태 흐름: 요청 하나가 끝나기까지</h2>
+ <p><code>mission_manager</code>의 상태 이름은 <code>mission_logic.py</code>에 있는 그대로입니다. 상자마다 그 단계에서 일하는 노드를 적었습니다. 팀원은 자기 노드가 어느 단계에서 도는지 여기서 찾으면 됩니다.</p>
+ <figure><div class="fig"><svg viewBox="0 0 1120 340" role="img" aria-label="IDLE에서 SELECTING, 수거(NAVIGATING, VERIFYING, LOADING), DROPPING, RETURNING, DOCKING, CHARGING을 거쳐 다시 SELECTING으로. 실패하면 FAILED 또는 NEEDS_HUMAN" style="--mw:880px">
+  <defs>
+   <marker id="s-plain" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" class="m-plain"/></marker>
+   <marker id="s-ret" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" class="m-ret"/></marker>
+  </defs>
+  <path d="M1040 226H1080V30H315V58" class="e e-ret" marker-end="url(#s-ret)"/><text x="700" y="22" class="lbl" text-anchor="middle">충전이 끝나면 다시 SELECTING</text>
+  <rect x="40" y="60" width="150" height="56" rx="5" class="b b-ext"/><text x="115" y="85" class="t-n" text-anchor="middle">IDLE</text><text x="115" y="102" class="t-d" text-anchor="middle">대기열이 빔</text>
+  <path d="M190 88H238" class="e e-plain" marker-end="url(#s-plain)"/>
+  <rect x="240" y="60" width="150" height="56" rx="5" class="b b-core"/><text x="315" y="85" class="t-n" text-anchor="middle">SELECTING</text><text x="315" y="102" class="t-d" text-anchor="middle">queue_manager</text>
+  <path d="M390 88H438" class="e e-plain" marker-end="url(#s-plain)"/>
+  <rect x="440" y="60" width="400" height="56" rx="5" class="b b-brain"/><text x="640" y="85" class="t-n t-brain" text-anchor="middle">NAVIGATING → VERIFYING → LOADING</text><text x="640" y="102" class="t-d t-brain" text-anchor="middle">collector · nav_bridge · arm_loader</text>
+  <path d="M640 116V156H315V196" class="e e-plain" marker-end="url(#s-plain)"/><text x="480" y="148" class="lbl" text-anchor="middle">적재함이 차거나 하역할 때</text>
+  <rect x="240" y="198" width="150" height="56" rx="5" class="b b-core"/><text x="315" y="223" class="t-n" text-anchor="middle">DROPPING</text><text x="315" y="240" class="t-d" text-anchor="middle">nav_bridge · arm_loader</text>
+  <path d="M390 226H458" class="e e-plain" marker-end="url(#s-plain)"/>
+  <rect x="460" y="198" width="150" height="56" rx="5" class="b b-core"/><text x="535" y="223" class="t-n" text-anchor="middle">RETURNING</text><text x="535" y="240" class="t-d" text-anchor="middle">nav_bridge</text>
+  <path d="M610 226H678" class="e e-plain" marker-end="url(#s-plain)"/>
+  <rect x="680" y="198" width="150" height="56" rx="5" class="b b-sim"/><text x="755" y="223" class="t-n" text-anchor="middle">DOCKING</text><text x="755" y="240" class="t-d" text-anchor="middle">애니메이션</text>
+  <path d="M830 226H888" class="e e-plain" marker-end="url(#s-plain)"/>
+  <rect x="890" y="198" width="150" height="56" rx="5" class="b b-core"/><text x="965" y="223" class="t-n" text-anchor="middle">CHARGING</text><text x="965" y="240" class="t-d" text-anchor="middle">battery_manager</text>
+  <rect x="40" y="282" width="1000" height="44" rx="5" class="b b-badbox"/><text x="60" y="309" class="t-l">어느 단계든 실패하면</text><text x="210" y="309" class="t-s">FAILED (다음 대상으로) 또는 NEEDS_HUMAN (관리자 알림 후 다음 대상으로)</text>
+ </svg></div><figcaption>발표용으로 줄인 그림입니다. 실제 코드에는 갈래가 더 있습니다. 근처 주차구역에 들러 내리기, 수거 중 배터리가 부족해 바로 충전하러 가기, 수거 중 요청 사유가 사라지면 멈추고 취소하기 등이며, 문서 5장에서 글로 덧붙입니다.</figcaption></figure>
+</section>
+
+<section id="doc">
+ <h2>제출 문서 목차</h2>
+ <p>발표 자료가 아니라 제출용 문서입니다. 설계 설명과 사용 설명을 한 문서에 담고, 슬라이드는 이 문서를 줄여서 만듭니다. 흐름은 "왜 만들었나 → 무엇인가 → 어떻게 쓰나 → 어떻게 동작하나 → 문제가 생기면 → 정말 되나"입니다.</p>
+ <div class="tw"><table>
+  <thead><tr><th>장</th><th>담당</th><th>들어갈 내용</th></tr></thead>
+  <tbody>
+   <tr><td class="n">1</td><td class="who">E</td><td><b>개요와 도입 배경.</b> 방치·전도된 킥보드 문제, 목표 서비스 한 문장, 이용자, 직접 구현 / 모의 / 제외 범위</td></tr>
+   <tr><td class="n">2</td><td class="who">A</td><td><b>로봇 외형과 하드웨어.</b> 1.7 × 0.9 m, 운전석, 6관절 팔, 뒤쪽 4칸 적재함, 센서 구성, 팔 방식을 고른 이유(넘어진 킥보드도 세움)</td></tr>
+   <tr><td class="n">3</td><td class="who">E · B</td><td><b>시스템 구조와 통신.</b> 노드 구성도(E), topic·service·action 표와 각각을 쓴 이유, msg·srv·action 필드 명세(B), 노드 명세(구현 수준 칸 포함)</td></tr>
+   <tr><td class="n">4</td><td class="who">B</td><td><b>사용자 이용 가이드.</b> 설치·실행 3단계, 요청 → 대기열 확인 → 진행 상황 → 취소, 관리자 알림. 명령과 출력 예시</td></tr>
+   <tr><td class="n">5</td><td class="who">B · C · D</td><td><b>주요 기능.</b> 5-1 접수와 대기열(B), 5-2 주행(C), 5-3 정렬과 적재(D), 5-4 하역·도킹·충전(D, 도킹 설계는 C)</td></tr>
+   <tr><td class="n">6</td><td class="who">D 취합</td><td><b>돌발 상황 대처.</b> 상황 / 알아채는 방법 / 대처 / 확인한 시나리오 표. 각자 자기 행 추가</td></tr>
+   <tr><td class="n">7</td><td class="who">각자</td><td><b>설계 근거.</b> 45°, 20%, 가중치 10/1/5, 팔 도달 1.10~1.80 m, 근처 하역 2.0 m, 배터리 모델, <code>/cmd_vel</code> 단독 사용, 비선점. 치밀함이 가장 잘 드러나는 장입니다</td></tr>
+   <tr><td class="n">8</td><td class="who">A</td><td><b>시뮬레이션 환경과 시나리오.</b> Gazebo Harmonic, 도로 맵, 경북대 맵, 시나리오 분류, Gazebo와 kinematic의 차이</td></tr>
+   <tr><td class="n">9</td><td class="who">D</td><td><b>검증 결과.</b> 회귀표(도로 18/18, 경북대 30/33과 실패 원인), 개선 전후(정렬 20/30 → 28/30), 요구사항 추적표</td></tr>
+   <tr><td class="n">10</td><td class="who">E</td><td><b>한계와 향후 확장.</b> 모의 처리한 인식·도킹을 실제로 만든다면, 보류한 기능</td></tr>
+   <tr><td class="n">11</td><td class="who">B 취합</td><td><b>출처.</b> ROS 2 Humble, Gazebo, AprilTag, scipy, 맵 원자료, 3D 모델과 Blender, 참고 문서</td></tr>
+   <tr><td class="n">부록</td><td class="who">A · E</td><td>전체 실행 명령, 시나리오 목록(k00~k32, s1~s19), 용어표</td></tr>
+  </tbody>
+ </table></div>
+ <div class="note"><b>슬라이드는 C가 문서에서 뽑습니다</b><p>문제와 목표(1장) · 외형(2장) · 구조도와 통신 근거(3장) · 상태 흐름(5장) · 데모 영상 · 돌발 대처 3~4개(6장) · 검증 수치(9장) · 향후 확장(10장). 문서 확정(12-5) 뒤에 완성합니다.</p></div>
+</section>
+
+<section id="kit">
+ <h2>팀원에게 주는 묶음</h2>
+ <p>팀원에게는 "처음부터 써라"가 아니라 "초안을 읽고 직접 돌려 보며 고쳐라"로 일을 줍니다. 초안은 E가 코드에서 뽑아 11-28(금)에 나눠 줍니다.</p>
+ <div class="legend">
+  <div><b>초안</b><p>자기 장의 80% 정도가 채워진 상태. 인터페이스 표, 구조도, 상태 기계는 코드에서 바로 뽑습니다.</p></div>
+  <div><b>체크리스트</b><p>실행할 명령과 확인할 로그·토픽. 문서대로 되지 않는 곳에 표시합니다. 예(B): <code>s1</code> 실행 → 요청 보내기 → <code>/queue_status</code> 확인 → 취소해 보기.</p></div>
+  <div><b>예상 질문 5개</b><p>자기 말로 답을 적어 옵니다. 예(B): "가중치 10/1/5는 왜?", "같은 킥보드에서 요청이 두 번 오면?" 마지막 항목은 "자기 노드를 30초 안에 설명하기"입니다.</p></div>
+ </div>
+ <div class="tw"><table>
+  <thead><tr><th>담당</th><th>11-26까지 (코드)</th><th>12-1 검토본 → 12-5 확정본 (문서)</th><th>발표</th></tr></thead>
+  <tbody>
+   <tr><td class="who">A</td><td>로컬 작업 push, 확장 프로필 유지 여부 답변</td><td>2장, 8장, 부록 시나리오 목록</td><td>데모 영상 (11-29 이후 녹화)</td></tr>
+   <tr><td class="who">B</td><td>s5 변형 시나리오 업로드, <code>B_queue_manager.patch</code> 결정</td><td>3장 명세, 4장, 5-1, 11장</td><td>이용 방법 파트</td></tr>
+   <tr><td class="who">C</td><td>진행 상황 공유, <code>nav_bridge</code> 병합 확인, 정렬 자리 회전 여유 답변, 시간 기준 결정</td><td>5-2, 5-4 도킹 설계</td><td>슬라이드 취합 (뼈대 12-4, 초안 12-5)</td></tr>
+   <tr><td class="who">D</td><td>role_D 3커밋 PR</td><td>5-3, 5-4, 6장 취합, 9장</td><td>미션·검증 파트</td></tr>
+   <tr><td class="who">E</td><td>필수 코드, 전체 회귀, 11-26 인터페이스 동결</td><td>1장, 3장 그림, 10장, 문서와 코드 일치 최종 검토(12-7)</td><td>개요·구조 파트</td></tr>
+  </tbody>
+ </table></div>
+</section>
+
+<section id="today">
+ <h2>오늘 회의에서 정할 것</h2>
+ <div class="cols">
+  <div>
+   <h3>분담과 일정</h3>
+   <ul class="check">
+    <li>코드는 E가 마무리, 다른 사람 파일을 E가 고치고 담당자가 확인 (README 9장 규칙 변경)</li>
+    <li>코드 push 마감 11-26(목), 기능 동결 12-1(화)</li>
+    <li>문서 장 분배와 마감 (검토본 12-1, 확정본 12-5)</li>
+    <li>발표 순서와 각자 맡을 파트</li>
+   </ul>
+  </div>
+  <div>
+   <h3>범위와 미뤄 둔 결정</h3>
+   <ul class="check">
+    <li>도킹은 애니메이션, 보류 항목은 "향후 확장"으로</li>
+    <li>데모 맵: 경북대 권장</li>
+    <li>확장 프로필: <code>archive/</code>로 옮기기 권장</li>
+    <li>k16 제한 시간 110분</li>
+    <li>D 10장 새 시나리오 중 채택할 것</li>
+    <li>C의 대기 시간 기준 (실제 시간 / 시뮬 시간)</li>
+   </ul>
+  </div>
+ </div>
+ <p class="muted">근거: role 브랜치 커밋(11-14 이후), README 9·12장, 회의록 2026-11-17, D 회의 안건 8~10장, <code>results/knu_1124_*</code>, <code>setup.py</code>와 각 노드의 publisher·subscriber·service·action 선언.</p>
+</section>
+</main>

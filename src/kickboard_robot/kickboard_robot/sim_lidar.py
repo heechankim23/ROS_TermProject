@@ -37,7 +37,7 @@ class SimLidar(Node):
         self.declare_parameter('range_min', 0.12)
         self.declare_parameter('range_max', 3.5)
         self.declare_parameter('noise', 0.01)
-        self.declare_parameter('scan_offset_x', 0.80)
+        self.declare_parameter('scan_offset_x', 0.86)
         self.declare_parameter('tilt_threshold_deg', 45.0)
         g = self.get_parameter
         om = OccupancyMap(g('map_yaml').value)

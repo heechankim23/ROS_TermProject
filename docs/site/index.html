@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCOOTOVER 문서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-soft:#f6f8f8; --bg-side:#fafbfb; --line:#e3e8e8; --text:#1d2626; --muted:#5d6b6b;
+  --brand:#2bb39a; --brand-strong:#16806c; --brand-soft:#e3f5f1;
+  --code-bg:#f2f5f5; --code-text:#1d2626; --pre-bg:#1e2727; --pre-text:#e6eeee;
+  --note:#2f7fd8; --note-bg:#eaf3fd; --warn:#c77700; --warn-bg:#fff5e5; --tip:#16806c; --tip-bg:#e3f5f1; --danger:#c8423a; --danger-bg:#fdecea;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --side-w:270px; --toc-w:220px; --top-h:56px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131a1a; --bg-soft:#1a2323; --bg-side:#161e1e; --line:#2a3535; --text:#e3eaea; --muted:#94a3a3;
+    --brand:#3fcdb2; --brand-strong:#6fe0c9; --brand-soft:#173a33;
+    --code-bg:#1f2a2a; --code-text:#dfe9e9; --pre-bg:#0d1313; --pre-text:#dfe9e9;
+    --note:#6aa8f0; --note-bg:#162638; --warn:#f0a840; --warn-bg:#33270f; --tip:#3fcdb2; --tip-bg:#173a33; --danger:#f07a70; --danger-bg:#3a1c1a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131a1a; --bg-soft:#1a2323; --bg-side:#161e1e; --line:#2a3535; --text:#e3eaea; --muted:#94a3a3;
+  --brand:#3fcdb2; --brand-strong:#6fe0c9; --brand-soft:#173a33;
+  --code-bg:#1f2a2a; --code-text:#dfe9e9; --pre-bg:#0d1313; --pre-text:#dfe9e9;
+  --note:#6aa8f0; --note-bg:#162638; --warn:#f0a840; --warn-bg:#33270f; --tip:#3fcdb2; --tip-bg:#173a33; --danger:#f07a70; --danger-bg:#3a1c1a;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:calc(var(--top-h) + 16px)}
+body{margin:0;background:var(--bg);color:var(--text);font:15.5px/1.75 "Noto Sans KR",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand-strong);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre,kbd{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+
+/* top bar */
+.topbar{position:fixed;inset:0 0 auto 0;height:var(--top-h);display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--bg);border-bottom:1px solid var(--line);z-index:30}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--text);letter-spacing:.02em;white-space:nowrap}
+.logo:hover{text-decoration:none}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:17px}
+.logo small{font-weight:500;color:var(--muted);font-size:13px;margin-left:2px}
+.version{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
+.top-links{display:flex;gap:18px;margin-left:12px;font-size:14px}
+.top-links a{color:var(--muted)} .top-links a.on{color:var(--brand-strong);font-weight:600}
+.spacer{flex:1}
+.search{position:relative}
+.search input{width:240px;padding:7px 12px 7px 32px;border:1px solid var(--line);border-radius:8px;background:var(--bg-soft);color:var(--text);font:inherit;font-size:14px}
+.search input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search-results{position:absolute;right:0;top:42px;width:380px;max-height:60vh;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);display:none}
+.search-results a{display:block;padding:9px 14px;border-bottom:1px solid var(--line);color:var(--text);font-size:14px}
+.search-results a:hover,.search-results a.sel{background:var(--brand-soft);text-decoration:none}
+.search-results small{display:block;color:var(--muted);font-size:12px}
+.icon-btn{border:1px solid var(--line);background:var(--bg-soft);color:var(--text);border-radius:8px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
+.menu-btn{display:none}
+
+/* layout */
+.sidebar{position:fixed;top:var(--top-h);bottom:0;left:0;width:var(--side-w);overflow-y:auto;background:var(--bg-side);border-right:1px solid var(--line);padding:18px 12px 40px;z-index:20}
+.side-group{margin-bottom:2px}
+.grp-btn{background:none;border:0;cursor:pointer;color:inherit;font:inherit}
+.grp-btn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:6px;font-size:14px;font-weight:700;color:var(--text);text-align:left}
+.grp-btn:hover{background:var(--bg-soft)}
+.chev{flex:none;width:10px;height:10px;color:var(--muted);transition:transform .15s}
+.open>.grp-btn .chev{transform:rotate(90deg)}
+.grp-body{display:none}
+.side-group.open>.grp-body{display:block;margin:2px 0 8px 15px;padding-left:8px;border-left:1px solid var(--line)}
+.pg-row{display:flex;align-items:center;border-radius:6px}
+.pg-row:hover{background:var(--bg-soft)}
+.pg-row a{flex:1;display:block;padding:5px 8px;color:var(--text);font-size:14px;border-radius:6px}
+.pg-row a:hover{text-decoration:none}
+.pg.active>.pg-row{background:var(--brand-soft)}
+.pg.active>.pg-row a{color:var(--brand-strong);font-weight:600}
+.main{margin-left:var(--side-w);margin-right:var(--toc-w);padding:calc(var(--top-h) + 28px) 48px 80px;min-height:100vh}
+.content{max-width:860px;margin:0 auto}
+.toc{position:fixed;top:var(--top-h);right:0;width:var(--toc-w);bottom:0;overflow-y:auto;padding:30px 18px;font-size:13.5px}
+.toc h5{margin:0 0 8px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.toc a{display:block;color:var(--muted);padding:3px 0 3px 10px;border-left:2px solid var(--line)}
+.toc a.h3{padding-left:22px;font-size:13px}
+.toc a.on{color:var(--brand-strong);border-left-color:var(--brand)}
+.toc a:hover{color:var(--text);text-decoration:none}
+
+/* content typography */
+.crumb{font-size:13px;color:var(--muted);margin-bottom:6px}
+.crumb a{color:var(--muted)}
+.page{display:none}
+.page.show{display:block}
+.page h1{font-size:30px;line-height:1.35;margin:0 0 10px;letter-spacing:-.01em}
+.page .lead{font-size:17px;color:var(--muted);margin:0 0 28px}
+.page h2{font-size:22px;margin:44px 0 12px;padding-top:6px;border-top:1px solid var(--line);padding-top:24px}
+.page h3{font-size:17.5px;margin:30px 0 8px}
+.page h2 .anchor,.page h3 .anchor{opacity:0;margin-left:6px;color:var(--muted);font-weight:400}
+.page h2:hover .anchor,.page h3:hover .anchor{opacity:1}
+.page p,.page li{max-width:75ch}
+.page ul,.page ol{padding-left:22px}
+.page li{margin:3px 0}
+:not(pre)>code{background:var(--code-bg);color:var(--code-text);padding:1.5px 6px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+pre{position:relative;background:var(--pre-bg);color:var(--pre-text);padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:14px 0 18px}
+pre .c{color:#7f9a9a} pre .k{color:#6fe0c9} pre .s{color:#f2c97d}
+.copy{position:absolute;top:8px;right:8px;font:12px "Noto Sans KR",sans-serif;background:rgba(255,255,255,.08);color:#cfe;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:2px 8px;cursor:pointer;opacity:0;transition:.15s}
+pre:hover .copy{opacity:1}
+.code-title{background:var(--bg-soft);border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;padding:5px 14px;font:12.5px "JetBrains Mono",monospace;color:var(--muted);margin-top:14px}
+.code-title + pre{border-radius:0 0 10px 10px;margin-top:0}
+table{border-collapse:collapse;width:100%;margin:14px 0 20px;font-size:14px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;white-space:nowrap}
+tbody tr:hover{background:var(--bg-soft)}
+.adm{border-left:4px solid var(--note);background:var(--note-bg);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.adm b.t{display:block;color:var(--note);margin-bottom:2px;font-size:14px}
+.adm.warn{border-color:var(--warn);background:var(--warn-bg)} .adm.warn b.t{color:var(--warn)}
+.adm.tip{border-color:var(--tip);background:var(--tip-bg)} .adm.tip b.t{color:var(--tip)}
+.adm.danger{border-color:var(--danger);background:var(--danger-bg)} .adm.danger b.t{color:var(--danger)}
+.adm p{margin:4px 0}
+figure{margin:18px 0 24px}
+figure img{width:100%;border-radius:10px;border:1px solid var(--line);display:block;background:#ddd}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:18px 0 26px}
+.card{display:block;border:1px solid var(--line);border-radius:12px;padding:16px 18px;color:var(--text);background:var(--bg);box-shadow:var(--shadow);transition:.15s}
+.card:hover{border-color:var(--brand);text-decoration:none;transform:translateY(-1px)}
+.card b{display:block;margin-bottom:4px}
+.card span{font-size:13.5px;color:var(--muted);line-height:1.55;display:block}
+.card .ic{font-size:20px;margin-bottom:6px}
+.hero{border-radius:16px;overflow:hidden;border:1px solid var(--line);margin:4px 0 26px;position:relative}
+.hero img{width:100%;display:block}
+.page ol.steps{counter-reset:step;list-style:none;padding-left:0}
+.steps>li>*{max-width:100%}
+.content,.page{min-width:0;max-width:100%}
+.steps>li{counter-increment:step;position:relative;padding-left:44px;margin:0 0 22px;max-width:none}
+.steps>li::before{content:counter(step);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+.steps>li>b:first-child{display:block;font-size:16px;margin-bottom:2px}
+.tag{display:inline-block;font-size:11.5px;padding:0 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);vertical-align:2px;margin-left:4px;line-height:1.7}
+.tag.sim{border-color:var(--warn);color:var(--warn)}
+.tag.int{border-color:var(--note);color:var(--note)}
+.tag.p1{border-color:var(--brand);color:var(--brand-strong)}
+.pager{display:flex;gap:14px;margin-top:56px;padding-top:24px;border-top:1px solid var(--line)}
+.pager a{flex:1;border:1px solid var(--line);border-radius:10px;padding:12px 16px;color:var(--text)}
+.pager a:hover{border-color:var(--brand);text-decoration:none}
+.pager a small{display:block;color:var(--muted);font-size:12px}
+.pager a.next{text-align:right}
+.diagram{border:1px solid var(--line);border-radius:12px;background:var(--bg-soft);padding:14px;margin:16px 0 22px;overflow-x:auto}
+.diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.diagram .bx{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+.diagram .bx.b{stroke:var(--brand);fill:var(--brand-soft)}
+.diagram .bx.s{stroke:var(--warn);stroke-dasharray:4 3}
+.diagram .bx.e{stroke:var(--danger)}
+.diagram text{fill:var(--text);font:13px "Noto Sans KR",sans-serif}
+.diagram text.sm{font-size:11px;fill:var(--muted)}
+.diagram text.mono{font-family:"JetBrains Mono",monospace;font-size:11.5px}
+.diagram .ln{stroke:var(--muted);stroke-width:1.4;fill:none}
+.diagram .ln.b{stroke:var(--brand)}
+.diagram .ln.d{stroke-dasharray:4 3}
+.diagram marker path{fill:var(--muted)}
+.foot{margin-top:40px;font-size:12.5px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;font-size:14px}
+.formula{font:15px "JetBrains Mono",monospace;background:var(--bg-soft);border:1px solid var(--line);padding:12px 16px;border-radius:8px;text-align:center;margin:14px 0}
+.scrim{display:none}
+
+@media (max-width:1200px){ .toc{display:none} .main{margin-right:0} }
+@media (max-width:860px){
+  .menu-btn{display:grid}
+  .top-links,.version{display:none}
+  .search input{width:110px}
+  .logo{font-size:15px;gap:8px}
+  .version{display:none}
+  .search-results{width:calc(100vw - 32px);right:-60px}
+  .sidebar{transform:translateX(-100%);transition:transform .2s;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  body.nav-open .sidebar{transform:none}
+  body.nav-open .scrim{display:block;position:fixed;inset:var(--top-h) 0 0 0;background:rgba(0,0,0,.3);z-index:15}
+  .main{margin-left:0;padding:calc(var(--top-h) + 20px) 16px 60px}
+  .page h1{font-size:25px}
+  .topbar{padding:0 12px;gap:10px}
+  .logo small{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="메뉴">☰</button>
+  <a class="logo" href="#/intro"><span class="logo-mark">S</span>SCOOTOVER <small>Docs</small></a>
+  <span class="version">v0.9 · 2026-11-26</span>
+  <nav class="top-links" id="topLinks">
+    <a href="#/intro" data-grp="시작하기">시작하기</a>
+    <a href="#/architecture" data-grp="개념">개념</a>
+    <a href="#/tut-run" data-grp="튜토리얼">튜토리얼</a>
+    <a href="#/ref-launch" data-grp="레퍼런스">레퍼런스</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="검색  ( / )" autocomplete="off">
+    <div class="search-results" id="results"></div>
+  </div>
+  <button class="icon-btn" id="themeBtn" aria-label="테마 전환">◐</button>
+</header>
+
+<aside class="sidebar" id="sidebar"></aside>
+<div class="scrim" id="scrim"></div>
+
+<main class="main">
+<div class="content" id="content">
+
+<!-- ===================================================== 시작하기 -->
+<article class="page" data-id="intro" data-group="시작하기" data-title="SCOOTOVER 소개">
+<h1>SCOOTOVER — 공유 킥보드 자율 수거·충전 로봇</h1>
+<p class="lead">수거 요청을 받으면 스스로 찾아가 킥보드를 확인하고 실어서, 상태에 맞는 구역(일반 · 충전 · 고장 분류)에 세워 두고 도크로 돌아와 충전하는 ROS 2 시스템입니다.</p>
+
+<div class="hero"><img src="img/unload_sequence.jpg" alt="SCOOTOVER 로봇이 뒤쪽 경사로로 킥보드를 꺼내 거치대에 세우는 동작 연속 장면"></div>
+
+<p>경북대학교 캠퍼스를 옮긴 시뮬레이션 맵 위에서, 사람이 개입하지 않고 <b>요청 접수 → 대기열 → 접근 → 카메라 확인 → 적재 → 하역 → 충전</b> 까지 한 바퀴를 돕니다. 노드와 인터페이스는 시뮬레이터와 분리되어 있어, 같은 코드를 Gazebo Harmonic 과 가벼운 kinematic 모드에서 모두 실행할 수 있습니다.</p>
+
+<h2 id="what">무엇을 하나요</h2>
+<div class="cards">
+  <div class="card"><div class="ic">📥</div><b>요청 접수와 대기열</b><span>킥보드 펌웨어 판정(넘어짐·구역 밖·배터리)과 사용자 신고를 받아 점수식으로 순서를 정합니다.</span></div>
+  <div class="card"><div class="ic">🧭</div><b>운동학 제약 주행</b><span>Hybrid A* + Dubins 곡선으로 회전 반경을 지키며 좁은 캠퍼스 길을 지나갑니다.</span></div>
+  <div class="card"><div class="ic">📷</div><b>현장 확인</b><span>AprilTag 로 실물 여부와 정확한 위치를 확인하고 GPS 오차를 보정합니다.</span></div>
+  <div class="card"><div class="ic">🦾</div><b>로봇팔 적재·하역</b><span>뒤쪽 경사로와 로봇팔로 킥보드를 싣고(넘어졌으면 세워서) 목적지 슬롯에 꽂습니다.</span></div>
+  <div class="card"><div class="ic">🔋</div><b>배터리·도킹</b><span>복귀 기준 20% 에서 도크로 돌아가 충전하고, 80% 가 되면 남은 일을 이어 갑니다.</span></div>
+  <div class="card"><div class="ic">📊</div><b>지표와 리플레이</b><span>시나리오 33개를 자동 실행하고 통과 여부와 브라우저 리플레이를 만듭니다.</span></div>
+</div>
+
+<h2 id="where">어디서부터 읽나요</h2>
+<div class="cards">
+  <a class="card" href="#/install"><b>처음이라면 →</b><span>설치와 빌드, 그리고 시나리오 하나를 돌려 보는 빠른 시작.</span></a>
+  <a class="card" href="#/architecture"><b>구조가 궁금하면 →</b><span>패키지·노드 구성과 데이터 흐름, 미션 상태 머신.</span></a>
+  <a class="card" href="#/tut-run"><b>직접 해 보려면 →</b><span>시나리오 실행, 상태 보기, 수동 요청, 결과 분석 튜토리얼.</span></a>
+  <a class="card" href="#/ref-launch"><b>값을 찾으려면 →</b><span>launch 인자, 토픽·서비스·액션, 파라미터, 시나리오 목록.</span></a>
+</div>
+
+<h2 id="env">개발 환경</h2>
+<table>
+<thead><tr><th>항목</th><th>버전 / 내용</th></tr></thead>
+<tbody>
+<tr><td>OS</td><td>Ubuntu 22.04 (arm64 VM 및 x86 PC)</td></tr>
+<tr><td>ROS</td><td>ROS 2 Humble</td></tr>
+<tr><td>시뮬레이터</td><td>Gazebo Harmonic (gz sim 8) + <code>ros_gz</code> 소스 빌드</td></tr>
+<tr><td>언어</td><td>Python (rclpy) — 모든 노드 직접 구현</td></tr>
+<tr><td>선택</td><td>Nav2, apriltag_ros (기본 모드에서는 필요 없음)</td></tr>
+</tbody>
+</table>
+<div class="adm warn"><b class="t">PRD 와 다른 점</b><p>PRD 는 Gazebo Classic + TurtleBot3 를 가정했지만 arm64 VM 에는 Classic 바이너리가 없어 Gazebo Harmonic 으로 구현했고, 로봇은 자체 설계(SCOOTOVER)한 SDF 모델을 씁니다. 노드·인터페이스는 시뮬레이터와 무관합니다.</p></div>
+</article>
+
+<article class="page" data-id="install" data-group="시작하기" data-title="설치와 빌드">
+<h1>설치와 빌드</h1>
+<p class="lead">워크스페이스를 받아 빌드하고, 새 터미널마다 환경을 불러오는 방법입니다.</p>
+
+<h2 id="prereq">준비물</h2>
+<p>ROS 2 Humble, Gazebo Harmonic, <code>ros_gz</code> 가 설치되어 있고 <code>~/.bashrc</code> 에서 source 된다고 가정합니다. 기본 모드에는 추가 설치가 필요 없습니다.</p>
+
+<h2 id="build">빌드</h2>
+<ol class="steps">
+<li><b>워크스페이스로 이동</b>
+이 문서의 모든 명령은 저장소를 clone 한 <code>ROS_TermProject</code> 폴더 안에서 실행한다고 가정합니다.
+<pre><code>cd ~/Desktop/ROS_TermProject</code></pre></li>
+<li><b>colcon 빌드</b>
+<pre><code>colcon build --symlink-install</code></pre>
+패키지 세 개만 빠르게 빌드하려면:
+<pre><code>colcon build --packages-select kickboard_interfaces kickboard_robot kickboard_sim</code></pre></li>
+<li><b>환경 불러오기</b> — 새 터미널을 열 때마다 합니다.
+<pre><code>source install/setup.bash</code></pre></li>
+</ol>
+
+<div class="adm danger"><b class="t">코드를 고친 뒤에는 꼭 다시 빌드</b><p>이 환경에서는 <code>--symlink-install</code> 이어도 Python 노드(<code>kickboard_robot</code>) 파일이 <code>install/</code> 로 <b>복사</b>됩니다. 다시 빌드하지 않으면 예전 코드가 실행됩니다. launch · YAML · SDF 는 링크라 바로 반영됩니다.</p></div>
+
+<h2 id="optional">선택 설치</h2>
+<p>해당 모드를 쓸 때만 필요합니다.</p>
+<pre><code>sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup   <span class="c"># nav:=nav2</span>
+sudo apt install ros-humble-apriltag-ros                         <span class="c"># perception:=apriltag</span></code></pre>
+
+<h2 id="verify">설치 확인</h2>
+<p>ROS 없이 도는 단위 테스트로 가공부 로직을 먼저 확인할 수 있습니다.</p>
+<pre><code>cd src/kickboard_robot && python3 -m pytest -q test/</code></pre>
+<div class="adm tip"><b class="t">팁</b><p>SSH 처럼 디스플레이가 없는 터미널에서 Gazebo 를 띄우면 <code>Couldn't open X display</code> 로 죽습니다. 데스크톱 터미널에서 실행하거나 <code>gui:=false sensors:=false</code>, 또는 <code>sim:=kinematic</code> 을 씁니다.</p></div>
+</article>
+
+<article class="page" data-id="quickstart" data-group="시작하기" data-title="빠른 시작">
+<h1>빠른 시작</h1>
+<p class="lead">5분 안에 시나리오 하나를 Gazebo 에서 돌려 보고, 로봇이 킥보드를 수거하는 장면을 확인합니다.</p>
+
+<ol class="steps">
+<li><b>환경 불러오기</b>
+<pre><code>source install/setup.bash</code></pre></li>
+<li><b>발표 데모 시나리오 실행</b>
+k08 은 한 장소에 상태가 다른 킥보드 7대가 있는 시나리오입니다. 주변만 잘라 만든 작은 world 에서 4배속으로 돕니다.
+<pre><code>./run_all_knu.sh --gui --rtf 4 k08</code></pre></li>
+<li><b>Gazebo 에서 지켜보기</b>
+world 를 불러온 뒤 (십여 초) 로봇이 도크에서 출발합니다. 카메라는 로봇을 따라갑니다. 오른쪽 아래 <b>Kickboard status</b> 패널에서 <b>Echo</b> 를 누르면 <code>[지금]</code> <code>[이유]</code> <code>[적재]</code> <code>[결과]</code> 줄이 1초마다 갱신됩니다.</li>
+<li><b>결과 보기</b>
+로봇이 도크로 돌아와 대기하면 자동으로 끝나고 요약과 리플레이가 만들어집니다.
+<pre><code>cat results/knu_*/summary.txt | tail -20
+xdg-open results/ops_replay.html</code></pre></li>
+</ol>
+
+<div class="adm"><b class="t">더 가볍게 돌리려면</b><p>VM 이 느리면 Gazebo 없이 로직만 확인하세요. 4개를 동시에 돌려도 가볍습니다.</p></div>
+<pre><code>./run_all_knu.sh --kinematic -j 4 --speed 3.0</code></pre>
+
+<h2 id="next">다음 단계</h2>
+<ul>
+<li><a href="#/tut-run">시나리오 실행하기</a> — 여러 시나리오를 묶어서 돌리고 옵션을 조절합니다.</li>
+<li><a href="#/architecture">시스템 구조</a> — 방금 본 동작 뒤에서 어떤 노드가 무엇을 하는지.</li>
+</ul>
+</article>
+
+<!-- ===================================================== 개념 -->
+<article class="page" data-id="architecture" data-group="개념" data-title="시스템 구조">
+<h1>시스템 구조</h1>
+<p class="lead">세 개의 패키지와 15개 안팎의 노드가 토픽·서비스·액션으로 연결됩니다.</p>
+
+<h2 id="packages">패키지</h2>
+<table>
+<thead><tr><th>패키지</th><th>내용</th><th>담당</th></tr></thead>
+<tbody>
+<tr><td><code>kickboard_interfaces</code></td><td>msg 8 · srv 7 · action 5. 노드 사이의 계약 (11주차 동결)</td><td>E</td></tr>
+<tr><td><code>kickboard_robot</code></td><td>직접 구현한 rclpy 노드와 ROS 무관 가공 로직(<code>*_logic.py</code>)</td><td>B · C · D</td></tr>
+<tr><td><code>kickboard_sim</code></td><td>world · 모델 · 맵 · 시나리오 · launch · 생성 스크립트</td><td>A</td></tr>
+</tbody>
+</table>
+
+<h2 id="graph">노드 연결</h2>
+<p>실선은 토픽, 굵은 민트선은 액션, 점선은 서비스입니다. 주황 점선 상자는 시뮬레이션 전용 노드입니다.</p>
+<div class="diagram">
+<svg viewBox="0 0 900 540" width="900">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<g text-anchor="middle">
+<rect class="bx s" x="20" y="20" width="150" height="54" rx="8"/><text x="95" y="44">scooter_fleet_sim</text><text class="sm" x="95" y="62">킥보드 펌웨어 흉내</text>
+<rect class="bx" x="320" y="20" width="150" height="54" rx="8"/><text x="395" y="44">request_gateway</text><text class="sm" x="395" y="62">검증 · GPS→map</text>
+<rect class="bx" x="620" y="20" width="150" height="54" rx="8"/><text x="695" y="44">queue_manager</text><text class="sm" x="695" y="62">대기열 · 점수식</text>
+<rect class="bx" x="40" y="170" width="150" height="54" rx="8"/><text x="115" y="194">ops_monitor</text><text class="sm" x="115" y="212">/ops_status · 실행 기록</text>
+<rect class="bx b" x="440" y="170" width="200" height="62" rx="10"/><text x="540" y="197" style="font-weight:700">mission_manager</text><text class="sm" x="540" y="216">상태 머신 · 하역 · 충전</text>
+<rect class="bx" x="720" y="170" width="160" height="54" rx="8"/><text x="800" y="194">battery_manager</text><text class="sm" x="800" y="212">가상 배터리</text>
+<rect class="bx" x="40" y="300" width="160" height="54" rx="8"/><text x="120" y="324">collector</text><text class="sm" x="120" y="342">접근·확인·정렬·적재</text>
+<rect class="bx" x="440" y="300" width="160" height="54" rx="8"/><text x="520" y="324">dock_controller</text><text class="sm" x="520" y="342">snap / precise</text>
+<rect class="bx s" x="700" y="300" width="180" height="54" rx="8"/><text x="790" y="324">arm_loader</text><text class="sm" x="790" y="342">로봇팔 적재·하역</text>
+<rect class="bx" x="220" y="410" width="170" height="54" rx="8"/><text x="305" y="434">nav_bridge</text><text class="sm" x="305" y="452">Hybrid A* · 경로 추종</text>
+<rect class="bx s" x="420" y="480" width="140" height="48" rx="8"/><text x="490" y="500">sim_lidar</text><text class="sm mono" x="490" y="517">/scan</text>
+<rect class="bx s" x="640" y="410" width="200" height="54" rx="8"/><text x="740" y="434">sim_tag_detector</text><text class="sm" x="740" y="452">/tag_detections → collector·dock</text>
+<rect class="bx" x="20" y="480" width="170" height="48" rx="8"/><text class="mono" x="105" y="509">/cmd_vel → 베이스</text>
+</g>
+<path class="ln d" d="M170 47 H318" marker-end="url(#ar)"/><text class="sm mono" x="180" y="40">/request_collection</text>
+<path class="ln d" d="M470 47 H618" marker-end="url(#ar)"/><text class="sm mono" x="482" y="40">/queue/enqueue</text>
+<path class="ln d" d="M630 170 V76" marker-end="url(#ar)"/><text class="sm mono" x="622" y="118" text-anchor="end">/queue/select_next</text><text class="sm mono" x="622" y="132" text-anchor="end">/queue/update_status</text>
+<path class="ln" d="M740 74 Q740 190 642 195" marker-end="url(#ar)"/><text class="sm mono" x="748" y="122">/queue_status</text>
+<path class="ln" d="M95 74 V140 H500 V168" marker-end="url(#ar)"/><text class="sm mono" x="200" y="134">/scooter_states</text>
+<path class="ln" d="M720 212 H642" marker-end="url(#ar)"/><text class="sm mono" x="681" y="206" text-anchor="middle">/battery_pct</text>
+<path class="ln b" stroke-width="2.2" d="M440 222 Q220 236 130 298" marker-end="url(#ar)"/><text class="sm mono" x="250" y="250">/collect_scooter</text>
+<path class="ln b" stroke-width="2.2" d="M520 232 V298" marker-end="url(#ar)"/><text class="sm mono" x="526" y="272">/dock_to_charger</text>
+<path class="ln b" stroke-width="2.2" d="M640 222 Q770 240 790 298" marker-end="url(#ar)"/><text class="sm mono" x="700" y="268">/arm_loader/unload</text>
+<path class="ln b" stroke-width="2.2" d="M200 345 Q450 385 698 345" marker-end="url(#ar)"/><text class="sm mono" x="560" y="386">/arm_loader/load</text>
+<path class="ln b" stroke-width="2.2" d="M120 354 Q130 437 218 437" marker-end="url(#ar)"/>
+<path class="ln b" stroke-width="2.2" d="M520 354 Q510 437 392 437" marker-end="url(#ar)"/><text class="sm mono" x="400" y="474">/nav_bridge/go_to_pose</text>
+<path class="ln" d="M420 504 Q330 504 315 466" marker-end="url(#ar)"/>
+<path class="ln" d="M260 464 Q245 504 192 504" marker-end="url(#ar)"/>
+</svg>
+</div>
+
+<h2 id="nodes">노드 목록</h2>
+<table>
+<thead><tr><th>노드</th><th>기능</th><th>역할</th></tr></thead>
+<tbody>
+<tr><td><code>request_gateway</code></td><td>요청 검증, 위경도 → map 좌표, 순번 응답</td><td>B</td></tr>
+<tr><td><code>queue_manager</code></td><td>대기열 · 점수식 · 병합 · 취소 · 자동 취소 · SetConfig · RViz 마커</td><td>B</td></tr>
+<tr><td><code>mission_manager</code></td><td>상태 머신, 대상 선택, 하역지 결정, <code>/robot_status</code>, <code>/admin_alerts</code>. 캠퍼스 맵에서는 <code>mission_manager_campus</code> 판이 같은 이름으로 뜸</td><td>D</td></tr>
+<tr><td><code>collector</code></td><td>CollectScooter: 이동 → 확인(회전 탐색) → 정렬 → 적재</td><td>D</td></tr>
+<tr><td><code>battery_manager</code></td><td>가상 배터리 (거리 × k1 + 시간 × k2)</td><td>D</td></tr>
+<tr><td><code>nav_bridge</code></td><td>GoToPose ↔ 간이 주행(Hybrid A*) 또는 Nav2</td><td>C</td></tr>
+<tr><td><code>dock_controller</code></td><td>DockToCharger: 충전소 접근 → 도킹</td><td>C</td></tr>
+<tr><td><code>sim_lidar</code> <span class="tag sim">시뮬</span></td><td>지도 + 킥보드 정답 위치로 360빔 <code>/scan</code> 생성</td><td>C</td></tr>
+<tr><td><code>sim_localizer</code> <span class="tag sim">시뮬</span></td><td>정답 위치로 map → odom 보정</td><td>C</td></tr>
+<tr><td><code>scooter_fleet_sim</code> <span class="tag sim">시뮬</span></td><td>시나리오 재생, 킥보드 상태·GPS 노이즈, 이벤트</td><td>A</td></tr>
+<tr><td><code>sim_tag_detector</code> <span class="tag sim">시뮬</span></td><td>카메라 FOV 62° · 3 m 안의 AprilTag 검출 흉내</td><td>A</td></tr>
+<tr><td><code>arm_loader</code> <span class="tag sim">시뮬</span></td><td>로봇팔 적재·하역 애니메이션 (Load/UnloadScooter)</td><td>A</td></tr>
+<tr><td><code>status_panel</code> <span class="tag sim">시뮬</span></td><td>Gazebo "Kickboard status" 패널</td><td>A</td></tr>
+<tr><td><code>ops_monitor</code></td><td>운영 상황 문장 <code>/ops_status</code>, 실행 기록 JSONL, 마커</td><td>A</td></tr>
+<tr><td><code>fake_base</code> <span class="tag sim">시뮬</span></td><td>Gazebo 없는 kinematic 베이스 (<code>sim:=kinematic</code>)</td><td>A</td></tr>
+</tbody>
+</table>
+
+<h2 id="hardware">로봇과 환경 모델</h2>
+<figure><img src="img/arm_grip.jpg" alt="로봇팔 집게가 킥보드 발판을 잡는 장면"><figcaption>SCOOTOVER v19 — 뒤쪽 경사로와 로봇팔. 적재 레인 2개(capacity 2), 로봇은 킥보드 앞 2.07 m 에 같은 방향으로 서서 후진 진입합니다.</figcaption></figure>
+<div class="cards">
+<div class="card"><img src="img/station.jpg" alt="충전 스테이션" style="width:100%;border-radius:8px;margin-bottom:8px"><b>로봇 스테이션 (도크)</b><span>셔터와 경사로가 있는 차고. 로봇이 대기·충전하는 곳.</span></div>
+<div class="card"><img src="img/kickspot.jpg" alt="킥보드 거치대" style="width:100%;border-radius:8px;margin-bottom:8px"><b>킥스팟 (거치대)</b><span>일반 슬롯 8칸 + 고장 분류 2칸, 충전 주차구역은 스탠드 8칸.</span></div>
+</div>
+<div class="adm"><b class="t">모델은 생성물입니다</b><p>로봇 · 스테이션 · 거치대 모델은 Blender 내보내기 → <code>build_blender_models.py</code> 로 만듭니다. <code>model.sdf</code> 를 손으로 고치지 말고 생성기를 고치세요.</p></div>
+</article>
+
+<article class="page" data-id="state-machine" data-group="개념" data-title="미션 상태 머신">
+<h1>미션 상태 머신</h1>
+<p class="lead"><code>mission_manager</code> 는 11개 상태를 오가며 수거 · 하역 · 충전을 결정합니다. 상태는 <code>/robot_status.state</code> 로 나갑니다.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 780 330" width="780">
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<g text-anchor="middle">
+<rect class="bx" x="20" y="130" width="90" height="40" rx="20"/><text x="65" y="155">IDLE</text>
+<rect class="bx b" x="150" y="130" width="110" height="40" rx="20"/><text x="205" y="155">SELECTING</text>
+<rect class="bx" x="300" y="40" width="120" height="40" rx="20"/><text x="360" y="65">NAVIGATING</text>
+<rect class="bx" x="460" y="40" width="110" height="40" rx="20"/><text x="515" y="65">VERIFYING</text>
+<rect class="bx" x="610" y="40" width="100" height="40" rx="20"/><text x="660" y="65">LOADING</text>
+<rect class="bx" x="300" y="130" width="120" height="40" rx="20"/><text x="360" y="155">DROPPING</text>
+<rect class="bx e" x="460" y="130" width="110" height="40" rx="20"/><text x="515" y="155">FAILED</text>
+<rect class="bx e" x="610" y="130" width="130" height="40" rx="20"/><text x="675" y="155">NEEDS_HUMAN</text>
+<rect class="bx" x="300" y="230" width="120" height="40" rx="20"/><text x="360" y="255">RETURNING</text>
+<rect class="bx" x="460" y="230" width="110" height="40" rx="20"/><text x="515" y="255">DOCKING</text>
+<rect class="bx" x="610" y="230" width="110" height="40" rx="20"/><text x="665" y="255">CHARGING</text>
+</g>
+<path class="ln" d="M110 150 H148" marker-end="url(#ar2)"/>
+<path class="ln b" d="M240 130 Q260 60 298 60" marker-end="url(#ar2)"/><text class="sm" x="246" y="92" text-anchor="end">대상 있음</text>
+<path class="ln" d="M420 60 H458" marker-end="url(#ar2)"/>
+<path class="ln" d="M570 60 H608" marker-end="url(#ar2)"/>
+<path class="ln" d="M660 40 Q660 10 600 10 H235 Q205 10 205 128" marker-end="url(#ar2)"/><text class="sm" x="430" y="26" text-anchor="middle">적재 완료 → 다시 선택</text>
+<path class="ln" d="M515 80 V128" marker-end="url(#ar2)"/><text class="sm" x="522" y="108">확인 실패</text>
+<path class="ln" d="M262 144 H298" marker-end="url(#ar2)"/>
+<path class="ln" d="M298 158 H262" marker-end="url(#ar2)"/><text class="sm" x="360" y="122" text-anchor="middle">만재 · 근처 하역</text>
+<path class="ln" d="M470 165 Q380 200 262 162" marker-end="url(#ar2)"/><text class="sm" x="380" y="204" text-anchor="middle">다음 대상</text>
+<path class="ln" d="M220 170 Q220 250 298 250" marker-end="url(#ar2)"/><text class="sm" x="232" y="282">배터리 &lt; 20%</text><text class="sm" x="232" y="295">또는 할 일 없음</text>
+<path class="ln" d="M420 250 H458" marker-end="url(#ar2)"/>
+<path class="ln" d="M570 250 H608" marker-end="url(#ar2)"/>
+<path class="ln d" d="M545 230 L650 172" marker-end="url(#ar2)"/><text class="sm" x="606" y="214">도킹 3회 실패</text>
+<path class="ln" d="M665 270 Q665 312 620 312 H170 Q160 312 160 260 V174" marker-end="url(#ar2)"/><text class="sm" x="430" y="326" text-anchor="middle">80% 충전 → 재개</text>
+</svg>
+</div>
+
+<h2 id="states">상태 설명</h2>
+<table>
+<thead><tr><th>상태</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>IDLE</code></td><td>도크에서 대기. 시작 시 배터리 계수를 받은 뒤 선택으로 넘어감</td></tr>
+<tr><td><code>SELECTING</code></td><td><code>/queue/select_next</code> 로 다음 대상 결정. 하역 · 복귀 판단도 여기서만 (비선점)</td></tr>
+<tr><td><code>NAVIGATING</code></td><td>CollectScooter 의 접근 단계 (킥보드 GPS 점 근처까지)</td></tr>
+<tr><td><code>VERIFYING</code></td><td>카메라로 태그 확인. 안 보이면 회전 탐색 (기본 10 s)</td></tr>
+<tr><td><code>LOADING</code></td><td>정렬 자리로 이동 후 로봇팔 적재</td></tr>
+<tr><td><code>DROPPING</code></td><td>목적지 구역 앞에서 슬롯마다 멈춰 하역</td></tr>
+<tr><td><code>RETURNING</code> · <code>DOCKING</code></td><td>도크로 복귀, <code>/dock_to_charger</code> 로 진입</td></tr>
+<tr><td><code>CHARGING</code></td><td><code>charge_target_pct</code>(80%) 까지 충전</td></tr>
+<tr><td><code>FAILED</code></td><td>대상 실패 처리 후 다음 선택으로</td></tr>
+<tr><td><code>NEEDS_HUMAN</code></td><td>도킹 반복 실패 등: 정지 후 관리자 처리 대기</td></tr>
+</tbody>
+</table>
+
+<h2 id="collect-phases">수거 단계 (CollectScooter)</h2>
+<ol>
+<li><b>NAVIGATING</b> — <code>approach_standoff</code> 1.8 m 떨어진 접근 지점으로 이동</li>
+<li><b>VERIFYING</b> — 태그로 실물 확인, 태그 위치로 킥보드 중심을 보정 (<code>corrected_pose</code>)</li>
+<li><b>ALIGNING</b> — <code>align_spot_mode: scan</code>: 지도 + 진입 금지 + 라이다로 팔이 닿는 자리 후보를 채점. 막히면 <code>align_wait_sec</code> 기다리고, 그래도 안 되면 다른 각도(90°, −90°, 180°)로</li>
+<li><b>LOADING</b> — <code>/arm_loader/load</code> 호출. 서버가 없으면 <code>load_time_sec</code> 정지로 대신</li>
+</ol>
+</article>
+
+<article class="page" data-id="queue" data-group="개념" data-title="대기열과 우선순위">
+<h1>대기열과 우선순위</h1>
+<p class="lead">모든 요청은 점수가 가장 높은 것부터 처리됩니다. 사유 · 대기 시간 · 거리를 한 식으로 묶습니다.</p>
+
+<h2 id="score">점수식</h2>
+<div class="formula">score = w_r · R(사유) + w_t · 대기(s) − w_d · 거리(m)</div>
+<p>점수는 <code>SelectNextTarget</code> 이 호출될 때(로봇이 <code>SELECTING</code> 일 때) 로봇 위치 기준으로 다시 계산됩니다. 수거 중에는 대상을 바꾸지 않습니다(비선점).</p>
+
+<table>
+<thead><tr><th>맵</th><th>w_r</th><th>w_t</th><th>w_d</th><th>d_max</th><th>t_max</th></tr></thead>
+<tbody>
+<tr><td>경북대 캠퍼스 (<code>knu_*</code>)</td><td><b>100</b></td><td><b>0.5</b></td><td><b>1</b></td><td>1200 m</td><td>3000 s</td></tr>
+<tr><td>교실 맵 (기본값)</td><td>10</td><td>1</td><td>5</td><td>12.8 m</td><td>84 s</td></tr>
+</tbody>
+</table>
+<p>캠퍼스 맵은 <code>w_d = 1</code> 이라 점수 1점 = 1 m 로 읽힙니다. 사유 가중치 1 차이 = 100 m, 대기 1분 = 30 m 입니다.</p>
+
+<h2 id="reasons">요청 사유</h2>
+<table>
+<thead><tr><th>사유</th><th>코드</th><th>R</th><th>출처</th></tr></thead>
+<tbody>
+<tr><td>통행 방해 신고 <code>OBSTRUCTION</code></td><td>5</td><td>4.0</td><td>사용자 신고</td></tr>
+<tr><td>넘어짐 <code>FALLEN</code></td><td>1</td><td>3.0</td><td>펌웨어: 기울기 &gt; 45°</td></tr>
+<tr><td>고장 <code>BROKEN</code></td><td>4</td><td>2.5</td><td>펌웨어 자가진단</td></tr>
+<tr><td>불법 주차 <code>OUT_OF_ZONE</code></td><td>2</td><td>2.0</td><td>펌웨어: 구역 밖</td></tr>
+<tr><td>신고 접수 <code>REPORTED</code></td><td>6</td><td>2.0</td><td>사용자 신고</td></tr>
+<tr><td>정렬 불량 <code>MISALIGNED</code></td><td>7</td><td>1.5</td><td>거치대 6 m 안, 슬롯 밖</td></tr>
+<tr><td>배터리 부족 <code>LOW_BATTERY</code></td><td>3</td><td>1.0</td><td>펌웨어: &lt; 20%</td></tr>
+</tbody>
+</table>
+<div class="adm"><b class="t">경계값</b><p>정확히 45° · 20% 는 정상으로 봅니다. 자동 취소는 반대 조건(≤ 45°, 구역 안, ≥ 20%)을 모두 만족할 때입니다.</p></div>
+
+<h2 id="starvation">기아 방지 상한 t_max</h2>
+<div class="formula">t_max = (w_r · ΔR_max + w_d · d_max) / w_t</div>
+<p>보장하는 것은 <b>"1번보다 t_max 이상 늦게 들어온 요청은 1번을 앞지르지 못한다"</b> 입니다. 먼저 들어왔거나 t_max 안에 들어온 요청에는 밀릴 수 있으므로 "t_max 안에 반드시 선택된다"는 보장이 아닙니다.</p>
+
+<h2 id="merge">같은 킥보드 요청 병합</h2>
+<ul>
+<li>펌웨어 판정끼리는 최신 상태를 따릅니다 (구역 밖 → 넘어짐, 다시 세워지면 배터리 부족으로 내려감).</li>
+<li>사용자 신고가 끼면 가중치가 높은 사유를 남깁니다.</li>
+<li>신고 위치는 GPS 오차가 커서 이미 들어온 요청의 위치를 덮지 않습니다.</li>
+</ul>
+</article>
+
+<article class="page" data-id="destinations" data-group="개념" data-title="목적지 분류 정책">
+<h1>목적지 분류 정책</h1>
+<p class="lead">실은 킥보드마다 상태를 보고 어디에 내려놓을지 정합니다.</p>
+
+<h2 id="rules">우선 순서</h2>
+<ol>
+<li><b>고장</b> → 일반 구역 거치대의 <b>고장 분류 칸</b> (반대 방향으로 세움). 배터리가 부족해도 충전하지 않습니다.</li>
+<li><b>배터리 &lt; 20%</b> → <b>충전 주차구역</b> 스탠드</li>
+<li><b>그 외</b> → <b>일반 구역 슬롯</b></li>
+</ol>
+<p>각 킥보드는 남은 칸이 있는 <b>가장 가까운</b> 구역으로 갑니다. 하역은 슬롯마다 한 번씩, 슬롯 1.6 m 앞에 멈춰서 합니다.</p>
+
+<h2 id="full">칸이 모자랄 때</h2>
+<table>
+<thead><tr><th>상황</th><th>동작</th><th>시나리오</th></tr></thead>
+<tbody>
+<tr><td>가까운 충전 구역 만석</td><td>다음으로 가까운 빈 충전 구역</td><td>k13</td></tr>
+<tr><td>캠퍼스 전체 충전 칸 포화</td><td>일반 슬롯에 세우고 "충전 대기" 표시 + 관리자 알림</td><td>k14</td></tr>
+<tr><td>가까운 일반 구역 만석</td><td>다음 구역으로</td><td>k18</td></tr>
+<tr><td>고장 분류 칸 부족</td><td>다른 구역의 고장 칸</td><td>k19</td></tr>
+<tr><td>충전 스탠드 고장</td><td>그 칸은 제외</td><td>k22</td></tr>
+<tr><td>구역 일시 폐쇄</td><td>목적지 후보에서 뺌</td><td>k23</td></tr>
+</tbody>
+</table>
+
+<h2 id="opportunistic">근처 하역</h2>
+<p>배터리가 정상이고 내릴 킥보드를 싣고 있을 때, 가장 가까운 하역 자리가 <code>opportunistic_drop_dist</code>(기본 2.0 m) 안이면 다음 대상을 고르기 전에 들러서 내립니다. <code>0.0</code> 이면 끕니다.</p>
+</article>
+
+<article class="page" data-id="navigation" data-group="개념" data-title="주행과 경로 계획">
+<h1>주행과 경로 계획</h1>
+<p class="lead"><code>nav:=simple</code> 백엔드는 차체 크기와 회전 반경을 고려하는 운동학 제약 경로 계획(<code>kinematic_planner.py</code>)을 씁니다.</p>
+
+<h2 id="planner">계획</h2>
+<ul>
+<li>(x, y, 방향) 공간의 <b>Hybrid A*</b>, 도착 자세는 <b>Dubins 곡선</b>으로 맞춤</li>
+<li>최소 회전 반경 <code>min_turn_radius</code> 0.8 m, 계획은 여유 1.25배(1.0 m)</li>
+<li>경로 중간 제자리 회전 없음. 출발·도착점에서 공간이 있을 때만 (<code>pivot_at_ends</code>)</li>
+<li>좁은 곳은 후진 허용 (비용 2.5배, 전·후진 전환 벌점, <code>allow_reverse</code>)</li>
+<li>계획이 두 번 실패하면 그 목표만 예전 격자 A* 로 (<code>kinematic_planning: false</code> 로 끌 수 있음)</li>
+</ul>
+
+<h2 id="collision">충돌 검사</h2>
+<p>차체를 원 3개로 덮어 경로 위 모든 자세(0.1 m 간격)를 정적 지도 + 라이다 장애물과 검사합니다. 인도(진입 금지 구역)는 벽이 아니라서, 바퀴(구동축 중심)만 경계에서 0.47 m 떨어지면 차체 앞부분은 나가도 됩니다.</p>
+
+<h2 id="costmap">코스트맵과 라이다</h2>
+<p>코스트맵 = 정적 지도 + 라이다로 본 장애물(맞은 칸은 60초 기억, 빔이 지나간 칸은 비움). 경로는 1초마다, 새 장애물이 경로를 막으면 즉시 다시 계획합니다.</p>
+<div class="adm warn"><b class="t">왜 sim_lidar 인가</b><p>개발 VM(ogre1)의 Gazebo <code>gpu_lidar</code> 는 모든 빔에 0.12 m 만 내서 쓸 수 없습니다. <code>sim_lidar</code> 가 정적 지도 + 킥보드 정답 위치로 360빔을 쏴서 <code>/scan</code> 을 만듭니다. x86 + ogre2 PC 에서는 <code>gz_bridge.yaml</code> 에 <code>/scan</code> 을 다시 넣으면 실제 센서로 돌아갑니다.</p></div>
+
+<h2 id="retry">실패와 재시도</h2>
+<p><code>nav_bridge</code> 는 목표당 최대 <code>max_retries</code>(2) 번 다시 시도합니다. 실패 사유는 <code>pose unavailable</code> · <code>scan unavailable</code> · <code>no safe approach point</code> · <code>no path</code> 로 구분해 GoToPose 결과 <code>message</code> 에 담습니다.</p>
+</article>
+
+<article class="page" data-id="perception" data-group="개념" data-title="인식과 도킹">
+<h1>인식과 도킹</h1>
+<p class="lead">킥보드 확인과 도킹은 AprilTag 검출 결과(<code>/tag_detections</code>)를 씁니다.</p>
+
+<h2 id="tags">AprilTag 검출</h2>
+<table>
+<thead><tr><th>모드</th><th>동작</th></tr></thead>
+<tbody>
+<tr><td><code>perception:=sim</code> <span class="tag p1">기본·발표</span></td><td><code>sim_tag_detector</code> 가 정답 위치 + 카메라 FOV 62.2° · 최대 3 m · 노이즈로 검출을 흉내. 카메라 렌더링 생략</td></tr>
+<tr><td><code>perception:=apriltag</code></td><td>실제 카메라 영상 + <code>apriltag_ros</code> → <code>apriltag_adapter</code>. 향후 확장용</td></tr>
+</tbody>
+</table>
+<p>킥보드 방향은 면마다 다른 태그 ID(<code>base + 150 × face</code>)로 알아냅니다. 지표 수치는 "시뮬레이션 검출 기준"으로 표기합니다.</p>
+
+<h2 id="docking">도킹 모드</h2>
+<table>
+<thead><tr><th><code>dock_mode</code></th><th>동작</th><th>쓰임</th></tr></thead>
+<tbody>
+<tr><td><code>snap</code> (기본)</td><td>충전소 앞까지 주행 → 도킹 자리로 들어간 뒤 시뮬레이터에서 자리 맞춤 (Gazebo <code>set_pose</code> / kinematic <code>/sim/set_robot_pose</code>). 항상 성공</td><td>시나리오 실행</td></tr>
+<tr><td><code>precise</code></td><td>pre-dock → 태그 기반 P 제어로 정밀 진입</td><td>정밀 도킹 시연 · 도킹 오차 측정</td></tr>
+</tbody>
+</table>
+<div class="adm warn"><b class="t">지표 주의</b><p>snap 모드의 도킹 오차(거의 0)는 시뮬레이터가 맞춘 값입니다. 도킹 성능 지표는 <code>precise</code> 로 측정하세요 (목표 ≤ 5 cm, ≤ 5°).</p></div>
+</article>
+
+<article class="page" data-id="pipeline" data-group="개념" data-title="통신부와 가공부">
+<h1>통신부와 가공부</h1>
+<p class="lead">노드 연결은 단순하게 고정하고, 노드 안의 계산은 ROS 를 모르는 파이썬 모듈로 분리합니다.</p>
+<pre><code>구독 / 서비스 요청 / 액션 목표        <span class="c"># 통신부: &lt;노드&gt;.py</span>
+      │  ROS 메시지 → 파이썬 값
+      ▼
+가공 함수·클래스                       <span class="c"># 가공부: &lt;영역&gt;_logic.py, planner.py ...</span>
+      │  rclpy 를 import 하지 않음 → 단위 테스트·벤치마크가 바로 된다
+      ▼
+발행 / 서비스 응답 / 액션 결과          <span class="c"># 통신부</span></code></pre>
+
+<h2 id="rules">규칙</h2>
+<ul>
+<li>가공부는 <code>rclpy</code> · 메시지 타입을 import 하지 않습니다 (numpy · scipy · yaml 은 가능).</li>
+<li>통신부는 메시지 변환, 파라미터, 타이밍, 로그만 맡습니다.</li>
+<li>토픽 이름 · 메시지 · 노드 이름 변경은 "통신부 변경"이라 팀에 미리 알립니다.</li>
+</ul>
+
+<h2 id="map">노드 ↔ 가공부</h2>
+<table>
+<thead><tr><th>노드</th><th>가공부</th></tr></thead>
+<tbody>
+<tr><td><code>request_gateway</code></td><td><code>gateway_logic</code>, <code>geo</code></td></tr>
+<tr><td><code>queue_manager</code></td><td><code>queue_book</code>, <code>queue_logic</code></td></tr>
+<tr><td><code>mission_manager</code></td><td><code>mission_logic</code> (<code>Cargo</code>, <code>ChargerSlots</code>), <code>drop_zones</code></td></tr>
+<tr><td><code>collector</code></td><td><code>collector_logic</code></td></tr>
+<tr><td><code>dock_controller</code></td><td><code>dock_logic</code>, <code>motion</code></td></tr>
+<tr><td><code>nav_bridge</code></td><td><code>nav_logic</code>, <code>kinematic_planner</code>, <code>planner</code>, <code>motion</code></td></tr>
+<tr><td><code>battery_manager</code></td><td><code>battery_logic</code></td></tr>
+<tr><td><code>sim_lidar</code> · <code>sim_tag_detector</code> · <code>sim_localizer</code></td><td><code>lidar_logic</code> · <code>tag_sim_logic</code> · <code>localizer_logic</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="bench">측정</h2>
+<pre><code>python3 tools/bench_logic.py [이름 일부]          <span class="c"># 가공 함수 1회 비용 (ROS 없이)</span>
+KICKBOARD_PROFILE=1 ros2 launch kickboard_sim bringup.launch.py ...   <span class="c"># 노드 안 실제 비용</span></code></pre>
+</article>
+
+<!-- ===================================================== 튜토리얼 -->
+<article class="page" data-id="tut-run" data-group="튜토리얼" data-title="시나리오 실행하기">
+<h1>시나리오 실행하기</h1>
+<p class="lead"><code>run_all_knu.sh</code> 로 시나리오를 하나 또는 여러 개 연속으로 돌리고, 끝나면 요약과 리플레이를 받습니다.</p>
+
+<h2 id="single">하나만 돌리기</h2>
+<pre><code>./run_all_knu.sh --gui --rtf 4 k04</code></pre>
+<p>시나리오 주변만 잘라 만든 작은 world 에서 4배속으로 돕니다. 로봇이 도크로 돌아와 <code>--grace</code>(200 s) 동안 새 일이 없으면 끝나고 다음 시나리오로 넘어갑니다.</p>
+
+<h2 id="batch">여러 개 묶어서</h2>
+<div class="code-title">발표 데모 추천 3개</div>
+<pre><code>./run_all_knu.sh --gui --rtf 4 k32 k08 k13</code></pre>
+<div class="code-title">분류별</div>
+<pre><code>./run_all_knu.sh --gui --rtf 4 k01 k02 k03 k04 k05 k06 k07 k08                       <span class="c"># A 상태별 기본</span>
+./run_all_knu.sh --gui --rtf 4 k09 k10 k11 k12                                       <span class="c"># B 복합 판단</span>
+./run_all_knu.sh --gui --rtf 4 --limit 5400 k13 k14 k15 k16 k17 k18 k19              <span class="c"># C 수용량·적재량</span>
+./run_all_knu.sh --gui --rtf 4 k20 k21 k22 k23 k24 k25 k26 k27 k28 k29 k30 k31 k32  <span class="c"># D 돌발상황</span>
+./run_all_knu.sh --gui --rtf 4 --limit 5400                                           <span class="c"># 전부 (k00~k32)</span></code></pre>
+
+<h2 id="options">옵션</h2>
+<table>
+<thead><tr><th>옵션</th><th>뜻</th></tr></thead>
+<tbody>
+<tr><td><code>--gui</code></td><td>Gazebo 화면을 띄움 (한 번에 하나씩)</td></tr>
+<tr><td><code>--rtf 4</code></td><td>4배속. 로봇이 버벅이거나 경로를 벗어나면 3 으로</td></tr>
+<tr><td><code>--full</code></td><td>작은 world 대신 캠퍼스 전체 world (무거움)</td></tr>
+<tr><td><code>--grace S</code></td><td>대기로 돌아온 뒤 S 초 동안 새 일이 없으면 다음으로 (기본 200)</td></tr>
+<tr><td><code>--limit S</code></td><td>시나리오당 최대 S 초 (기본 3600)</td></tr>
+<tr><td><code>--kinematic -j N</code></td><td>Gazebo 없이 로직만, N 개 동시 실행</td></tr>
+<tr><td><code>--speed X</code></td><td>kinematic 모드 주행 속도 배율</td></tr>
+</tbody>
+</table>
+
+<h2 id="launch">ros2 launch 로 직접</h2>
+<p>스크립트 없이 하나만 띄울 수도 있습니다. 끝나도 자동으로 꺼지지 않으니 <kbd>Ctrl</kbd>+<kbd>C</kbd> 로 끕니다.</p>
+<pre><code>ros2 launch kickboard_sim bringup.launch.py scenario:=k08 map:=local rtf:=4 start_delay:=15</code></pre>
+<p>전체 인자는 <a href="#/ref-launch">Launch 인자</a> 를 보세요.</p>
+
+<div class="adm tip"><b class="t">카메라 고정</b><p>Gazebo 카메라는 로봇을 따라갑니다. 고정 화면으로 보려면:</p></div>
+<pre><code>gz service -s /gui/follow --reqtype gz.msgs.StringMsg --reptype gz.msgs.Boolean --timeout 3000 --req 'data: ""'</code></pre>
+</article>
+
+<article class="page" data-id="tut-monitor" data-group="튜토리얼" data-title="실행 중 상태 보기">
+<h1>실행 중 상태 보기</h1>
+<p class="lead">시뮬레이션이 도는 동안 새 터미널에서 로봇이 무엇을, 왜 하고 있는지 봅니다.</p>
+
+<ol class="steps">
+<li><b>새 터미널에서 환경 불러오기</b>
+<pre><code>source install/setup.bash</code></pre></li>
+<li><b>운영 상황 한 줄 요약</b> — 지금 하는 일 · 어디로 · 왜 · 목적지 · 정렬 결과
+<pre><code>ros2 topic echo /ops_status</code></pre></li>
+<li><b>로봇 상태</b> — 상태 · 배터리 · 적재 수 · 현재 대상
+<pre><code>ros2 topic echo /robot_status</code></pre>
+<pre><code><span class="k">battery_pct</span>: 87.4
+<span class="k">load_count</span>: 1
+<span class="k">capacity</span>: 2
+<span class="k">state</span>: <span class="s">NAVIGATING</span>
+<span class="k">current_target_id</span>: <span class="s">'3'</span></code></pre>
+<p style="font-size:13px;color:var(--muted)">출력 예시 (값은 실행마다 다름)</p></li>
+<li><b>대기열</b>
+<pre><code>ros2 topic echo /queue_status
+ros2 service call /get_queue kickboard_interfaces/srv/GetQueue</code></pre></li>
+<li><b>거치대 점유 · 관리자 알림</b>
+<pre><code>ros2 topic echo /zone_occupancy
+ros2 topic echo /admin_alerts</code></pre></li>
+</ol>
+
+<h2 id="rviz">RViz 로 보기</h2>
+<p><code>rviz:=true</code> 를 주면 킥보드 상태 색, 경로, 목적지 화살표, 구역, 대기열 마커(순위 · 대기 시간)가 함께 보입니다.</p>
+<pre><code>ros2 launch kickboard_sim bringup.launch.py scenario:=k08 map:=local rviz:=true</code></pre>
+
+<h2 id="panel">Gazebo 패널</h2>
+<p>Gazebo 오른쪽 아래 <b>Kickboard status</b> 패널에서 <b>Echo</b> 를 누릅니다. 터미널에서는:</p>
+<pre><code>gz topic -e -t /echo</code></pre>
+</article>
+
+<article class="page" data-id="tut-request" data-group="튜토리얼" data-title="수동으로 요청 보내기">
+<h1>수동으로 요청 보내기</h1>
+<p class="lead">시나리오 밖에서 직접 수거 요청을 넣고, 취소하고, 설정을 바꿔 봅니다.</p>
+
+<h2 id="request">수거 요청</h2>
+<p>위경도는 서비스 지역 안이어야 합니다. 캠퍼스 맵의 map 원점은 <code>gps_origin</code> (35.8904, 128.6103) 이고 +x = 동, +y = 북입니다. <code>reason</code> 은 <a href="#/queue">사유 코드</a> 입니다.</p>
+<pre><code>ros2 service call /request_collection kickboard_interfaces/srv/RequestCollection \
+  "{scooter_id: '99', lat: 35.8904, lon: 128.6103, reason: 1}"</code></pre>
+<p>응답의 <code>accepted</code> · <code>queue_position</code> 으로 접수 여부와 순번을 봅니다. 거절되면 <code>message</code> 에 이유(<code>위경도 범위 오류</code>, <code>서비스 지역 밖 (x, y)</code>, <code>알 수 없는 reason</code> 등)가 담기고, 같은 킥보드 요청과 합쳐지면 <code>병합됨:</code> 으로 시작합니다.</p>
+<div class="adm"><b class="t">실물이 없는 ID</b><p>시나리오에 없는 ID 라 로봇이 가서 회전 탐색 후 <b>확인 실패</b> 경로를 탑니다. 실물이 있는 킥보드는 시나리오 YAML 로 추가하세요.</p></div>
+
+<h2 id="cancel">취소</h2>
+<pre><code>ros2 service call /cancel_request kickboard_interfaces/srv/CancelRequest "{scooter_id: '9'}"</code></pre>
+
+<h2 id="config">실행 중 설정 바꾸기</h2>
+<p>음수 값은 "변경 안 함"입니다.</p>
+<pre><code>ros2 service call /set_config kickboard_interfaces/srv/SetConfig \
+  "{return_battery_pct: 30.0, capacity: -1, w_r: -1.0, w_t: 2.0, w_d: -1.0}"</code></pre>
+<p>노드 파라미터는 <code>ros2 param set</code> 으로도 바꿀 수 있습니다.</p>
+<pre><code>ros2 param set /mission_manager opportunistic_drop_dist 0.0
+ros2 param set /arm_loader time_scale 2.0</code></pre>
+
+<h2 id="dock">수동 도킹</h2>
+<pre><code>ros2 action send_goal /dock_to_charger kickboard_interfaces/action/DockToCharger "{station_id: station_1}" --feedback</code></pre>
+</article>
+
+<article class="page" data-id="tut-results" data-group="튜토리얼" data-title="결과 분석과 리플레이">
+<h1>결과 분석과 리플레이</h1>
+<p class="lead">시나리오가 기대대로 끝났는지 확인하고, 브라우저에서 다시 재생합니다.</p>
+
+<h2 id="auto">자동 (run_all_knu.sh)</h2>
+<p>스크립트로 돌리면 끝날 때 (또는 <kbd>Ctrl</kbd>+<kbd>C</kbd> 로 멈출 때) 자동으로 만들어집니다.</p>
+<table>
+<thead><tr><th>파일</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td><code>results/knu_&lt;날짜_시각&gt;/summary.txt</code></td><td>시나리오별 통과 / 부분 (예상 결과와 비교)</td></tr>
+<tr><td><code>results/ops_replay.html</code></td><td>시나리오별 최신 기록 리플레이 (×1 ~ ×60)</td></tr>
+<tr><td><code>~/.ros/kickboard_ops/&lt;시나리오&gt;_&lt;시각&gt;.jsonl</code></td><td>원본 실행 기록</td></tr>
+</tbody>
+</table>
+
+<h2 id="manual">수동</h2>
+<pre><code>python3 src/kickboard_sim/scripts/check_knu_runs.py      <span class="c"># 시나리오별 통과/부분</span>
+python3 src/kickboard_sim/scripts/build_ops_replay.py    <span class="c"># 리플레이 만들기</span>
+xdg-open results/ops_replay.html</code></pre>
+
+<h2 id="metrics">PRD 지표 (rosbag)</h2>
+<ol class="steps">
+<li><b>기록</b>
+<pre><code>ros2 bag record -o bags/k08 /mission_events /robot_status /queue_status</code></pre></li>
+<li><b>분석</b>
+<pre><code>ros2 run kickboard_robot analyze bags/k08</code></pre>
+수거 성공률, 최대/평균 대기 시간, 도킹 위치·방향 오차, GPS 오차 vs 카메라 보정 후 오차가 나옵니다.</li>
+</ol>
+<div class="adm warn"><b class="t">측정할 때는 하나만</b><p>VM 부하가 크면 rosbag 기록이 늦게 시작돼 앞부분 이벤트가 빠질 수 있습니다.</p></div>
+</article>
+
+<!-- ===================================================== How-to -->
+<article class="page" data-id="howto-scenario" data-group="How-to" data-title="시나리오 만들기·고치기">
+<h1>시나리오 만들기·고치기</h1>
+<p class="lead">경북대 시나리오 YAML 은 생성 스크립트가 만듭니다. YAML 을 직접 고치지 말고 스크립트를 고칩니다.</p>
+
+<h2 id="build">다시 만들기</h2>
+<pre><code>python3 src/kickboard_sim/scripts/build_knu_scenarios.py     <span class="c"># 시나리오 (좌표·접근·조건 검사)</span>
+python3 src/kickboard_sim/scripts/build_scenario_worlds.py   <span class="c"># 시나리오 전용 작은 world</span>
+python3 src/kickboard_sim/scripts/build_knu_campus.py        <span class="c"># 캠퍼스 맵 전체 (약 40초)</span>
+colcon build --packages-select kickboard_sim && source install/setup.bash</code></pre>
+<p>스크립트는 장소(건물 출입구, 보행로, 잔디, 슬롯)로 적힌 시나리오를 맵 좌표로 바꾸고 다음을 검사합니다: 캠퍼스 안 · 건물/물 위 아님 · 킥보드끼리 1.1 m 이상 · 도크에서 킥보드 옆까지 도달 가능 · 시나리오가 노리는 조건 성립.</p>
+
+<h2 id="yaml">YAML 형식</h2>
+<div class="code-title">src/kickboard_sim/config/scenarios_knu/k04.yaml (발췌)</div>
+<pre><code><span class="k">name</span>: <span class="s">"K04. 넘어진 킥보드"</span>
+<span class="k">id</span>: k04
+<span class="k">category</span>: <span class="s">"A 상태별 기본"</span>
+<span class="k">map</span>: knu_campus_flat
+<span class="k">situation</span>: <span class="s">"바람 부는 날 인문대(104) 앞 보행로에 1대가 처음부터 넘어져 있고, 30초에 ..."</span>
+<span class="k">expected</span>:     <span class="c"># 킥보드별 예상 처리 순서·목적지 구역</span>
+  - {id: 1, order: 1, dest: general, zone: P15, reasons: ["넘어짐", "불법 주차"]}
+  - {id: 2, order: 2, dest: general, zone: P24, reasons: ["불법 주차"]}
+<span class="k">pass_criteria</span>:
+  - <span class="s">"일반 주차구역 슬롯: #1,2 → 슬롯 중심 ±0.3 m, 방향 ±15°"</span>
+  - <span class="s">"충돌 0회, 계단·건물·운동장 진입 0회"</span>
+<span class="k">robot</span>: {initial_battery_pct: 100, capacity: 2}
+<span class="k">scooters</span>:      <span class="c"># id = AprilTag id</span>
+  - {id: 1, x: 43.11, y: 72.93, yaw_deg: 158.8, tilt_deg: 90, battery_pct: 70, place: walkway, where: <span class="s">"인문대 앞 보행로"</span>}
+  - {id: 2, x: -262.25, y: -251.36, yaw_deg: -83.0, battery_pct: 55, place: roadside, where: <span class="s">"대운동장 옆 도로가"</span>}
+<span class="k">events</span>:
+  - {t: 30, id: 2, type: <span class="s">"fall"</span>}</code></pre>
+
+<h3 id="fields">킥보드 필드</h3>
+<table><thead><tr><th>필드</th><th>뜻</th></tr></thead><tbody>
+<tr><td><code>x</code> <code>y</code> <code>yaw_deg</code> <code>tilt_deg</code> <code>battery_pct</code></td><td>위치·자세·배터리 (tilt &gt; 45° = 넘어짐)</td></tr>
+<tr><td><code>model</code></td><td><code>false</code> 면 요청만 오고 실물 없음 (확인 실패 검증)</td></tr>
+<tr><td><code>spawn_at</code></td><td>등장 시각 (s)</td></tr>
+<tr><td><code>fault</code></td><td>고장 코드: brake · motor · throttle · lock · display · tire · stem</td></tr>
+<tr><td><code>slot</code> / <code>charging</code></td><td>처음부터 슬롯에 바르게 서 있음 / 스탠드에서 충전 중</td></tr>
+<tr><td><code>silent</code> / <code>false_report</code></td><td>펌웨어가 요청하지 않음 (신고로만) / 오신고</td></tr>
+</tbody></table>
+
+<h3 id="events">이벤트</h3>
+<table><thead><tr><th>type</th><th>뜻</th></tr></thead><tbody>
+<tr><td><code>fall</code> · <code>stand</code></td><td>넘어짐 / 다시 세워짐</td></tr>
+<tr><td><code>battery</code> · <code>move</code></td><td>배터리 변경 / 위치 이동</td></tr>
+<tr><td><code>rent</code> · <code>return</code></td><td>누가 빌려 감 / 반납</td></tr>
+<tr><td><code>report</code></td><td>사용자 신고 {reason, gps_error_m, note}</td></tr>
+<tr><td><code>fault</code></td><td>고장 발생 {code, detect}. <code>detect: on_inspect</code> 면 현장 확인 때 드러남</td></tr>
+<tr><td><code>park</code></td><td>사용자가 직접 슬롯에 세움 → 자동 취소</td></tr>
+<tr><td><code>stand_fault</code> · <code>zone_closed</code></td><td>충전 스탠드 고장 / 구역 일시 폐쇄 {zone, duration}</td></tr>
+<tr><td><code>obstacle</code> · <code>pedestrian</code> · <code>remove_obstacle</code></td><td>장애물 · 보행자 추가 / 제거</td></tr>
+</tbody></table>
+</article>
+
+<article class="page" data-id="howto-map" data-group="How-to" data-title="맵 바꾸기">
+<h1>맵 바꾸기</h1>
+<p class="lead">맵에 종속된 값은 맵 설정 파일 한 곳에 모여 있습니다.</p>
+<h2 id="files">관련 파일</h2>
+<table><thead><tr><th>파일</th><th>내용</th></tr></thead><tbody>
+<tr><td><code>config/maps/&lt;맵&gt;.yaml</code></td><td>GPS 기준점, 로봇 스폰(=도킹) pose, 충전소 태그 pose, 구역 폴리곤, <code>params.queue_manager</code> 덮어쓰기, <code>mission_variant</code></td></tr>
+<tr><td><code>worlds/&lt;맵&gt;.sdf</code></td><td>Gazebo world</td></tr>
+<tr><td><code>maps/&lt;맵&gt;.{png,yaml}</code>, <code>&lt;맵&gt;_lidar.*</code></td><td>주행용 지도 · 라이다용 지도</td></tr>
+</tbody></table>
+<p>맵 이름은 <code>map:=</code> 인자 → 시나리오 YAML 의 <code>map</code> 키 → 기본 맵 순서로 정해집니다. <code>map:=local</code> 은 그 시나리오 주변만 잘라 만든 world 입니다.</p>
+<div class="adm warn"><b class="t">지도 해상도 주의</b><p>0.25 m 지도에서는 차고 문기둥 같은 얇은 구조물을 얇게 그려야 합니다. 두껍게 그리면 도크 출발이나 경로가 막힙니다.</p></div>
+</article>
+
+<article class="page" data-id="howto-trouble" data-group="How-to" data-title="문제 해결">
+<h1>문제 해결</h1>
+<p class="lead">자주 만나는 증상과 해결법입니다.</p>
+<table>
+<thead><tr><th>증상</th><th>원인 / 해결</th></tr></thead>
+<tbody>
+<tr><td>Gazebo 창이 안 뜨거나 바로 꺼짐</td><td>디스플레이 없음 또는 VM 부하. <code>gui:=false</code> 로 서버만, 또는 <code>sim:=kinematic</code></td></tr>
+<tr><td><code>Couldn't open X display</code></td><td>SSH 세션. 데스크톱 터미널에서 실행하거나 <code>gui:=false sensors:=false</code></td></tr>
+<tr><td>로봇이 안 생김</td><td>world 로드가 느림. <code>start_delay:=20</code></td></tr>
+<tr><td>로봇이 경로를 벗어나거나 멈칫거림</td><td>배속이 너무 높음. <code>--rtf 3</code> 이하로</td></tr>
+<tr><td>고친 코드가 반영 안 됨</td><td>Python 노드는 복사 설치. <code>colcon build</code> 후 <code>source install/setup.bash</code></td></tr>
+<tr><td><code>/scan</code> 이 전부 0.12 m</td><td>VM 의 gpu_lidar 문제. <code>sim_lidar</code> 를 쓰는 기본 설정 유지</td></tr>
+<tr><td>대상이 <code>NEEDS_HUMAN</code></td><td>접근 자리 · 경로가 없음 (<code>no path</code>, <code>no safe approach point</code>). 시나리오 좌표나 지도 확인</td></tr>
+<tr><td>rosbag 앞부분 이벤트 누락</td><td>VM 부하. 시뮬레이션을 하나만 돌릴 것</td></tr>
+</tbody>
+</table>
+<h2 id="light">가볍게 돌리는 순서</h2>
+<ol>
+<li><code>sim:=kinematic rviz:=true</code> — Gazebo 없이 로직만</li>
+<li><code>gui:=false rviz:=true</code> — Gazebo 서버만, RViz 로 보기</li>
+<li>시뮬레이션은 한 번에 하나만, 브라우저 · VS Code 는 닫기</li>
+</ol>
+</article>
+
+<!-- ===================================================== 레퍼런스 -->
+<article class="page" data-id="ref-launch" data-group="레퍼런스" data-title="Launch 인자">
+<h1>Launch 인자</h1>
+<p class="lead"><code>ros2 launch kickboard_sim bringup.launch.py &lt;인자&gt;:=&lt;값&gt;</code></p>
+<table>
+<thead><tr><th>인자</th><th>기본값</th><th>값</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td><code>scenario</code></td><td><code>k08</code></td><td><code>k00</code> ~ <code>k32</code> 또는 YAML 경로</td><td>실행할 시나리오</td></tr>
+<tr><td><code>map</code></td><td>(시나리오)</td><td><code>local</code> · 맵 이름</td><td>비우면 시나리오의 <code>map</code> 키</td></tr>
+<tr><td><code>sim</code></td><td><code>gz</code></td><td><code>gz</code> · <code>kinematic</code></td><td><code>kinematic</code>: Gazebo 없이 <code>/cmd_vel</code> 적분</td></tr>
+<tr><td><code>nav</code></td><td><code>simple</code></td><td><code>simple</code> · <code>nav2</code></td><td>직접 구현 주행 / Nav2 (설치 필요)</td></tr>
+<tr><td><code>perception</code></td><td><code>sim</code></td><td><code>sim</code> · <code>apriltag</code></td><td>검출 흉내 / 실제 카메라</td></tr>
+<tr><td><code>gui</code></td><td><code>true</code></td><td>bool</td><td>Gazebo GUI</td></tr>
+<tr><td><code>rviz</code></td><td><code>false</code></td><td>bool</td><td>RViz</td></tr>
+<tr><td><code>sensors</code></td><td><code>true</code></td><td>bool</td><td><code>false</code>: 라이다·카메라 렌더링 끔</td></tr>
+<tr><td><code>arm</code></td><td><code>true</code></td><td>bool</td><td>로봇팔 애니메이션 (<code>sim:=gz</code>)</td></tr>
+<tr><td><code>rtf</code></td><td><code>1.0</code></td><td>float</td><td>실시간 배율</td></tr>
+<tr><td><code>speed</code></td><td>(없음)</td><td>float</td><td>주행 속도 배율</td></tr>
+<tr><td><code>follow</code></td><td><code>true</code></td><td>bool</td><td>Gazebo 카메라가 로봇을 따라감</td></tr>
+<tr><td><code>start_delay</code></td><td><code>6.0</code></td><td>초</td><td>Gazebo 기동 후 노드 시작까지 대기</td></tr>
+</tbody>
+</table>
+</article>
+
+<article class="page" data-id="ref-topics" data-group="레퍼런스" data-title="토픽">
+<h1>토픽</h1>
+<p class="lead">주기는 Gazebo 헤드리스 실행에서 잰 값입니다.</p>
+<table>
+<thead><tr><th>토픽</th><th>타입</th><th>발행</th><th>주기</th></tr></thead>
+<tbody>
+<tr><td><code>/scooter_states</code></td><td><code>ScooterState</code></td><td>scooter_fleet_sim</td><td>2 Hz</td></tr>
+<tr><td><code>/queue_status</code></td><td><code>QueueStatus</code></td><td>queue_manager</td><td>1 Hz</td></tr>
+<tr><td><code>/queue_markers</code></td><td><code>MarkerArray</code></td><td>queue_manager</td><td>1 Hz</td></tr>
+<tr><td><code>/robot_status</code></td><td><code>RobotStatus</code></td><td>mission_manager</td><td>2 Hz</td></tr>
+<tr><td><code>/admin_alerts</code></td><td><code>AdminAlert</code></td><td>mission_manager</td><td>이벤트</td></tr>
+<tr><td><code>/scooter_dropped</code></td><td><code>ScooterTruthArray</code></td><td>mission_manager</td><td>이벤트</td></tr>
+<tr><td><code>/scooter_loaded</code></td><td><code>std_msgs/String</code></td><td>collector</td><td>이벤트</td></tr>
+<tr><td><code>/mission_events</code></td><td><code>std_msgs/String</code></td><td>여러 노드 (common)</td><td>이벤트</td></tr>
+<tr><td><code>/battery_pct</code> · <code>/battery_low</code></td><td><code>Float32</code> · <code>Bool</code></td><td>battery_manager</td><td>2 Hz</td></tr>
+<tr><td><code>/ops_status</code></td><td><code>std_msgs/String</code></td><td>ops_monitor</td><td>—</td></tr>
+<tr><td><code>/zone_occupancy</code></td><td><code>std_msgs/String</code></td><td>scooter_fleet_sim</td><td>—</td></tr>
+<tr><td><code>/tag_detections</code></td><td><code>TagDetectionArray</code></td><td>sim_tag_detector</td><td>10 Hz</td></tr>
+<tr><td><code>/scan</code></td><td><code>LaserScan</code></td><td>sim_lidar</td><td>5 Hz</td></tr>
+<tr><td><code>/cmd_vel</code></td><td><code>Twist</code></td><td>nav_bridge · dock_controller · collector</td><td>20 Hz (주행 중)</td></tr>
+<tr><td><code>/odom</code></td><td><code>Odometry</code></td><td>Gazebo / fake_base</td><td>25 Hz</td></tr>
+<tr><td><code>/sim/scooter_truth</code> <span class="tag sim">시뮬</span></td><td><code>ScooterTruthArray</code></td><td>scooter_fleet_sim</td><td>5 Hz</td></tr>
+<tr><td><code>/sim/set_robot_pose</code> <span class="tag sim">시뮬</span></td><td><code>PoseStamped</code></td><td>dock_controller (snap)</td><td>이벤트</td></tr>
+</tbody>
+</table>
+<div class="adm warn"><b class="t"><code>/cmd_vel</code> 공유</b><p>nav_bridge · dock_controller(C)와 collector(D)가 함께 씁니다. 두 노드가 동시에 보내지 않도록 합니다.</p></div>
+</article>
+
+<article class="page" data-id="ref-services" data-group="레퍼런스" data-title="서비스">
+<h1>서비스</h1>
+<p class="lead"><span class="tag p1">외부</span> 는 사용자·관리자용, <span class="tag int">내부</span> 는 노드 사이 전용입니다.</p>
+
+<h2 id="request_collection"><code>/request_collection</code> <span class="tag p1">외부</span></h2>
+<p><code>RequestCollection</code> · 제공: request_gateway</p>
+<pre><code>uint8 FALLEN=1  OUT_OF_ZONE=2  LOW_BATTERY=3  BROKEN=4  OBSTRUCTION=5  REPORTED=6  MISALIGNED=7
+string scooter_id
+float64 lat
+float64 lon
+uint8 reason
+---
+bool accepted
+uint32 queue_position
+string message</code></pre>
+
+<h2 id="get_queue"><code>/get_queue</code> <span class="tag p1">외부</span></h2>
+<p><code>GetQueue</code> · 제공: queue_manager · 응답 <code>QueueItem[] items</code></p>
+
+<h2 id="cancel_request"><code>/cancel_request</code> <span class="tag p1">외부</span></h2>
+<pre><code>string scooter_id
+---
+bool success
+string message</code></pre>
+
+<h2 id="set_config"><code>/set_config</code> <span class="tag p1">외부</span></h2>
+<pre><code><span class="c"># 음수 값은 "변경하지 않음"</span>
+float32 return_battery_pct
+int32 capacity
+float32 w_r
+float32 w_t
+float32 w_d
+---
+bool success
+string message</code></pre>
+
+<h2 id="internal">내부 서비스 <span class="tag int">내부</span></h2>
+<table><thead><tr><th>서비스</th><th>타입</th><th>호출 → 제공</th><th>내용</th></tr></thead><tbody>
+<tr><td><code>/queue/enqueue</code></td><td><code>EnqueueRequest</code></td><td>request_gateway → queue_manager</td><td>map 좌표로 변환된 요청 등록, 병합 여부·순번 응답</td></tr>
+<tr><td><code>/queue/select_next</code></td><td><code>SelectNextTarget</code></td><td>mission_manager → queue_manager</td><td>점수 최고 항목을 IN_PROGRESS 로 바꾸고 반환</td></tr>
+<tr><td><code>/queue/update_status</code></td><td><code>UpdateRequestStatus</code></td><td>mission_manager → queue_manager</td><td>DONE / FAILED / NEEDS_HUMAN / REQUEUE, 보정 위치</td></tr>
+</tbody></table>
+</article>
+
+<article class="page" data-id="ref-actions" data-group="레퍼런스" data-title="액션">
+<h1>액션</h1>
+<p class="lead">오래 걸리는 작업은 모두 액션입니다. 피드백으로 진행 단계를 볼 수 있습니다.</p>
+
+<h2 id="collect"><code>/collect_scooter</code></h2>
+<p><code>CollectScooter</code> · mission_manager → collector</p>
+<pre><code>string scooter_id
+geometry_msgs/PoseStamped target_pose
+---
+bool success
+string failure_reason
+geometry_msgs/PoseStamped corrected_pose
+---
+string phase              <span class="c"># NAVIGATING / VERIFYING / ALIGNING / LOADING</span>
+float32 distance_remaining
+uint8 load_count</code></pre>
+
+<h2 id="dock"><code>/dock_to_charger</code></h2>
+<p><code>DockToCharger</code> · mission_manager → dock_controller</p>
+<pre><code>string station_id
+---
+bool success
+float32 position_error_m
+float32 yaw_error_deg
+---
+string phase              <span class="c"># APPROACH / ALIGN / DOCKED</span>
+float32 lateral_error
+float32 yaw_error</code></pre>
+
+<h2 id="goto"><code>/nav_bridge/go_to_pose</code> <span class="tag int">내부</span></h2>
+<p><code>GoToPose</code> · collector, dock_controller → nav_bridge. 우리 인터페이스와 주행 백엔드 사이의 경계입니다.</p>
+<pre><code>geometry_msgs/PoseStamped target_pose
+float32 standoff          <span class="c"># &gt;0 이면 target 에서 로봇 쪽으로 이 거리만큼 떨어진 곳이 목표</span>
+---
+bool success
+uint8 attempts
+string message
+---
+float32 distance_remaining
+uint8 attempt</code></pre>
+
+<h2 id="arm"><code>/arm_loader/load</code> · <code>/arm_loader/unload</code> <span class="tag sim">시뮬</span></h2>
+<p><code>LoadScooter</code> / <code>UnloadScooter</code> · <code>sim:=gz</code> 전용. 서버가 없으면 collector 는 <code>load_time_sec</code> 정지로 대신합니다.</p>
+<pre><code><span class="c"># LoadScooter</span>
+string scooter_id
+---
+bool success
+string message
+uint8 slot                <span class="c"># 실린 칸 (0 = 맨 뒤)</span>
+---
+string phase              <span class="c"># REACH / DESCEND / GRIP / LIFT / SWING / PLACE / RELEASE / RETRACT</span>
+float32 progress</code></pre>
+<pre><code><span class="c"># UnloadScooter</span>
+string scooter_id
+bool remove_only          <span class="c"># true: 애니메이션 없이 지움 (충전 끝나 치움)</span>
+bool keep_as_cargo        <span class="c"># true: 충전 자리에 세우되 정상 킥보드로 되돌리지 않음</span>
+geometry_msgs/Pose target
+---
+bool success
+string message
+geometry_msgs/Pose placed_pose
+---
+string phase
+float32 progress</code></pre>
+</article>
+
+<article class="page" data-id="ref-msgs" data-group="레퍼런스" data-title="메시지">
+<h1>메시지</h1>
+<p class="lead"><code>kickboard_interfaces/msg</code></p>
+
+<h2 id="ScooterState">ScooterState</h2>
+<p>킥보드 펌웨어가 주기적으로 내보내는 상태.</p>
+<pre><code>string id
+float64 lat
+float64 lon
+float32 tilt_deg
+float32 battery_pct
+bool in_parking_zone       <span class="c"># 캠퍼스: 슬롯에 바르게 서 있음 (거치대 센서)</span>
+string fault               <span class="c"># 고장 코드, 빈 문자열 = 정상</span>
+bool in_slot_area          <span class="c"># 거치대 6 m 안이지만 슬롯 밖 → 정렬 불량</span>
+builtin_interfaces/Time stamp</code></pre>
+
+<h2 id="RobotStatus">RobotStatus</h2>
+<pre><code>float32 battery_pct
+uint8 load_count
+uint8 capacity
+string state               <span class="c"># 미션 상태 머신 참고</span>
+string current_target_id</code></pre>
+
+<h2 id="QueueItem">QueueItem · QueueStatus</h2>
+<pre><code>string STATUS_WAITING=WAITING        STATUS_IN_PROGRESS=IN_PROGRESS   STATUS_DONE=DONE
+string STATUS_FAILED=FAILED          STATUS_NEEDS_HUMAN=NEEDS_HUMAN   STATUS_CANCELLED=CANCELLED
+string id
+uint8 reason
+float32 wait_sec
+float32 score
+string status
+float64 x                  <span class="c"># map 좌표 (GPS 변환값, 카메라 보정 후 갱신)</span>
+float64 y
+uint8 nav_failures</code></pre>
+<pre><code><span class="c"># QueueStatus</span>
+builtin_interfaces/Time stamp
+QueueItem[] items</code></pre>
+
+<h2 id="AdminAlert">AdminAlert</h2>
+<pre><code>string id
+string reason
+string message
+builtin_interfaces/Time stamp</code></pre>
+
+<h2 id="TagDetection">TagDetection · TagDetectionArray</h2>
+<pre><code><span class="c"># pose 는 map 프레임, 방향은 태그 면의 바깥쪽 법선(yaw)</span>
+int32 id
+geometry_msgs/Pose pose
+float32 distance</code></pre>
+
+<h2 id="ScooterTruthArray">ScooterTruthArray <span class="tag sim">시뮬</span></h2>
+<pre><code><span class="c"># 킥보드 실제 위치. sim_tag_detector 와 지표 계산에만 사용</span>
+std_msgs/Header header
+string[] ids
+geometry_msgs/Pose[] poses</code></pre>
+</article>
+
+<article class="page" data-id="ref-params" data-group="레퍼런스" data-title="파라미터">
+<h1>파라미터</h1>
+<p class="lead"><code>src/kickboard_sim/config/robot_params.yaml</code>. 맵 설정의 <code>params</code> 가 일부를 덮어씁니다.</p>
+
+<h2 id="mission">mission_manager</h2>
+<table><thead><tr><th>이름</th><th>기본</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>capacity</code></td><td>2</td><td>적재 레인 수 (SCOOTOVER v19)</td></tr>
+<tr><td><code>return_battery_pct</code></td><td>20.0</td><td>이 아래면 복귀</td></tr>
+<tr><td><code>charge_target_pct</code></td><td>80.0</td><td>충전 목표</td></tr>
+<tr><td><code>scooter_battery_threshold_pct</code></td><td>20.0</td><td>킥보드 배터리가 이보다 낮으면 충전 구역으로</td></tr>
+<tr><td><code>opportunistic_drop_dist</code></td><td>2.0</td><td>근처 하역 거리 (m), 0 = 끔</td></tr>
+<tr><td><code>drop_clearance</code></td><td>1.05</td><td>하역 때 서는 자리의 벽 여유</td></tr>
+</tbody></table>
+
+<h2 id="queue">queue_manager</h2>
+<table><thead><tr><th>이름</th><th>기본</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>w_r</code> · <code>w_t</code> · <code>w_d</code></td><td>10 · 1 · 5 (캠퍼스 100 · 0.5 · 1)</td><td>점수식 가중치</td></tr>
+<tr><td><code>d_max</code></td><td>12.8 (캠퍼스 1200)</td><td>t_max 계산용 최대 거리</td></tr>
+<tr><td><code>auto_cancel</code></td><td>true</td><td>정상으로 돌아온 킥보드 자동 취소</td></tr>
+<tr><td><code>tilt_threshold_deg</code> · <code>battery_threshold_pct</code></td><td>45 · 20</td><td>요청 판정 임계값</td></tr>
+</tbody></table>
+
+<h2 id="collector">collector</h2>
+<table><thead><tr><th>이름</th><th>기본</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>approach_standoff</code></td><td>1.8</td><td>로봇 중심 → 킥보드 GPS 점</td></tr>
+<tr><td><code>verify_timeout_sec</code></td><td>10.0</td><td>회전 탐색 시간</td></tr>
+<tr><td><code>align_distance</code></td><td>1.35</td><td>팔이 발판에 닿는 거리</td></tr>
+<tr><td><code>align_spot_mode</code></td><td>scan</td><td>정렬 자리 채점 방식</td></tr>
+<tr><td><code>align_wait_sec</code> · <code>align_retries</code></td><td>5.0 · 2</td><td>정렬 실패 시 대기 · 다른 각도 재시도</td></tr>
+<tr><td><code>load_time_sec</code></td><td>3.0</td><td>팔 서버가 없을 때 적재 정지 시간</td></tr>
+</tbody></table>
+
+<h2 id="nav">nav_bridge</h2>
+<table><thead><tr><th>이름</th><th>기본</th><th>설명</th></tr></thead><tbody>
+<tr><td><code>max_retries</code></td><td>2</td><td>목표당 재시도</td></tr>
+<tr><td><code>goal_timeout_sec</code></td><td>120.0</td><td>목표당 시간 한도</td></tr>
+<tr><td><code>goal_clearance</code> · <code>inflation_radius</code></td><td>1.2 · 1.2</td><td>목표·경로의 장애물 여유</td></tr>
+<tr><td><code>obstacle_stop_dist</code></td><td>0.15</td><td>라이다 바로 앞 안전 정지</td></tr>
+<tr><td><code>scan_timeout_sec</code> · <code>pose_timeout_sec</code></td><td>1.0 · 1.0</td><td>센서 중단 감지</td></tr>
+</tbody></table>
+
+<h2 id="others">그 밖</h2>
+<table><thead><tr><th>노드</th><th>이름</th><th>기본</th></tr></thead><tbody>
+<tr><td>battery_manager</td><td><code>initial_pct</code> · <code>charge_rate_pct_per_s</code></td><td>100 · 2.0</td></tr>
+<tr><td>dock_controller</td><td><code>dock_mode</code> · <code>snap_drive_sec</code></td><td>snap · 15.0</td></tr>
+<tr><td>sim_tag_detector</td><td><code>hfov_deg</code> · <code>max_range</code></td><td>62.2 · 3.0</td></tr>
+<tr><td>scooter_fleet_sim</td><td><code>gps_noise_sigma</code></td><td>1.0</td></tr>
+<tr><td>arm_loader</td><td><code>time_scale</code></td><td>1.0 (2.0 = 2배 느리게)</td></tr>
+</tbody></table>
+</article>
+
+<article class="page" data-id="ref-scenarios" data-group="레퍼런스" data-title="시나리오 목록">
+<h1>시나리오 목록</h1>
+<p class="lead">경북대 캠퍼스 시나리오 33개 (킥보드 234대). 기본 맵은 <code>knu_campus_flat</code>, k25 만 지형 맵 <code>knu_campus</code>.</p>
+<p><input id="scFilter" type="search" placeholder="시나리오 필터 (예: 충전, k1)" style="width:100%;max-width:360px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg-soft);color:var(--text);font:inherit"></p>
+<table id="scTable">
+<thead><tr><th>ID</th><th>분류</th><th>내용</th></tr></thead>
+<tbody></tbody>
+</table>
+<div class="adm tip"><b class="t">발표 데모 추천</b><p><b>k32</b> 하루 운영 종합 · <b>k08</b> 한 장소에 상태가 다른 7대 · <b>k13</b> 충전 구역 만석</p></div>
+<p>시나리오별 상황 · 예상 결과 · 통과 기준은 <code>src/kickboard_sim/config/scenarios_knu/README.md</code> 에 있습니다.</p>
+</article>
+
+
+<nav class="pager" id="pager"></nav>
+<div class="foot">SCOOTOVER — 경북대 ROS 2 텀 프로젝트 · 이 문서는 저장소의 README · KNU_COMMANDS · PIPELINE 과 소스 코드를 바탕으로 작성되었습니다.</div>
+</div>
+</main>
+
+<aside class="toc" id="toc"></aside>
+
+<script>
+(function(){
+  const pages=[...document.querySelectorAll('.page')];
+  const byId=Object.fromEntries(pages.map(p=>[p.dataset.id,p]));
+  const sidebar=document.getElementById('sidebar'), toc=document.getElementById('toc'), pager=document.getElementById('pager');
+
+  // theme
+  const root=document.documentElement;
+  try{const t=localStorage.getItem('sc-theme'); if(t) root.dataset.theme=t;}catch(e){}
+  document.getElementById('themeBtn').onclick=()=>{
+    const dark = root.dataset.theme ? root.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try{localStorage.setItem('sc-theme',root.dataset.theme)}catch(e){}
+  };
+  document.getElementById('menuBtn').onclick=()=>document.body.classList.toggle('nav-open');
+  document.getElementById('scrim').onclick=()=>document.body.classList.remove('nav-open');
+
+  // sidebar
+
+  // heading ids + anchors
+  pages.forEach(p=>p.querySelectorAll('h2,h3').forEach((h,i)=>{
+    if(!h.id) h.id='s'+i;
+    h.dataset.label=h.textContent.trim();
+    h.dataset.anchor=p.dataset.id+'/'+h.id;
+    const a=document.createElement('a'); a.className='anchor'; a.href='#/'+p.dataset.id+'/'+h.id; a.textContent='#'; h.appendChild(a);
+  }));
+
+  // sidebar tree: 그룹 > 페이지
+  const CHEV='<svg class="chev" viewBox="0 0 10 10"><path d="M3 1.5 6.5 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const groups={};
+  pages.forEach(p=>{(groups[p.dataset.group]=groups[p.dataset.group]||[]).push(p)});
+  sidebar.innerHTML=Object.entries(groups).map(([g,ps])=>
+    `<div class="side-group" data-g="${g}"><button class="grp-btn" aria-expanded="false">${CHEV}${g}</button><div class="grp-body">`+
+    ps.map(p=>`<div class="pg" data-id="${p.dataset.id}"><div class="pg-row"><a href="#/${p.dataset.id}">${p.dataset.title}</a></div></div>`).join('')+`</div></div>`).join('');
+  sidebar.addEventListener('click',e=>{
+    const gb=e.target.closest('.grp-btn');
+    if(gb){const g=gb.parentElement; g.classList.toggle('open'); gb.setAttribute('aria-expanded',g.classList.contains('open'));}
+  });
+
+  // code copy
+  document.querySelectorAll('pre').forEach(pre=>{
+    const b=document.createElement('button'); b.className='copy'; b.textContent='복사';
+    b.onclick=()=>{
+      const txt=pre.querySelector('code').innerText.split('\n').map(l=>l.replace(/\s+#\s.*$/,'')).join('\n').trim();
+      navigator.clipboard.writeText(txt).then(()=>{b.textContent='복사됨';setTimeout(()=>b.textContent='복사',1200)});
+    };
+    pre.appendChild(b);
+  });
+
+  // scenarios table
+  const SC=[["k00","E 운영 환경","캠퍼스 운영 전경 (킥보드 56대)"],["k01","A 상태별 기본","도서관 앞에 무질서하게 놓인 킥보드"],["k02","A 상태별 기본","건물 출입구 앞 불법 주차"],["k03","A 상태별 기본","통행 방해 신고 접수"],["k04","A 상태별 기본","넘어진 킥보드"],["k05","A 상태별 기본","이미 바르게 정렬된 킥보드는 건드리지 않음"],["k06","A 상태별 기본","배터리 부족 킥보드를 충전 주차구역으로"],["k07","A 상태별 기본","고장 킥보드 분류"],["k08","A 상태별 기본","한 장소에 상태가 다른 킥보드 7대"],["k09","B 복합 판단","넘어졌고 배터리도 부족"],["k10","B 복합 판단","고장 났고 배터리도 부족"],["k11","B 복합 판단","방치 신고 → 확인해 보니 고장"],["k12","B 복합 판단","오신고 (이미 바르게 주차됨)"],["k13","C 수용량·적재량","충전 주차구역 수용량 초과 (최대 5대)"],["k14","C 수용량·적재량","캠퍼스 전체 충전 주차구역 포화"],["k15","C 수용량·적재량","로봇 적재량 초과 (한 곳에 7대)"],["k16","C 수용량·적재량","요청 폭주 (시험 끝난 날 25건)"],["k17","C 수용량·적재량","적재함 안에 목적지가 다른 킥보드"],["k18","C 수용량·적재량","가장 가까운 일반 주차구역이 만석"],["k19","C 수용량·적재량","고장 분류 칸 부족 (고장 5대)"],["k20","D 돌발상황","가는 도중 누가 빌려 감"],["k21","D 돌발상황","대기 중 사용자가 직접 정렬"],["k22","D 돌발상황","꽂으려던 충전 스탠드 고장"],["k23","D 돌발상황","충전구역 일시 폐쇄 (광장 행사)"],["k24","D 돌발상황","짐을 실은 채 로봇 배터리 부족"],["k25","D 돌발상황","언덕길 왕복 (경사 구간, 지형 맵)"],["k26","D 돌발상황","계단 위 킥보드 (로봇 접근 불가)"],["k27","D 돌발상황","GPS 오차가 큰 곳의 신고"],["k28","D 돌발상황","수업 교대 시간 보행자 혼잡"],["k29","D 돌발상황","수거 중 로봇팔 고장"],["k30","D 돌발상황","세워 둔 킥보드가 다시 넘어짐"],["k31","D 돌발상황","야간 일괄 순회 (배터리 부족 8 + 고장 2)"],["k32","D 돌발상황","하루 운영 종합 (발표 데모용)"]];
+  const tb=document.querySelector('#scTable tbody');
+  tb.innerHTML=SC.map(([id,g,d])=>`<tr><td><code>${id}</code></td><td>${g}</td><td>${d}<br><code style="font-size:12px">./run_all_knu.sh --gui --rtf 4 ${id}</code></td></tr>`).join('');
+  document.getElementById('scFilter').oninput=e=>{
+    const q=e.target.value.trim().toLowerCase();
+    [...tb.rows].forEach(r=>r.style.display=!q||r.textContent.toLowerCase().includes(q)?'':'none');
+  };
+
+  // router
+  const order=pages.map(p=>p.dataset.id);
+  let spy=null;
+  function show(){
+    const h=location.hash.replace(/^#\/?/,'');
+    let [pid,sec]=h.split('/');
+    if(!byId[pid]) pid='intro';
+    pages.forEach(p=>p.classList.toggle('show',p.dataset.id===pid));
+    const page=byId[pid];
+    sidebar.querySelectorAll('.pg').forEach(x=>{const on=x.dataset.id===pid; x.classList.toggle('active',on);});
+    const grp=sidebar.querySelector(`.side-group[data-g="${page.dataset.group}"]`);
+    if(grp){grp.classList.add('open'); grp.querySelector('.grp-btn').setAttribute('aria-expanded','true');}
+    document.querySelectorAll('#topLinks a').forEach(a=>a.classList.toggle('on',a.dataset.grp===page.dataset.group));
+    document.title=page.dataset.title+' — SCOOTOVER 문서';
+    // crumb
+    let cr=page.querySelector('.crumb');
+    if(!cr){cr=document.createElement('div');cr.className='crumb';page.prepend(cr);}
+    cr.innerHTML=`<a href="#/intro">문서</a> › ${page.dataset.group} › ${page.dataset.title}`;
+    // toc
+    const hs=[...page.querySelectorAll('h2,h3')];
+    toc.innerHTML=hs.length?'<h5>이 페이지에서</h5>'+hs.map(x=>`<a class="${x.tagName.toLowerCase()}" href="#/${pid}/${x.id}" data-t="${x.id}">${x.dataset.label}</a>`).join(''):'';
+    // pager
+    const i=order.indexOf(pid), prev=byId[order[i-1]], next=byId[order[i+1]];
+    pager.innerHTML=(prev?`<a href="#/${prev.dataset.id}"><small>← 이전</small>${prev.dataset.title}</a>`:'<span style="flex:1"></span>')+
+                    (next?`<a class="next" href="#/${next.dataset.id}"><small>다음 →</small>${next.dataset.title}</a>`:'<span style="flex:1"></span>');
+    document.body.classList.remove('nav-open');
+    const target=sec&&document.getElementById(sec);
+    if(target && page.contains(target)) target.scrollIntoView(); else window.scrollTo(0,0);
+    // scroll spy
+    if(spy) spy.disconnect();
+    spy=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){toc.querySelectorAll('a').forEach(a=>a.classList.toggle('on',a.dataset.t===e.target.id))}})},{rootMargin:'-60px 0px -70% 0px'});
+    hs.forEach(x=>spy.observe(x));
+  }
+  window.addEventListener('hashchange',show); show();
+
+  // search
+  const idx=[];
+  pages.forEach(p=>{
+    idx.push({href:'#/'+p.dataset.id,title:p.dataset.title,sub:p.dataset.group,text:(p.querySelector('.lead')||{}).textContent||''});
+    p.querySelectorAll('h2,h3').forEach(h=>{
+      let body='',n=h.nextElementSibling; while(n&&!/^H[23]$/.test(n.tagName)){body+=' '+n.textContent;n=n.nextElementSibling}
+      idx.push({href:'#/'+p.dataset.id+'/'+h.id,title:h.textContent.replace(/#$/,''),sub:p.dataset.title,text:body});
+    });
+  });
+  const q=document.getElementById('q'), res=document.getElementById('results'); let sel=0;
+  function render(){
+    const s=q.value.trim().toLowerCase();
+    if(!s){res.style.display='none';return}
+    const hits=idx.map(e=>{const t=e.title.toLowerCase(),b=e.text.toLowerCase();const sc=t.includes(s)?2:b.includes(s)?1:0;return{e,sc}}).filter(x=>x.sc).sort((a,b)=>b.sc-a.sc).slice(0,12);
+    sel=0;
+    res.innerHTML=hits.length?hits.map((h,i)=>`<a href="${h.e.href}" class="${i===0?'sel':''}">${h.e.title}<small>${h.e.sub}</small></a>`).join(''):'<a>결과 없음</a>';
+    res.style.display='block';
+  }
+  q.oninput=render;
+  q.onkeydown=e=>{
+    const as=[...res.querySelectorAll('a[href]')];
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();sel=(sel+(e.key==='ArrowDown'?1:-1)+as.length)%as.length;as.forEach((a,i)=>a.classList.toggle('sel',i===sel))}
+    if(e.key==='Enter'&&as[sel]){location.hash=as[sel].getAttribute('href');q.value='';res.style.display='none';q.blur()}
+    if(e.key==='Escape'){q.value='';res.style.display='none';q.blur()}
+  };
+  res.onclick=()=>{q.value='';res.style.display='none'};
+  document.addEventListener('click',e=>{if(!e.target.closest('.search'))res.style.display='none'});
+  document.addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement!==q&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();q.focus()}});
+})();
+</script>
+</body>
+</html>

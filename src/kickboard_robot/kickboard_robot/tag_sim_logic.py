@@ -6,7 +6,7 @@ import math
 import random
 from dataclasses import dataclass
 
-from .collector_logic import tag_id_of
+from .collector_logic import face_tag_id, tag_id_of
 from .gz_utils import SCOOTER_L, SCOOTER_W
 from .motion import wrap
 
@@ -60,12 +60,12 @@ def detect(cam, scooters, charger_face, charger_id, model, rng=random):
     out = []
     for sid, x, y, yaw in scooters:
         best = None
-        for f in scooter_faces(x, y, yaw):
+        for k, f in enumerate(scooter_faces(x, y, yaw)):
             v = visible(cam, f, model)
             if v and (best is None or v[1] < best[1][1]):
-                best = (f, v)
-        if best:
-            out.append(noisy(tag_id_of(sid), best[0], best[1][0], model, rng))
+                best = (f, v, k)
+        if best:     # 면마다 다른 ID (collector 가 킥보드 방향을 앎)
+            out.append(noisy(face_tag_id(tag_id_of(sid), best[2]), best[0], best[1][0], model, rng))
     if charger_face is not None:
         v = visible(cam, charger_face, model)
         if v:

@@ -26,10 +26,10 @@ pass_criteria:
   - "조치 없음: #1,2 → 수거하지 않음 (위치 변화 0.2 m 이하)"
   - "충돌 0회, 계단·건물·운동장 진입 0회"
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
-robot: {initial_battery_pct: 100, capacity: 4}
+robot: {initial_battery_pct: 100, capacity: 2}
 overrides: {charging_capacity: 5}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 200.512, y: 131.745, yaw_deg: 176.5, battery_pct: 35, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
+  - {id: 1, x: 200.540, y: 132.240, yaw_deg: 176.5, battery_pct: 35, slot: C1-01, charging: true, place: slot, where: "C1 중앙도서관 앞 01번 칸"}
   - {id: 2, x: 204.85, y: 212.816, yaw_deg: -93.1, battery_pct: 70, slot: P06-02, place: slot, where: "P06 111 중앙도서관 인근 02번 칸"}
   - {id: 3, x: 203.22, y: 136.63, yaw_deg: -54.4, tilt_deg: 90, battery_pct: 66, place: walkway, where: "도서관 앞 보행로"}
   - {id: 4, x: 64.57, y: 209.67, yaw_deg: 19.0, battery_pct: 74, place: entrance, where: "103 글로벌플라자 출입구 앞"}

@@ -6,8 +6,12 @@ import threading
 import time
 
 # 킥보드 외형: 옆에서 보면 'ㄴ' 자 — 앞쪽 세로 기둥(+핸들) + 낮은 발판 + 바퀴 2개.  +x = 앞(기둥 쪽)
-SCOOTER_L, SCOOTER_W = 0.6, 0.17          # 태그 면 기준 외곽: 앞뒤 ±0.3, 좌우 ±0.085 (sim_tag_detector 와 공유)
-FALLEN_Z = 0.21                           # 넘어졌을 때(roll 90°) 핸들이 땅에 묻히지 않게 띄우는 높이
+SCOOTER_L, SCOOTER_W = 0.6, 0.17          # 태그 면 기준 외곽: 앞뒤 ±0.3, 좌우 ±0.085 (sim_tag_detector 와 공유, 인식 로직용)
+FALLEN_Z = 0.236                          # 넘어졌을 때(roll 90°) 핸들(반폭 0.236)이 땅에 묻히지 않게 띄우는 높이
+# 외형: Blender G30 메시 (models/g30_scooter, scripts/build_blender_models.py 가 만듦).
+#   모델 원점 = 앞·뒤 바퀴 축 가운데 지면, +x = 앞. 휠베이스 0.84, 앞바퀴 축 (0.42, 0, 0.127), 길이 1.17, 핸들 폭 0.47
+G30_MESH = 'model://g30_scooter/meshes/'
+G30_WB, G30_R = 0.84, 0.127
 
 # 상태별 색 (Gazebo 에서 한눈에 보이게).  발판 = 상태,  기둥·핸들 = 배터리
 DECK_COLORS = {
@@ -43,30 +47,6 @@ def scooter_colors(state, low_battery, broken=False, charging=False):
     return DECK_COLORS[state], stem
 
 
-def _box(name, x, y, z, sx, sy, sz, rgb, collide=False, roll=0.0, yaw=0.0):
-    pose = f"<pose>{x:.3f} {y:.3f} {z:.3f} {roll:.4f} 0 {yaw:.4f}</pose>"
-    geo = f"<geometry><box><size>{sx} {sy} {sz}</size></box></geometry>"
-    mat = f"<material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse></material>"
-    out = f"<visual name='{name}'>{pose}{geo}{mat}</visual>"
-    if collide:
-        out += f"<collision name='{name}_c'>{pose}{geo}</collision>"
-    return out
-
-
-def _wheel(name, x):
-    return (f"<visual name='{name}'><pose>{x} 0 0.06 1.5708 0 0</pose>"
-            f"<geometry><cylinder><radius>0.06</radius><length>0.04</length></cylinder></geometry>"
-            f"<material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>")
-
-
-def _tag(i, x, y, z, yaw):
-    """태그 자리: 흰 판 + 검은 사각형 (AprilTag 처럼 보이게).
-    TODO(A): 실제 tag36h11 텍스처로 바꾸면 apriltag_ros 백엔드에서 검출 가능."""
-    c, s = math.cos(yaw), math.sin(yaw)
-    return (_box(f'tag{i}', x + 0.004 * c, y + 0.004 * s, z, 0.004, 0.2, 0.2, '1 1 1', yaw=yaw)
-            + _box(f'tag{i}_in', x + 0.007 * c, y + 0.007 * s, z, 0.004, 0.11, 0.11, '0 0 0', yaw=yaw))
-
-
 def body_link(name):
     """킥보드 링크 이름 (모델마다 다르게 — Gazebo Entity Tree 에서 구분하기 쉽게)"""
     return f'{name}_body'
@@ -84,29 +64,36 @@ def _beacon(rgb, roll=0.0, h=2.3):
             f"<geometry><sphere><radius>0.32</radius></sphere></geometry>{mat}</visual>")
 
 
+def _mesh(name, uri, rgb=None, pose='0 0 0 0 0 0'):
+    mat = (f"<material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse><specular>0.2 0.2 0.2 1</specular></material>"
+           if rgb else '')
+    return (f"<visual name='{name}'><pose>{pose}</pose><geometry><mesh><uri>{uri}</uri></mesh></geometry>"
+            f"{mat}</visual>")
+
+
+def _cbox(name, x, y, z, sx, sy, sz, pitch=0.0):
+    return (f"<collision name='{name}'><pose>{x:.3f} {y:.3f} {z:.3f} 0 {pitch:.4f} 0</pose>"
+            f"<geometry><box><size>{sx} {sy} {sz}</size></box></geometry></collision>")
+
+
 def scooter_sdf(name, collide=True, deck=DECK_COLORS['OK'], stem=STEM_NORMAL, beacon=False, roll=0.0):
-    """collide=False: 충돌체 없는 복사본 (로봇팔이 들고 다니거나 적재함에 실린 킥보드)
+    """G30 킥보드. 발판 = 상태 색, 스템·핸들 = 배터리 색 (나머지는 Blender 재질 그대로).
+    collide=False: 충돌체 없는 복사본 (로봇이 싣고 다니거나 옮기는 중인 킥보드)
     beacon=True: 처리가 필요한 킥보드(발판 색이 정상 초록이 아님)면 위에 상태 색 신호등을 단다 (캠퍼스 맵)"""
-    c = collide
-    L, W = SCOOTER_L, SCOOTER_W
-    dark = '0.12 0.12 0.12'
-    body = (
-        _box('deck', 0.0, 0, 0.105, L - 0.04, 0.16, 0.05, deck, collide=c)                # 발판
-        + _box('stem', L / 2 - 0.03, 0, 0.52, 0.05, 0.05, 0.8, stem, collide=c)          # 세로 기둥 (ㄴ 의 세로)
-        + _box('bar', L / 2 - 0.03, 0, 0.93, 0.04, 0.42, 0.04, stem)                      # 핸들
-        + _box('fender', -L / 2 + 0.005, 0, 0.2, 0.01, 0.16, 0.2, dark, collide=c)       # 뒤 흙받이 (뒤 태그용)
-        + _box('side_l', 0.0, W / 2 - 0.005, 0.22, 0.24, 0.01, 0.2, dark)                # 옆 태그 판
-        + _box('side_r', 0.0, -W / 2 + 0.005, 0.22, 0.24, 0.01, 0.2, dark)
-        + _wheel('wheel_f', L / 2 - 0.06) + _wheel('wheel_r', -L / 2 + 0.06)
-    )
-    tags = (_tag(0, L / 2 - 0.005, 0, 0.42, 0.0)                 # 앞: 기둥 앞면
-            + _tag(1, -L / 2, 0, 0.2, math.pi)                   # 뒤: 흙받이
-            + _tag(2, 0, W / 2, 0.22, math.pi / 2)               # 왼쪽
-            + _tag(3, 0, -W / 2, 0.22, -math.pi / 2))            # 오른쪽
+    body = (_mesh('g30_body', G30_MESH + 'g30_body.obj') + _mesh('g30_stand', G30_MESH + 'g30_stand.obj')
+            + _mesh('deck', G30_MESH + 'g30_deck.obj', deck) + _mesh('stem', G30_MESH + 'g30_stem.obj', stem))
+    if collide:
+        ax = G30_WB / 2
+        t = math.radians(14)                                   # 스템 뒤 기울기
+        body += (_cbox('deck_c', -0.075, 0, 0.125, 0.85, 0.17, 0.09)
+                 + _cbox('wheel_f_c', ax, 0, G30_R, 0.25, 0.06, 0.25)
+                 + _cbox('wheel_r_c', -ax, 0, G30_R, 0.25, 0.06, 0.25)
+                 + _cbox('stem_c', ax - 0.53 * math.sin(t), 0, G30_R + 0.53 * math.cos(t), 0.05, 0.05, 1.06, -t)
+                 + _cbox('bar_c', ax - 1.06 * math.sin(t), 0, G30_R + 1.06 * math.cos(t), 0.05, 0.47, 0.04))
     if beacon and deck != DECK_COLORS['OK']:
         body += _beacon(deck, roll)
     return (f"<?xml version='1.0'?><sdf version='1.9'><model name='{name}'><static>true</static>"
-            f"<link name='{body_link(name)}'>{body}{tags}</link></model></sdf>")
+            f"<link name='{body_link(name)}'>{body}</link></model></sdf>")
 
 
 class GzWorld:

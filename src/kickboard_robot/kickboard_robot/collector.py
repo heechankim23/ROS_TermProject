@@ -15,6 +15,9 @@ ALIGNING   : 검출한 태그로 킥보드 중심을 추정하고, nav_bridge(Go
              + 진입 금지 구역 + 최근 라이다 점으로 팔이 닿는 띠(align_spot_radii) 위 후보를 검사(몸체·팔 경로·갈 수 있음)·
              채점해 가장 좋은 자리로 보내고, 실패하면 기다렸다 다시 채점 -> 실패한 자리에서 떨어진 다음 후보. 후보가 없으면
              align_blocked_wait_sec 동안 1초마다 다시 채점하고, 그래도 없으면 실패 (collector_logic.plan_align_spots).
+             load_mode: reverse (기본, SCOOTOVER v19) 이면 자리는 하나다 — 킥보드와 같은 방향으로 킥보드 앞에 서서
+             뒤 램프를 킥보드 앞바퀴에 댄다 (collector_logic.reverse_entry_pose, 다음 레인 = /arm_loader/next_lane).
+             킥보드 방향은 태그 면 ID(면마다 다름)로 안다. 후보 = 그 자리 + 진행 방향으로 조금 더 먼 자리(entry_extra).
 LOADING    : 로봇팔(arm_loader, sim:=gz) 이 발판을 집어 적재함 칸에 싣는다 -> 적재 +1, /scooter_loaded 발행
              arm_loader 가 없으면(kinematic 모드 등) load_time_sec 정지로 대신한다
 """
@@ -30,13 +33,15 @@ from sensor_msgs.msg import LaserScan
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
-from std_msgs.msg import String
+from rclpy.qos import DurabilityPolicy, QoSProfile
+from std_msgs.msg import Int8, String
 
 from kickboard_interfaces.action import CollectScooter, GoToPose, LoadScooter
 from kickboard_interfaces.msg import RobotStatus, TagDetectionArray
 
-from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, SpotGrid, align_next_step, align_pose, fill_static,
-                              next_spot, plan_align_spots, retry_angles, within_reach)
+from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, ENTRY_DIST, SpotGrid, align_next_step, align_pose,
+                              entry_error, fill_static, next_spot, plan_align_spots, retry_angles, scooter_from_face,
+                              split_tag_id, within_reach)
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
 from .motion import quat_from_yaw, yaw_from_quat
 
@@ -54,7 +59,10 @@ class Collector(Node):
         self.declare_parameter('approach_standoff', 1.6)     # 로봇 중심 -> 킥보드 (로봇 길이 1.7 m)
         self.declare_parameter('verify_timeout_sec', 10.0)
         self.declare_parameter('search_angular_speed', 0.65)
-        self.declare_parameter('align_distance', 1.35)        # 로봇 중심 -> 킥보드 중심 (팔이 발판에 닿는 거리)
+        self.declare_parameter('align_distance', 1.35)        # 로봇 중심 -> 킥보드 중심 (팔이 발판에 닿는 거리, load_mode arm)
+        self.declare_parameter('load_mode', 'reverse')        # reverse = v19 뒤 램프 후진 적재, arm = 예전 로봇팔(어느 방향이든)
+        self.declare_parameter('entry_extra', [0.0, 0.15, 0.30])    # reverse: 적재 자리 후보 (진행 방향 추가 거리 m)
+        self.declare_parameter('entry_tol', [0.35, 0.15, 10.0])     # reverse: 적재 가능 오차 (앞뒤 m, 옆 m, yaw 도)
         self.declare_parameter('align_pos_tol', 0.05)
         self.declare_parameter('align_yaw_tol_deg', 10.0)
         self.declare_parameter('align_timeout_sec', 90.0)     # 정렬 자리까지 경로 주행 포함 (시도 1번당)
@@ -102,6 +110,10 @@ class Collector(Node):
         self.loaded_pub = self.create_publisher(String, '/scooter_loaded', 10)
         self.nav = ActionClient(self, GoToPose, '/nav_bridge/go_to_pose', callback_group=self.cb)
         self.loader = ActionClient(self, LoadScooter, '/arm_loader/load', callback_group=self.cb)
+        self.next_lane, self.entry = None, None  # 다음 적재 레인 (arm_loader), 지금 정렬 중인 (킥보드 방향, 레인)
+        self.create_subscription(Int8, '/arm_loader/next_lane', lambda m: setattr(self, 'next_lane', m.data),
+                                 QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL),
+                                 callback_group=self.cb)
         ActionServer(self, CollectScooter, '/collect_scooter', self.execute,
                      goal_callback=lambda g: GoalResponse.ACCEPT,
                      cancel_callback=lambda g: CancelResponse.ACCEPT, callback_group=self.cb)
@@ -109,12 +121,17 @@ class Collector(Node):
     def on_dets(self, msg):
         t = now_sec(self)
         for d in msg.detections:
-            self.dets[d.id] = (t, d)
+            base, face = split_tag_id(d.id)      # 면마다 ID 가 다름 -> 킥보드 ID 로 모으고 면 번호를 같이 둠
+            self.dets[base] = (t, d, face)
 
     def fresh(self, tag):
+        e = self.fresh_face(tag)
+        return e[0] if e else None
+
+    def fresh_face(self, tag):
         e = self.dets.get(tag)
         if e and now_sec(self) - e[0] <= self.get_parameter('detection_max_age_sec').value:
-            return e[1]
+            return e[1], e[2]
         return None
 
     def twist(self, v=0.0, w=0.0):
@@ -209,15 +226,23 @@ class Collector(Node):
         #    자리 선택과 경로 모두 코스트맵(정적 지도 + 라이다)을 써서 다른 킥보드·벽·이 킥보드의
         #    넘어진 기둥까지 피한다. 로봇팔은 손목을 돌려 맞추므로 어느 방향에서 다가가도 된다.
         self.fb(gh, 'ALIGNING')
-        dist = self.get_parameter('align_distance').value
+        reverse = self.get_parameter('load_mode').value == 'reverse'
+        # arm_loader 가 없으면(kinematic) 실은 수로: 0 대 -> 왼쪽, 1 대 -> 오른쪽 (mission_manager_campus.sync_lanes 와 같음)
+        lane = max(self.next_lane, 0) if self.next_lane is not None else min(self.load_count, 1)
+        dist = ENTRY_DIST if reverse else self.get_parameter('align_distance').value
         half = self.get_parameter('scooter_half_depth').value
         centers = []
 
         def collect():
-            d = self.fresh(tag)
-            if d is not None:
+            e = self.fresh_face(tag)
+            if e is not None:
+                d, face = e
                 ty = yaw_from_quat(d.pose.orientation)
-                centers.append((d.pose.position.x - half * math.cos(ty), d.pose.position.y - half * math.sin(ty), ty))
+                if reverse:     # 면 번호로 킥보드 진행 방향까지
+                    centers.append(scooter_from_face(d.pose.position.x, d.pose.position.y, ty, face))
+                else:
+                    centers.append((d.pose.position.x - half * math.cos(ty), d.pose.position.y - half * math.sin(ty),
+                                    ty))
 
         t0 = now_sec(self)
         while now_sec(self) - t0 < 1.0:              # 1초 모아서 평균 (검출 노이즈)
@@ -227,6 +252,11 @@ class Collector(Node):
             return self.finish(gh, False, 'align_failed: tag lost')
         cx = sum(c[0] for c in centers) / len(centers)
         cy = sum(c[1] for c in centers) / len(centers)
+        hd = math.atan2(sum(math.sin(c[2]) for c in centers), sum(math.cos(c[2]) for c in centers))
+        self.entry = (hd, lane) if reverse else None
+        if reverse:
+            self.get_logger().info(f'킥보드 {sid}: 방향 {math.degrees(hd):.0f}° -> '
+                                   f'{"왼" if lane == 0 else "오른"}쪽 레인 후진 적재 자리로')
         target = PoseStamped()
         target.header.frame_id = 'map'
         target.pose.position.x, target.pose.position.y = cx, cy
@@ -237,7 +267,20 @@ class Collector(Node):
             pose = self.pose.get()
             return None if pose is None else math.hypot(cx - pose[0], cy - pose[1])
 
+        def entry_ok(far=None):
+            # v19: 뒤 램프가 킥보드 앞바퀴에 닿는 자리인가 (앞뒤·옆·방향 오차). far 가 있으면(정렬 생략 판단) 더 좁게
+            pose = self.pose.get()
+            if pose is None:
+                return False, None
+            ea, el, ey = entry_error(pose, cx, cy, hd, lane)
+            ta, tl, ty = self.get_parameter('entry_tol').value
+            if far is not None:
+                ta, tl, ty = ta / 2, tl / 2, ty / 2
+            return abs(ea) <= ta and abs(el) <= tl and abs(math.degrees(ey)) <= ty, (ea, el, math.degrees(ey))
+
         def in_reach(far=None):
+            if reverse:
+                return entry_ok(far)[0]
             # 로봇팔은 손목을 돌려 맞추므로 방향과 무관하게 거리만 맞으면 실을 수 있다
             r = reach_dist()
             return r is not None and within_reach(r, dist, ARM_REACH_NEAR, margin if far is None else far)
@@ -245,6 +288,11 @@ class Collector(Node):
         def too_far(status, msg):
             # 이동은 성공했는데 nav_bridge 가 먼 자리를 골랐으면(좁은 곳: 주차 차량 사이, 진입 금지 구역 안)
             # 팔이 닿지 않는다 -> 이동 실패로 보고 다른 각도 자리로 다시 시도한다
+            if reverse:
+                ok, e = entry_ok()
+                if status == 'ok' and not ok and e is not None:
+                    return 'failed', f'out of arm reach (적재 자리 오차 앞뒤 {e[0]:.2f} m, 옆 {e[1]:.2f} m, {e[2]:.0f}°)'
+                return status, msg
             r = reach_dist()
             if status == 'ok' and r is not None and r > dist + margin:
                 return 'failed', f'out of arm reach ({r:.2f} m)'
@@ -318,7 +366,7 @@ class Collector(Node):
         names = ['map_yaml', 'physical_map_yaml', 'keepout_goal_clearance', 'inscribed_radius', 'scan_offset_x',
                  'footprint']
         info = {'nav': None, 'phys': None, 'keep_clear': None, 'inscribed': 0.47, 'scan_off': 0.80,
-                'footprint': [-0.92, 0.89, 0.50]}
+                'footprint': [-0.98, 0.96, 0.58]}
         vals = {}
         if self.nav_params_cli.wait_for_service(timeout_sec=2.0):
             res = future_wait(self, self.nav_params_cli.call_async(GetParameters.Request(names=names)), 3.0)
@@ -380,9 +428,10 @@ class Collector(Node):
         grid = SpotGrid(cx, cy, half=6.0, res=0.1)
         fill_static(grid, info['nav'], info['phys'])
         grid.add_points(*self.recent_scan_points(info))
-        return plan_align_spots(grid, cx, cy, pose[:2], dist, list(self.get_parameter('align_spot_radii').value),
+        radii = list(self.get_parameter('entry_extra' if self.entry else 'align_spot_radii').value)
+        return plan_align_spots(grid, cx, cy, pose[:2], dist, radii,
                                 step_deg=self.get_parameter('align_spot_step_deg').value,
-                                inscribed=float(info['inscribed']), keep_clear=info['keep_clear'])
+                                inscribed=float(info['inscribed']), keep_clear=info['keep_clear'], entry=self.entry)
 
     def spot_goal(self, spot):
         goal = PoseStamped()

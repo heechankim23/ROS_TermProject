@@ -4,13 +4,14 @@ mission_variant: campus
 map_json: knu_campus.json
 gps_origin: {lat: 35.8904, lon: 128.6103}
 terrain: {flat: true}
-robot_spawn: {x: 86.184, y: 84.835, yaw_deg: 216.6}
+robot_spawn: {x: 96.778, y: 78.158, z: 0.1, yaw_deg: 268.4}
 charger:
   station_id: station_1
   tag_id: 100
-  tag_pose: {x: 85.381, y: 84.239, yaw_deg: 36.6}
-  dock_distance: 1.0
-  pre_dock_distance: 2.0
+  tag_pose: {x: 96.747, y: 77.018, yaw_deg: 88.4}
+  dock_distance: 1.14
+  pre_dock_distance: 4.44
+  station: {model: scootover_robot_station, x: 96.814, y: 79.457, yaw_deg: -91.6}
 parking_zones:
 - name: P13
   site: 201 농대1호관 인근
@@ -23,16 +24,16 @@ parking_zones:
   rack: {x: -68.09, y: -10.55, yaw_deg: -14.6, length: 7.0, road: service}
   robot_access: {x: -68.54, y: -12.24, yaw_deg: -14.6}
   slots:
-  - {id: P13-01, x: -71.14, y: -9.75, z: -6.19, yaw_deg: 75.4, role: normal}
-  - {id: P13-02, x: -70.46, y: -9.93, z: -6.15, yaw_deg: 75.4, role: normal}
-  - {id: P13-03, x: -69.79, y: -10.11, z: -6.12, yaw_deg: 75.4, role: normal}
-  - {id: P13-04, x: -69.11, y: -10.28, z: -6.08, yaw_deg: 75.4, role: normal}
-  - {id: P13-05, x: -68.43, y: -10.46, z: -6.04, yaw_deg: 75.4, role: normal}
-  - {id: P13-06, x: -67.76, y: -10.64, z: -6.0, yaw_deg: 75.4, role: normal}
-  - {id: P13-07, x: -67.08, y: -10.81, z: -5.96, yaw_deg: 75.4, role: normal}
-  - {id: P13-08, x: -66.4, y: -10.99, z: -5.91, yaw_deg: 75.4, role: normal}
-  - {id: P13-09, x: -65.72, y: -11.17, z: -5.87, yaw_deg: -104.6, role: broken}
-  - {id: P13-10, x: -65.05, y: -11.34, z: -5.82, yaw_deg: -104.6, role: broken}
+  - {id: P13-01, x: -71.14, y: -9.75, z: -6.29, yaw_deg: 75.4, role: normal}
+  - {id: P13-02, x: -70.46, y: -9.93, z: -6.26, yaw_deg: 75.4, role: normal}
+  - {id: P13-03, x: -69.79, y: -10.11, z: -6.22, yaw_deg: 75.4, role: normal}
+  - {id: P13-04, x: -69.11, y: -10.28, z: -6.19, yaw_deg: 75.4, role: normal}
+  - {id: P13-05, x: -68.43, y: -10.46, z: -6.15, yaw_deg: 75.4, role: normal}
+  - {id: P13-06, x: -67.76, y: -10.64, z: -6.11, yaw_deg: 75.4, role: normal}
+  - {id: P13-07, x: -67.08, y: -10.81, z: -6.06, yaw_deg: 75.4, role: normal}
+  - {id: P13-08, x: -66.4, y: -10.99, z: -6.02, yaw_deg: 75.4, role: normal}
+  - {id: P13-09, x: -65.72, y: -11.17, z: -5.97, yaw_deg: -104.6, role: broken}
+  - {id: P13-10, x: -65.05, y: -11.34, z: -5.93, yaw_deg: -104.6, role: broken}
 - name: P15
   site: 106 인문한국진흥관 인근
   origin: image
@@ -44,16 +45,16 @@ parking_zones:
   rack: {x: 56.52, y: -61.55, yaw_deg: -6.3, length: 7.0, road: service}
   robot_access: {x: 56.33, y: -63.29, yaw_deg: -6.3}
   slots:
-  - {id: P15-01, x: 53.39, y: -61.21, z: -4.73, yaw_deg: 83.7, role: normal}
-  - {id: P15-02, x: 54.09, y: -61.28, z: -4.74, yaw_deg: 83.7, role: normal}
-  - {id: P15-03, x: 54.79, y: -61.36, z: -4.75, yaw_deg: 83.7, role: normal}
-  - {id: P15-04, x: 55.48, y: -61.44, z: -4.77, yaw_deg: 83.7, role: normal}
-  - {id: P15-05, x: 56.18, y: -61.51, z: -4.78, yaw_deg: 83.7, role: normal}
-  - {id: P15-06, x: 56.87, y: -61.59, z: -4.79, yaw_deg: 83.7, role: normal}
-  - {id: P15-07, x: 57.57, y: -61.67, z: -4.81, yaw_deg: 83.7, role: normal}
-  - {id: P15-08, x: 58.26, y: -61.75, z: -4.82, yaw_deg: 83.7, role: normal}
-  - {id: P15-09, x: 58.96, y: -61.82, z: -4.84, yaw_deg: -96.3, role: broken}
-  - {id: P15-10, x: 59.66, y: -61.9, z: -4.85, yaw_deg: -96.3, role: broken}
+  - {id: P15-01, x: 53.39, y: -61.21, z: -4.83, yaw_deg: 83.7, role: normal}
+  - {id: P15-02, x: 54.09, y: -61.28, z: -4.84, yaw_deg: 83.7, role: normal}
+  - {id: P15-03, x: 54.79, y: -61.36, z: -4.86, yaw_deg: 83.7, role: normal}
+  - {id: P15-04, x: 55.48, y: -61.44, z: -4.87, yaw_deg: 83.7, role: normal}
+  - {id: P15-05, x: 56.18, y: -61.51, z: -4.88, yaw_deg: 83.7, role: normal}
+  - {id: P15-06, x: 56.87, y: -61.59, z: -4.9, yaw_deg: 83.7, role: normal}
+  - {id: P15-07, x: 57.57, y: -61.67, z: -4.91, yaw_deg: 83.7, role: normal}
+  - {id: P15-08, x: 58.26, y: -61.75, z: -4.93, yaw_deg: 83.7, role: normal}
+  - {id: P15-09, x: 58.96, y: -61.82, z: -4.94, yaw_deg: -96.3, role: broken}
+  - {id: P15-10, x: 59.66, y: -61.9, z: -4.96, yaw_deg: -96.3, role: broken}
 charging_zones:
 - name: C1
   site: 중앙도서관 앞
@@ -68,14 +69,14 @@ charging_zones:
   rack: {x: 200.69, y: 134.71, yaw_deg: 86.5, length: 6.8, road: footway}
   robot_access: {x: 202.44, y: 134.61, yaw_deg: 86.5}
   slots:
-  - {id: C1-01, x: 200.51, y: 131.74, z: 2.34, yaw_deg: 176.5, role: charge}
-  - {id: C1-02, x: 200.56, y: 132.59, z: 2.31, yaw_deg: 176.5, role: charge}
-  - {id: C1-03, x: 200.62, y: 133.44, z: 2.28, yaw_deg: 176.5, role: charge}
-  - {id: C1-04, x: 200.67, y: 134.29, z: 2.25, yaw_deg: 176.5, role: charge}
-  - {id: C1-05, x: 200.72, y: 135.14, z: 2.22, yaw_deg: 176.5, role: charge}
-  - {id: C1-06, x: 200.77, y: 135.99, z: 2.19, yaw_deg: 176.5, role: charge}
-  - {id: C1-07, x: 200.82, y: 136.84, z: 2.16, yaw_deg: 176.5, role: charge}
-  - {id: C1-08, x: 200.88, y: 137.68, z: 2.13, yaw_deg: 176.5, role: charge}
+  - {id: C1-01, x: 200.54, y: 132.24, z: 2.22, yaw_deg: 176.5, role: charge}
+  - {id: C1-02, x: 200.58, y: 132.86, z: 2.2, yaw_deg: 176.5, role: charge}
+  - {id: C1-03, x: 200.62, y: 133.48, z: 2.18, yaw_deg: 176.5, role: charge}
+  - {id: C1-04, x: 200.66, y: 134.1, z: 2.15, yaw_deg: 176.5, role: charge}
+  - {id: C1-05, x: 200.73, y: 135.33, z: 2.11, yaw_deg: 176.5, role: charge}
+  - {id: C1-06, x: 200.77, y: 135.95, z: 2.09, yaw_deg: 176.5, role: charge}
+  - {id: C1-07, x: 200.81, y: 136.57, z: 2.07, yaw_deg: 176.5, role: charge}
+  - {id: C1-08, x: 200.85, y: 137.19, z: 2.04, yaw_deg: 176.5, role: charge}
 - name: C4
   site: 글로벌플라자 광장
   origin: new
@@ -87,14 +88,14 @@ charging_zones:
   rack: {x: 95.51, y: 218.29, yaw_deg: -1.1, length: 6.8, road: service}
   robot_access: {x: 95.54, y: 220.04, yaw_deg: -1.1}
   slots:
-  - {id: C4-01, x: 92.53, y: 218.35, z: -5.74, yaw_deg: -91.1, role: charge}
-  - {id: C4-02, x: 93.38, y: 218.33, z: -5.67, yaw_deg: -91.1, role: charge}
-  - {id: C4-03, x: 94.23, y: 218.32, z: -5.6, yaw_deg: -91.1, role: charge}
-  - {id: C4-04, x: 95.08, y: 218.3, z: -5.53, yaw_deg: -91.1, role: charge}
-  - {id: C4-05, x: 95.93, y: 218.28, z: -5.47, yaw_deg: -91.1, role: charge}
-  - {id: C4-06, x: 96.78, y: 218.27, z: -5.41, yaw_deg: -91.1, role: charge}
-  - {id: C4-07, x: 97.63, y: 218.25, z: -5.35, yaw_deg: -91.1, role: charge}
-  - {id: C4-08, x: 98.48, y: 218.24, z: -5.29, yaw_deg: -91.1, role: charge}
+  - {id: C4-01, x: 93.03, y: 218.34, z: -5.8, yaw_deg: -91.1, role: charge}
+  - {id: C4-02, x: 93.65, y: 218.33, z: -5.75, yaw_deg: -91.1, role: charge}
+  - {id: C4-03, x: 94.27, y: 218.32, z: -5.7, yaw_deg: -91.1, role: charge}
+  - {id: C4-04, x: 94.89, y: 218.3, z: -5.65, yaw_deg: -91.1, role: charge}
+  - {id: C4-05, x: 96.13, y: 218.28, z: -5.56, yaw_deg: -91.1, role: charge}
+  - {id: C4-06, x: 96.75, y: 218.27, z: -5.51, yaw_deg: -91.1, role: charge}
+  - {id: C4-07, x: 97.37, y: 218.26, z: -5.47, yaw_deg: -91.1, role: charge}
+  - {id: C4-08, x: 97.99, y: 218.25, z: -5.43, yaw_deg: -91.1, role: charge}
 - name: C5
   site: 인문대 쪽
   origin: image
@@ -106,20 +107,20 @@ charging_zones:
   rack: {x: -10.35, y: 109.03, yaw_deg: -160.3, length: 6.8, road: service}
   robot_access: {x: -9.76, y: 107.38, yaw_deg: -160.3}
   slots:
-  - {id: C5-01, x: -7.55, y: 110.03, z: -5.46, yaw_deg: 109.7, role: charge}
-  - {id: C5-02, x: -8.35, y: 109.74, z: -5.48, yaw_deg: 109.7, role: charge}
-  - {id: C5-03, x: -9.15, y: 109.46, z: -5.5, yaw_deg: 109.7, role: charge}
-  - {id: C5-04, x: -9.95, y: 109.17, z: -5.52, yaw_deg: 109.7, role: charge}
-  - {id: C5-05, x: -10.75, y: 108.88, z: -5.54, yaw_deg: 109.7, role: charge}
-  - {id: C5-06, x: -11.55, y: 108.6, z: -5.56, yaw_deg: 109.7, role: charge}
-  - {id: C5-07, x: -12.35, y: 108.31, z: -5.58, yaw_deg: 109.7, role: charge}
-  - {id: C5-08, x: -13.15, y: 108.03, z: -5.6, yaw_deg: 109.7, role: charge}
+  - {id: C5-01, x: -8.02, y: 109.86, z: -5.58, yaw_deg: 109.7, role: charge}
+  - {id: C5-02, x: -8.6, y: 109.65, z: -5.59, yaw_deg: 109.7, role: charge}
+  - {id: C5-03, x: -9.18, y: 109.44, z: -5.61, yaw_deg: 109.7, role: charge}
+  - {id: C5-04, x: -9.77, y: 109.24, z: -5.62, yaw_deg: 109.7, role: charge}
+  - {id: C5-05, x: -10.94, y: 108.82, z: -5.65, yaw_deg: 109.7, role: charge}
+  - {id: C5-06, x: -11.52, y: 108.61, z: -5.67, yaw_deg: 109.7, role: charge}
+  - {id: C5-07, x: -12.1, y: 108.4, z: -5.68, yaw_deg: 109.7, role: charge}
+  - {id: C5-08, x: -12.69, y: 108.19, z: -5.69, yaw_deg: 109.7, role: charge}
 params:
-  request_gateway: {max_range_m: 1200.0}
-  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.1, inflation_radius: 1.1, window_m: 70.0, max_retries: 2}
+  nav_bridge: {v_max: 1.5, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}
   battery_manager: {k1_pct_per_m: 0.02, k2_pct_per_s: 0.01}
   queue_manager: {w_r: 100.0, w_t: 0.5, w_d: 1.0, d_max: 1200.0}
+  request_gateway: {max_range_m: 1200.0}
   sim_lidar: {range_max: 12.0}
   collector: {align_timeout_sec: 120.0, search_radius_m: 10.5}
-  mission_manager: {return_battery_pct: 20.0}
+  mission_manager: {return_battery_pct: 20.0, undock_distance: 3.0}
   scooter_fleet_sim: {charge_rate_pct_per_s: 0.2}

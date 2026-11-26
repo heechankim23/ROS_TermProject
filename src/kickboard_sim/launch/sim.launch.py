@@ -44,8 +44,8 @@ def _setup(context):
                                '--frame-id', parent, '--child-frame-id', child],
                     parameters=[st], output='log')
 
-    acts += [static_tf('tf_scan', 'base_footprint', 'base_scan', (0.80, 0, 0.22)),
-             static_tf('tf_cam', 'base_footprint', 'camera_link', (0.76, 0, 0.45)),
+    acts += [static_tf('tf_scan', 'base_footprint', 'base_scan', (0.86, 0, 1.04)),
+             static_tf('tf_cam', 'base_footprint', 'camera_link', (0.9125, 0, 0.38)),
              static_tf('tf_cam_opt', 'camera_link', 'camera_optical_frame', (0, 0, 0),
                        (-math.pi / 2, 0, -math.pi / 2))]
 
@@ -106,7 +106,7 @@ def _setup(context):
             acts.append(TimerAction(period=delay, actions=[Node(
                 package='ros_gz_sim', executable='create', output='log', name=f'spawn_robot_{k}',
                 arguments=['-world', mf['name'], '-name', 'kickboard_robot', '-file', robot_sdf,
-                           '-x', str(sx), '-y', str(sy), '-z', '0.01', '-Y', str(syaw)])]))
+                           '-x', str(sx), '-y', str(sy), '-z', str(float(spawn.get('z', 0.0)) + 0.01), '-Y', str(syaw)])]))
         if gui and LC('follow').perform(context) == 'true':
             # 카메라가 로봇을 따라가게 (Gazebo 의 CameraTracking: /gui/follow).
             # world·GUI 를 불러오는 시간이 PC 마다 달라서 정해진 시각에 한 번 부르면 놓친다 ->

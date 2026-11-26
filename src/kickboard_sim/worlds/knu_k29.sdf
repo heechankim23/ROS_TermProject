@@ -43,18 +43,22 @@
       <static>true</static>
       <link name="link">
         <visual name="v"><geometry><mesh><uri>model://knu_campus/meshes/racks_k29.obj</uri></mesh></geometry></visual>
-        <collision name="C5_rack"><pose>-10.352 109.027 0.4 0 0 -2.7986</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
-        <collision name="C7_rack"><pose>-33.437 -173.756 0.4 0 0 -0.1313</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
-        <collision name="C8_rack"><pose>-268.283 -256.271 0.4 0 0 1.6936</pose><geometry><box><size>7.00 0.3 0.8</size></box></geometry></collision>
         <collision name="P14_rack"><pose>-411.900 -59.312 0.4 0 0 -1.5457</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P16_rack"><pose>-297.616 -64.201 0.4 0 0 1.5574</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
         <collision name="P19_rack"><pose>-226.817 -126.886 0.4 0 0 0.2226</pose><geometry><box><size>7.20 0.3 0.8</size></box></geometry></collision>
       </link>
     </model>
+    <include><uri>model://kickspot_4</uri><name>C5_kickspot_1</name><pose>-9.034 109.944 0.000 0 0 1.9138</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C5_kickspot_2</name><pose>-11.953 108.901 0.000 0 0 1.9138</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C7_kickspot_1</name><pose>-34.918 -173.137 0.000 0 0 1.4395</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C7_kickspot_2</name><pose>-31.845 -173.543 0.000 0 0 1.4395</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C8_kickspot_1</name><pose>-268.510 -257.860 0.000 0 0 -3.0188</pose></include>
+    <include><uri>model://kickspot_4</uri><name>C8_kickspot_2</name><pose>-268.890 -254.784 0.000 0 0 -3.0188</pose></include>
+    <!-- 로봇 충전소 차고 (Blender). 문이 길 쪽, 로봇은 안에서 충전 -->
     <include>
-      <uri>model://charging_station</uri>
+      <uri>model://scootover_robot_station</uri>
       <name>charging_station</name>
-      <pose>-299.777 -77.281 0 0 0 -1.5416</pose>
+      <pose>-301.443 -77.780 0 0 0 1.6000</pose>
     </include>
   </world>
 </sdf>
