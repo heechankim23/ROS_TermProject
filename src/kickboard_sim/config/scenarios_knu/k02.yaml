@@ -17,4 +17,4 @@ pass_criteria:
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: -193.89, y: -317.91, yaw_deg: -53.1, battery_pct: 58, place: entrance, where: "404 공대1호관 출입구 앞"}
-  - {id: 2, x: 73.86, y: -276.97, yaw_deg: 21.9, battery_pct: 66, place: entrance, where: "415 IT대학5호관 출입구 앞"}
+  - {id: 2, x: 73.86, y: -276.97, yaw_deg: 6.9, battery_pct: 66, place: entrance, where: "415 IT대학5호관 출입구 앞"}

@@ -65,13 +65,14 @@ def test_drop_zone_spots():
     plans = edge_plans('A', zone)
     assert len(plans) == 4
     south = min(plans, key=lambda p: p['robot'][1])
-    assert abs(south['robot'][1] - (2.3 - 0.95)) < 1e-9
-    assert abs(south['robot'][2] - math.pi / 2) < 1e-9          # 구역(북쪽)을 바라봄
+    assert abs(south['robot'][1] - (2.3 - 1.62)) < 1e-9          # 뒤 하차: 킥보드(변 안 0.45)가 로봇 뒤 2.07 m
+    assert abs(south['robot'][2] + math.pi / 2) < 1e-9          # 구역(북쪽)을 등짐
     assert len(south['spots']) == 4
     for x, y, yaw in south['spots']:
         assert -3.0 < x < -1.0 and 2.3 < y < 3.7                  # 구역 안
-        # 로봇팔 회전축(로봇 중심 앞 0.5 m)에서 닿는 거리
-        assert math.hypot(x - south['robot'][0], y - (south['robot'][1] + 0.5)) < 1.2
+        # 뒤 하차 끝 자리(로봇 뒤 2.07 m, 옆 0.27)에서 arm_loader 가 보정할 수 있는 거리·방향
+        assert math.hypot(x - south['robot'][0], y - (south['robot'][1] + 2.07)) < 1.5
+        assert abs(yaw - south['robot'][2]) < 1e-9
     plan, fs = choose_plan(plans, [], (-2.0, 0.0))
     assert plan is south and len(fs) == 4
     used = [(s[0], s[1]) for s in south['spots']]
@@ -84,11 +85,11 @@ def test_nearby_drop_opportunistic():
     """근처 주차구역 하역 판정 (D 요청, 2026-11-17)"""
     from kickboard_robot.drop_zones import choose_plan, edge_plans, nearby_drop
     zone_b = [[2.0, -3.7], [4.0, -3.7], [4.0, -2.3], [2.0, -2.3]]
-    north = max(edge_plans('B', zone_b), key=lambda p: p['robot'][1])      # 실제 맵에서 쓰는 변 (3.0, -1.35)
+    north = max(edge_plans('B', zone_b), key=lambda p: p['robot'][1])      # 실제 맵에서 쓰는 변 (3.0, -0.68)
     plans = [north]
     pick = (2.34, -2.31)                         # s5: 1번(3.5, -3.0)을 실으러 서는 자리
     d = nearby_drop(plans, [], pick, need=2, max_dist=2.0)
-    assert d is not None and abs(d - math.hypot(3.0 - 2.34, -1.35 + 2.31)) < 1e-6
+    assert d is not None and abs(d - math.hypot(3.0 - 2.34, -0.68 + 2.31)) < 1e-6
     assert nearby_drop(plans, [], pick, need=2, max_dist=0.0) is None      # 0 = 끔 (예전 동작)
     assert nearby_drop(plans, [], pick, need=0, max_dist=2.0) is None      # 내릴 킥보드 없음
     assert nearby_drop(plans, [], (-3.548, 0.0), need=1, max_dist=2.0) is None   # 먼 곳 (도킹 자리)

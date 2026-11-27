@@ -3,7 +3,7 @@
 planner.Costmap 은 지도 전체를 한 격자로 잡고 A* 를 돈다. 캠퍼스 주행 지도는 0.25 m 격자 5000 x 5160 칸이라
 그대로는 거리 변환 한 번에 수 초, 먼 목표 A* 는 수십 초가 걸린다. 그래서 두 단계로 나눈다.
 
-  1. GridRouter  빈 공간 위 1 m 격자 그래프 (도로·보행로는 비용을 낮게)에서 Dijkstra 로 큰 경로를 찾는다.
+  1. GridRouter  빈 공간 위 1 m 격자 그래프 (인도·횡단보도는 싸게, 차도는 비싸게: surface.py)에서 Dijkstra 로 큰 경로를 찾는다.
                  OSM 길 그래프는 꼭짓점이 건물 출입구 안쪽에 찍힌 곳이 많아 끊겨서 쓰지 않는다.
   2. RollingCostmap  로봇 주변 window_m x window_m 창만 planner.Costmap 으로 잡는다 (라이다 장애물 포함).
                  목표가 창 안이면 그대로 A*, 밖이면 큰 경로에서 창 안의 가장 먼 점까지 A* 하고 나머지는 큰 경로 점을 잇는다.
@@ -18,20 +18,21 @@ import warnings
 import numpy as np
 
 from .planner import Costmap
+from .surface import FACTOR, build_surface
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from scipy import ndimage
 
-OFF_ROAD_COST = 5.0          # 큰 경로에서 차도·보행로 밖 1 m 의 비용 (길 = 1)
+SUB_CLEARANCE = 1.5          # 창 안 중간 목표의 장애물 여유: 어느 방향으로 도착해도 차체(앞뒤 0.98 m)가 설 수 있게
 
 
 class GridRouter:
     """빈 공간 위 1 m 격자 그래프에서 큰 경로를 찾는다 (scipy C 구현 Dijkstra, 캠퍼스 끝에서 끝까지 1초 안).
-    칸 비용: 도로 1.0, 보행로 1.2, 길이 아닌 곳(광장·잔디) OFF_ROAD_COST = 5 (막지는 않되 길을 따라가게), 장애물 1.2 m 안이면 x1.5.
+    칸 비용: 노면 종류(surface.py 의 FACTOR: 인도·횡단보도 1, 길가, 빈 땅, 차도), 장애물 1.2 m 안이면 x1.5.
     여유 거리(clear)가 min_clear 보다 작은 칸은 지나갈 수 없다 (로봇 반폭 + 격자 오차)."""
 
-    def __init__(self, clear, ox, oy, res, roads=None, min_clear=0.6, cell=1.0):
+    def __init__(self, clear, ox, oy, res, surface=None, min_clear=0.6, cell=1.0):
         from scipy.sparse import coo_matrix
         f = max(1, int(round(cell / res)))
         H, W = (clear.shape[0] // f) * f, (clear.shape[1] // f) * f
@@ -39,9 +40,11 @@ class GridRouter:
         self.ox, self.oy, self.cell = ox, oy, res * f
         self.h, self.w = c.shape
         free = c >= min_clear
-        cost = np.full(c.shape, OFF_ROAD_COST)
-        if roads is not None:
-            cost = np.where(roads[:H, :W].reshape(H // f, f, W // f, f).any(axis=(1, 3)), 1.0, cost)
+        if surface is None:
+            cost = np.ones(c.shape)
+        else:                                      # 칸 중심의 노면 종류
+            kind = surface[:H, :W].reshape(H // f, f, W // f, f)[:, f // 2, :, f // 2]
+            cost = FACTOR[kind].astype(float)
         cost = np.where(c < 1.2, cost * 1.5, cost)
         self.free, self.cost = free, cost
         idx = -np.ones(c.shape, dtype=np.int64)
@@ -157,7 +160,7 @@ class RollingCostmap:
         self.full = grid[:hh, :ww].reshape(hh // f, f, ww // f, f).any(axis=(1, 3))
         self.ox, self.oy = omap.ox, omap.oy
         self.H, self.W = self.full.shape
-        # 큰 경로: 0.25 m 여유 거리 -> 1 m 격자 그래프 (도로·보행로는 싸게)
+        # 큰 경로: 0.25 m 여유 거리 -> 1 m 격자 그래프 (인도는 싸게, 차도는 비싸게)
         try:                                    # OpenCV 가 있으면 float32 로 (scipy 는 이 크기에서 메모리를 1 GB 가까이 씀)
             import cv2
             clear = cv2.distanceTransform((~self.full).astype(np.uint8), cv2.DIST_L2, 5) * np.float32(res)
@@ -165,20 +168,9 @@ class RollingCostmap:
             clear = ndimage.distance_transform_edt(~self.full).astype(np.float32) * res
         with open(route_json) as fjs:
             meta = json.load(fjs)
-        roads = np.zeros_like(self.full)
-        for r in meta.get('roads', []):
-            if r['kind'] == 'steps':
-                continue
-            p = np.array(r['pts'])
-            for a, b in zip(p[:-1], p[1:]):
-                n = max(2, int(math.dist(a, b) / res))
-                xs = np.linspace(a[0], b[0], n)
-                ys = np.linspace(a[1], b[1], n)
-                jj = ((ys - self.oy) / res).astype(int)
-                ii = ((xs - self.ox) / res).astype(int)
-                ok = (jj >= 0) & (jj < self.H) & (ii >= 0) & (ii < self.W)
-                roads[jj[ok], ii[ok]] = True
-        self.graph = GridRouter(clear, self.ox, self.oy, res, roads=roads)
+        # 노면 종류 (uint8): 창을 잡을 때 잘라 비용 배수로 바꾼다
+        self.surface_kind = build_surface(meta, self.ox, self.oy, res, self.full.shape)
+        self.graph = GridRouter(clear, self.ox, self.oy, res, surface=self.surface_kind)
         del clear
         self.win = None
         self.wc = None
@@ -202,6 +194,7 @@ class RollingCostmap:
         x0, y0 = self.ox + i0 * self.res, self.oy + j0 * self.res
         cm = Costmap(x0, y0, size, size, **self.kw)
         cm.static[:, :] = self.full[j0:j0 + cm.h, i0:i0 + cm.w]
+        cm.surface = FACTOR[self.surface_kind[j0:j0 + cm.h, i0:i0 + cm.w]]
         return cm, i0, j0
 
     def ensure(self, center):
@@ -263,7 +256,7 @@ class RollingCostmap:
             n = max(1, int(math.dist(prev, q)))
             pts += [(prev[0] + (q[0] - prev[0]) * k / n, prev[1] + (q[1] - prev[1]) * k / n) for k in range(1, n + 1)]
             prev = q
-        cost = self.win.cost_grid(t)
+        cost, dist = self.win.cost_grid(t), self.win.distance(t)
         cand = []
         for k, p in enumerate(pts):
             if not self.in_window(p, 6.0):
@@ -272,6 +265,10 @@ class RollingCostmap:
             if self.win.inside(j, i) and not math.isinf(cost[j, i]):
                 cand.append(p)
         # 창 안의 큰 경로 점 중 실제로 갈 수 있는 가장 먼 점 (먼 쪽부터 몇 개 시도)
+        # 사방에 여유가 있는 점을 우선. 그런 점이 없는 좁은 길(또는 멀리 못 가는 경우)만 아무 점이나
+        wide = [p for p in cand if dist[self.win.cell(*p)] >= SUB_CLEARANCE]
+        if wide and math.dist(wide[-1], start) > 10.0:
+            cand = wide
         local, sub = None, None
         step = max(1, len(cand) // 6)
         for p in list(reversed(cand))[::step][:7]:

@@ -55,7 +55,7 @@
       <gravity>false</gravity><inertial><pose>0.0000 0.0000 0.2250 0 0 0</pose><mass>8.0000</mass><inertia><ixx>0.152281</ixx><iyy>0.152281</iyy><izz>0.034561</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
       <visual name="arm_base"><geometry><mesh><uri>model://kickboard_robot/meshes/arm_base.obj</uri></mesh></geometry></visual>
     </link>
-    <joint name="j_arm_base_r" type="revolute"><parent>arm_base__0</parent><child>arm_base</child><axis><xyz>0.000000 0.000000 1.000000</xyz><limit><lower>-0.1000</lower><upper>3.1365</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
+    <joint name="j_arm_base_r" type="revolute"><parent>arm_base__0</parent><child>arm_base</child><axis><xyz>0.000000 0.000000 1.000000</xyz><limit><lower>-2.8003</lower><upper>3.6058</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
     <link name="dock_clamp_mount_l">
       <pose>0.500000 0.390000 0.800000 0.000000 -0.000000 0.000000</pose>
       <gravity>false</gravity><inertial><pose>-0.0515 0.0030 0.2851 0 0 0</pose><mass>0.6000</mass><inertia><ixx>0.001872</ixx><iyy>0.004074</iyy><izz>0.002250</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
@@ -133,7 +133,7 @@
       <gravity>false</gravity><inertial><pose>0.2715 0.0377 0.0000 0 0 0</pose><mass>3.0000</mass><inertia><ixx>0.006984</ixx><iyy>0.100046</iyy><izz>0.103502</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
       <visual name="forearm"><geometry><mesh><uri>model://kickboard_robot/meshes/forearm.obj</uri></mesh></geometry></visual>
     </link>
-    <joint name="j_forearm" type="revolute"><parent>upper_arm</parent><child>forearm</child><axis><xyz>0.000000 -1.000000 0.000000</xyz><limit><lower>-0.1102</lower><upper>2.2997</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
+    <joint name="j_forearm" type="revolute"><parent>upper_arm</parent><child>forearm</child><axis><xyz>0.000000 -1.000000 0.000000</xyz><limit><lower>-0.1102</lower><upper>3.0964</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
     <link name="front_ramp_l">
       <pose>0.900000 0.270000 0.150000 -0.000000 -1.570796 0.000000</pose>
       <gravity>false</gravity><inertial><pose>0.1425 -0.0200 -0.0050 0 0 0</pose><mass>1.5000</mass><inertia><ixx>0.006363</ixx><iyy>0.012716</iyy><izz>0.018453</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
@@ -391,29 +391,29 @@
       <gravity>false</gravity><inertial><pose>0.2965 0.0000 0.0000 0 0 0</pose><mass>4.0000</mass><inertia><ixx>0.008067</ixx><iyy>0.168770</iyy><izz>0.168770</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
       <visual name="upper_arm"><geometry><mesh><uri>model://kickboard_robot/meshes/upper_arm.obj</uri></mesh></geometry></visual>
     </link>
-    <joint name="j_upper_arm" type="revolute"><parent>arm_base</parent><child>upper_arm</child><axis><xyz>0.000000 -1.000000 0.000000</xyz><limit><lower>-0.1000</lower><upper>1.9905</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
+    <joint name="j_upper_arm" type="revolute"><parent>arm_base</parent><child>upper_arm</child><axis><xyz>0.000000 -1.000000 0.000000</xyz><limit><lower>-0.4317</lower><upper>1.9905</upper><effort>1000</effort><velocity>5</velocity></limit></axis></joint>
     <link name="wheel_fl">
       <pose>0.620000 0.475000 0.125000 0.000000 -0.000000 0.000000</pose>
       <inertial><pose>0.0000 0.0000 0.0000 0 0 0</pose><mass>5.0000</mass><inertia><ixx>0.029123</ixx><iyy>0.052083</iyy><izz>0.029123</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
-      <visual name="wheel_fl"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_fl.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
+      <visual name="wheel_fl"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_fl.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.1</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
     </link>
     <joint name="j_wheel_fl" type="revolute"><parent>base_link</parent><child>wheel_fl</child><axis><xyz>0.000000 1.000000 0.000000</xyz></axis></joint>
     <link name="wheel_fr">
       <pose>0.620000 -0.475000 0.125000 0.000000 -0.000000 0.000000</pose>
       <inertial><pose>0.0000 0.0000 0.0000 0 0 0</pose><mass>5.0000</mass><inertia><ixx>0.029123</ixx><iyy>0.052083</iyy><izz>0.029123</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
-      <visual name="wheel_fr"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_fr.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
+      <visual name="wheel_fr"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_fr.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.1</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
     </link>
     <joint name="j_wheel_fr" type="revolute"><parent>base_link</parent><child>wheel_fr</child><axis><xyz>0.000000 1.000000 0.000000</xyz></axis></joint>
     <link name="wheel_rl">
       <pose>-0.620000 0.475000 0.125000 0.000000 -0.000000 0.000000</pose>
       <inertial><pose>0.0000 0.0000 0.0000 0 0 0</pose><mass>5.0000</mass><inertia><ixx>0.029123</ixx><iyy>0.052083</iyy><izz>0.029123</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
-      <visual name="wheel_rl"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_rl.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
+      <visual name="wheel_rl"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_rl.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
     </link>
     <joint name="j_wheel_rl" type="revolute"><parent>base_link</parent><child>wheel_rl</child><axis><xyz>0.000000 1.000000 0.000000</xyz></axis></joint>
     <link name="wheel_rr">
       <pose>-0.620000 -0.475000 0.125000 0.000000 -0.000000 0.000000</pose>
       <inertial><pose>0.0000 0.0000 0.0000 0 0 0</pose><mass>5.0000</mass><inertia><ixx>0.029123</ixx><iyy>0.052083</iyy><izz>0.029123</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
-      <visual name="wheel_rr"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_rr.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
+      <visual name="wheel_rr"><geometry><mesh><uri>model://kickboard_robot/meshes/wheel_rr.obj</uri></mesh></geometry></visual><collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius><length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2><fdir1 gz:expressed_in="base_link">1 0 0</fdir1></ode></friction></surface></collision>
     </link>
     <joint name="j_wheel_rr" type="revolute"><parent>base_link</parent><child>wheel_rr</child><axis><xyz>0.000000 1.000000 0.000000</xyz></axis></joint>
     <link name="wheel_shuttle_l">

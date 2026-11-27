@@ -1,5 +1,6 @@
 """[sim:=kinematic] Gazebo 없이 /cmd_vel 을 적분해 /odom 과 TF(odom->base_footprint)를 낸다.
 로직(대기열·상태 머신·도킹 흐름)을 빠르게 검증할 때 사용.
+Gazebo 모델과 같이 뒷바퀴 축(base_footprint 뒤 0.62 m)을 중심으로 돈다.
 /sim/set_robot_pose (map 좌표 PoseStamped) 를 받으면 로봇을 그 자리로 옮긴다 (dock_controller snap 모드)."""
 import math
 
@@ -11,6 +12,14 @@ from rclpy.time import Time
 from tf2_ros import Buffer, TransformBroadcaster, TransformListener
 
 from .common import now_sec, spin_single
+from .motion import from_rear, spinning, to_rear
+
+
+def integrate(x, y, th, v, w, dt):
+    """base_footprint 자세를 dt 만큼: 뒤축이 v 로 전진하고 그 둘레로 w 회전"""
+    rx, ry, _ = to_rear((x, y, th))
+    mid = th + 0.5 * w * dt
+    return from_rear((rx + v * math.cos(mid) * dt, ry + v * math.sin(mid) * dt, th + w * dt))
 
 
 class FakeBase(Node):
@@ -31,6 +40,8 @@ class FakeBase(Node):
 
     def on_cmd(self, m):
         self.v, self.w = m.linear.x, m.angular.z
+        if spinning(self.v, self.w):
+            self.get_logger().warn(f'서서 도는 명령: v={self.v:.3f}, w={self.w:.3f}', throttle_duration_sec=2.0)
         self.last_cmd = now_sec(self)
 
     def on_set_pose(self, m):
@@ -57,9 +68,8 @@ class FakeBase(Node):
         self.last_t = t
         if t - self.last_cmd > 0.5:
             self.v = self.w = 0.0
-        self.th += self.w * dt
-        self.x += self.v * math.cos(self.th) * dt
-        self.y += self.v * math.sin(self.th) * dt
+        pose = integrate(self.x, self.y, self.th, self.v, self.w, dt)
+        self.x, self.y, self.th = pose
         stamp = self.get_clock().now().to_msg()
         qz, qw = math.sin(self.th / 2), math.cos(self.th / 2)
         tr = TransformStamped()

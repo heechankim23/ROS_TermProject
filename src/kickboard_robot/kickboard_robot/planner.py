@@ -15,6 +15,8 @@ import warnings
 
 import numpy as np
 
+from .surface import FACTOR, ROAD
+
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')           # 이 VM 의 scipy 1.8 + numpy 1.26 버전 경고
     from scipy import ndimage
@@ -32,6 +34,7 @@ class Costmap:
         self.seen = np.full((self.h, self.w), -np.inf)             # 라이다로 장애물을 마지막으로 본 시각
         self._dist = None
         self._t = None
+        self.surface = None         # 노면 비용 배수 [j, i] (>= 1, surface.py). None = 구분 없음
         # 진입 금지 구역(인도 등): 지나갈 수는 없지만 벽이 아니다. set_physical() 로 물리 지도를 주면 구분한다.
         self.phys = None            # 물리 장애물만 (벽·건물·차). None 이면 static 과 같다고 본다
         self.keepout = None         # static 중 물리 장애물이 아닌 칸
@@ -145,9 +148,11 @@ class Costmap:
             return 0.0
         return float(self.distance(t)[j, i])
 
-    def cost_grid(self, t):
+    def cost_grid(self, t, surface=True):
         d = self.distance(t)
         c = 1.0 + self.weight * np.clip((self.inflate - d) / (self.inflate - self.inscribed), 0.0, 1.0) ** 2
+        if surface and self.surface is not None:
+            c = c * self.surface
         c[d < self.inscribed] = LETHAL
         return c
 
@@ -232,12 +237,29 @@ class Costmap:
             nxt = k + 1
             for m in range(len(pts) - 1, k + 1, -1):
                 worst = max(cost[self.cell(*p)] for p in pts[k:m + 1])
-                if self.segment_ok(pts[k], pts[m], cost, max(worst, 1.0)):
+                if self.segment_ok(pts[k], pts[m], cost, max(worst, 1.0)) and self._no_worse_surface(pts, k, m):
                     nxt = m
                     break
             out.append(pts[nxt])
             k = nxt
         return out[1:]
+
+    def surface_length(self, a, b):
+        """선분 a-b 를 노면 비용 배수로 잰 길이"""
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        n = max(1, int(d / (self.res * 0.5)))
+        total = 0.0
+        for k in range(n):
+            j, i = self.cell(a[0] + (b[0] - a[0]) * (k + 0.5) / n, a[1] + (b[1] - a[1]) * (k + 0.5) / n)
+            total += float(self.surface[j, i]) if self.inside(j, i) else 1.0
+        return total * d / n
+
+    def _no_worse_surface(self, pts, k, m):
+        """지름길이 차도 같은 비싼 노면을 더 지나지 않는가"""
+        if self.surface is None:
+            return True
+        before = sum(self.surface_length(a, b) for a, b in zip(pts[k:m], pts[k + 1:m + 1]))
+        return self.surface_length(pts[k], pts[m]) <= before * 1.02 + 0.1
 
     def path_blocked(self, path, t, from_xy=None):
         """경로 위에 통과 불가 칸이 생겼는지 (새 장애물)"""
@@ -251,7 +273,23 @@ class Costmap:
 
 def free_spot(cm, target, robot_xy, dist, clearance, t, step_deg=15, max_extra=0.6, keep_clearance=None):
     """target 주변 반경 dist 원 위에서, 로봇 쪽 방향부터 좌우로 넓혀 가며
-    장애물(정적 + 라이다)과 clearance 이상 떨어진 점을 찾는다. -> (x, y, target 을 보는 yaw) 또는 None"""
+    장애물(정적 + 라이다)과 clearance 이상 떨어진 점을 찾는다. -> (x, y, target 을 보는 yaw) 또는 None
+    target 이 차도 위가 아니면 차도가 아닌 자리를 먼저 찾는다 (차도에는 킥보드가 차도에 있을 때만 나간다)."""
+    if not _on_road(cm, *target):
+        spot = _ring_search(cm, target, robot_xy, dist, clearance, t, step_deg, max_extra, keep_clearance, False)
+        if spot is not None:
+            return spot
+    return _ring_search(cm, target, robot_xy, dist, clearance, t, step_deg, max_extra, keep_clearance, True)
+
+
+def _on_road(cm, x, y):
+    if getattr(cm, 'surface', None) is None:
+        return False
+    j, i = cm.cell(x, y)
+    return cm.inside(j, i) and float(cm.surface[j, i]) >= float(FACTOR[ROAD])
+
+
+def _ring_search(cm, target, robot_xy, dist, clearance, t, step_deg, max_extra, keep_clearance, road_ok):
     base = math.atan2(robot_xy[1] - target[1], robot_xy[0] - target[0])
     extra = 0.0
     while extra <= max_extra + 1e-9:
@@ -260,7 +298,7 @@ def free_spot(cm, target, robot_xy, dist, clearance, t, step_deg=15, max_extra=0
             for sgn in ((1,) if k == 0 else (1, -1)):
                 a = base + sgn * math.radians(k * step_deg)
                 gx, gy = target[0] + r * math.cos(a), target[1] + r * math.sin(a)
-                if cm.spot_ok(gx, gy, t, clearance, keep_clearance):
+                if (road_ok or not _on_road(cm, gx, gy)) and cm.spot_ok(gx, gy, t, clearance, keep_clearance):
                     return gx, gy, math.atan2(target[1] - gy, target[0] - gx)
         extra += 0.2
     return None

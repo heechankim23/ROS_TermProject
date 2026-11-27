@@ -24,16 +24,16 @@ parking_zones:
   rack: {x: -68.09, y: -10.55, yaw_deg: -14.6, length: 7.0, road: service}
   robot_access: {x: -68.54, y: -12.24, yaw_deg: -14.6}
   slots:
-  - {id: P13-01, x: -71.14, y: -9.75, z: -6.29, yaw_deg: 75.4, role: normal}
-  - {id: P13-02, x: -70.46, y: -9.93, z: -6.26, yaw_deg: 75.4, role: normal}
-  - {id: P13-03, x: -69.79, y: -10.11, z: -6.22, yaw_deg: 75.4, role: normal}
-  - {id: P13-04, x: -69.11, y: -10.28, z: -6.19, yaw_deg: 75.4, role: normal}
-  - {id: P13-05, x: -68.43, y: -10.46, z: -6.15, yaw_deg: 75.4, role: normal}
-  - {id: P13-06, x: -67.76, y: -10.64, z: -6.11, yaw_deg: 75.4, role: normal}
-  - {id: P13-07, x: -67.08, y: -10.81, z: -6.06, yaw_deg: 75.4, role: normal}
-  - {id: P13-08, x: -66.4, y: -10.99, z: -6.02, yaw_deg: 75.4, role: normal}
-  - {id: P13-09, x: -65.72, y: -11.17, z: -5.97, yaw_deg: -104.6, role: broken}
-  - {id: P13-10, x: -65.05, y: -11.34, z: -5.93, yaw_deg: -104.6, role: broken}
+  - {id: P13-01, x: -71.14, y: -9.75, z: -6.29, yaw_deg: -104.6, role: normal}
+  - {id: P13-02, x: -70.46, y: -9.93, z: -6.26, yaw_deg: -104.6, role: normal}
+  - {id: P13-03, x: -69.79, y: -10.11, z: -6.22, yaw_deg: -104.6, role: normal}
+  - {id: P13-04, x: -69.11, y: -10.28, z: -6.19, yaw_deg: -104.6, role: normal}
+  - {id: P13-05, x: -68.43, y: -10.46, z: -6.15, yaw_deg: -104.6, role: normal}
+  - {id: P13-06, x: -67.76, y: -10.64, z: -6.11, yaw_deg: -104.6, role: normal}
+  - {id: P13-07, x: -67.08, y: -10.81, z: -6.06, yaw_deg: -104.6, role: normal}
+  - {id: P13-08, x: -66.4, y: -10.99, z: -6.02, yaw_deg: -104.6, role: normal}
+  - {id: P13-09, x: -65.72, y: -11.17, z: -5.97, yaw_deg: 75.4, role: broken}
+  - {id: P13-10, x: -65.05, y: -11.34, z: -5.93, yaw_deg: 75.4, role: broken}
 - name: P14
   site: 212 제2체육관 인근
   origin: image
@@ -46,16 +46,16 @@ parking_zones:
   rack: {x: -411.9, y: -59.31, yaw_deg: -88.6, length: 7.0, road: service}
   robot_access: {x: -410.15, y: -59.27, yaw_deg: -88.6}
   slots:
-  - {id: P14-01, x: -411.98, y: -56.16, z: -9.59, yaw_deg: -178.6, role: normal}
-  - {id: P14-02, x: -411.96, y: -56.86, z: -9.57, yaw_deg: -178.6, role: normal}
-  - {id: P14-03, x: -411.94, y: -57.56, z: -9.56, yaw_deg: -178.6, role: normal}
-  - {id: P14-04, x: -411.93, y: -58.26, z: -9.55, yaw_deg: -178.6, role: normal}
-  - {id: P14-05, x: -411.91, y: -58.96, z: -9.54, yaw_deg: -178.6, role: normal}
-  - {id: P14-06, x: -411.89, y: -59.66, z: -9.52, yaw_deg: -178.6, role: normal}
-  - {id: P14-07, x: -411.87, y: -60.36, z: -9.51, yaw_deg: -178.6, role: normal}
-  - {id: P14-08, x: -411.86, y: -61.06, z: -9.5, yaw_deg: -178.6, role: normal}
-  - {id: P14-09, x: -411.84, y: -61.76, z: -9.48, yaw_deg: 1.4, role: broken}
-  - {id: P14-10, x: -411.82, y: -62.46, z: -9.47, yaw_deg: 1.4, role: broken}
+  - {id: P14-01, x: -411.98, y: -56.16, z: -9.59, yaw_deg: 1.4, role: normal}
+  - {id: P14-02, x: -411.96, y: -56.86, z: -9.57, yaw_deg: 1.4, role: normal}
+  - {id: P14-03, x: -411.94, y: -57.56, z: -9.56, yaw_deg: 1.4, role: normal}
+  - {id: P14-04, x: -411.93, y: -58.26, z: -9.55, yaw_deg: 1.4, role: normal}
+  - {id: P14-05, x: -411.91, y: -58.96, z: -9.54, yaw_deg: 1.4, role: normal}
+  - {id: P14-06, x: -411.89, y: -59.66, z: -9.52, yaw_deg: 1.4, role: normal}
+  - {id: P14-07, x: -411.87, y: -60.36, z: -9.51, yaw_deg: 1.4, role: normal}
+  - {id: P14-08, x: -411.86, y: -61.06, z: -9.5, yaw_deg: 1.4, role: normal}
+  - {id: P14-09, x: -411.84, y: -61.76, z: -9.48, yaw_deg: -178.6, role: broken}
+  - {id: P14-10, x: -411.82, y: -62.46, z: -9.47, yaw_deg: -178.6, role: broken}
 - name: P16
   site: 210 제2과학관 인근
   origin: image
@@ -67,16 +67,16 @@ parking_zones:
   rack: {x: -297.62, y: -64.2, yaw_deg: 89.2, length: 7.0, road: service}
   robot_access: {x: -295.87, y: -64.22, yaw_deg: 89.2}
   slots:
-  - {id: P16-01, x: -297.66, y: -67.35, z: -10.66, yaw_deg: 179.2, role: normal}
-  - {id: P16-02, x: -297.65, y: -66.65, z: -10.62, yaw_deg: 179.2, role: normal}
-  - {id: P16-03, x: -297.64, y: -65.95, z: -10.58, yaw_deg: 179.2, role: normal}
-  - {id: P16-04, x: -297.63, y: -65.25, z: -10.53, yaw_deg: 179.2, role: normal}
-  - {id: P16-05, x: -297.62, y: -64.55, z: -10.49, yaw_deg: 179.2, role: normal}
-  - {id: P16-06, x: -297.61, y: -63.85, z: -10.44, yaw_deg: 179.2, role: normal}
-  - {id: P16-07, x: -297.6, y: -63.15, z: -10.39, yaw_deg: 179.2, role: normal}
-  - {id: P16-08, x: -297.59, y: -62.45, z: -10.34, yaw_deg: 179.2, role: normal}
-  - {id: P16-09, x: -297.58, y: -61.75, z: -10.3, yaw_deg: -0.8, role: broken}
-  - {id: P16-10, x: -297.57, y: -61.05, z: -10.25, yaw_deg: -0.8, role: broken}
+  - {id: P16-01, x: -297.66, y: -67.35, z: -10.66, yaw_deg: -0.8, role: normal}
+  - {id: P16-02, x: -297.65, y: -66.65, z: -10.62, yaw_deg: -0.8, role: normal}
+  - {id: P16-03, x: -297.64, y: -65.95, z: -10.58, yaw_deg: -0.8, role: normal}
+  - {id: P16-04, x: -297.63, y: -65.25, z: -10.53, yaw_deg: -0.8, role: normal}
+  - {id: P16-05, x: -297.62, y: -64.55, z: -10.49, yaw_deg: -0.8, role: normal}
+  - {id: P16-06, x: -297.61, y: -63.85, z: -10.44, yaw_deg: -0.8, role: normal}
+  - {id: P16-07, x: -297.6, y: -63.15, z: -10.39, yaw_deg: -0.8, role: normal}
+  - {id: P16-08, x: -297.59, y: -62.45, z: -10.34, yaw_deg: -0.8, role: normal}
+  - {id: P16-09, x: -297.58, y: -61.75, z: -10.3, yaw_deg: 179.2, role: broken}
+  - {id: P16-10, x: -297.57, y: -61.05, z: -10.25, yaw_deg: 179.2, role: broken}
 charging_zones:
 - name: C5
   site: 인문대 쪽

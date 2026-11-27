@@ -44,7 +44,8 @@ def _setup(context):
                                '--frame-id', parent, '--child-frame-id', child],
                     parameters=[st], output='log')
 
-    acts += [static_tf('tf_scan', 'base_footprint', 'base_scan', (0.86, 0, 1.04)),
+    acts += [static_tf('tf_rear_axle', 'base_footprint', 'rear_axle', (-0.62, 0, 0)),     # 자동차식 주행 기준점
+             static_tf('tf_scan', 'base_footprint', 'base_scan', (0.86, 0, 1.04)),
              static_tf('tf_cam', 'base_footprint', 'camera_link', (0.9125, 0, 0.38)),
              static_tf('tf_cam_opt', 'camera_link', 'camera_optical_frame', (0, 0, 0),
                        (-math.pi / 2, 0, -math.pi / 2))]

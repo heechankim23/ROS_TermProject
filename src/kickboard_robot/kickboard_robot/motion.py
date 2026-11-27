@@ -6,6 +6,34 @@ def wrap(a):
     return math.atan2(math.sin(a), math.cos(a))
 
 
+# 자동차식 주행 (docs/PLAN_CARLIKE_DRIVING.md): 회전 중심 = 뒷바퀴 축, 제자리 회전 없음
+REAR_AXLE_X = -0.62                    # base_footprint -> 뒷바퀴 축 (model.sdf)
+MIN_TURN_RADIUS = 1.8                  # m (축거 1.24 m, 조향각 35° 가정)
+BASE_BODY_X = (-0.98, 0.96)            # 차체 x 범위 (base_footprint 기준)
+REAR_BODY_X = (BASE_BODY_X[0] - REAR_AXLE_X, BASE_BODY_X[1] - REAR_AXLE_X)   # 뒤축 기준 -0.36 ~ 1.58
+
+
+def to_rear(pose):
+    """base_footprint 자세 (x, y, yaw) -> 뒤축 자세"""
+    return pose[0] + REAR_AXLE_X * math.cos(pose[2]), pose[1] + REAR_AXLE_X * math.sin(pose[2]), pose[2]
+
+
+def from_rear(pose):
+    """뒤축 자세 -> base_footprint 자세"""
+    return pose[0] - REAR_AXLE_X * math.cos(pose[2]), pose[1] - REAR_AXLE_X * math.sin(pose[2]), pose[2]
+
+
+def car_limit(v, w, radius=MIN_TURN_RADIUS):
+    """자동차가 낼 수 있는 (v, w) 로 자른다: |w| <= |v| / R (서 있으면 회전 0). /cmd_vel 을 내는 주행 코드가 모두 거친다"""
+    lim = abs(v) / radius
+    return v, max(-lim, min(lim, w))
+
+
+def spinning(v, w):
+    """서서 도는 명령인가 (자동차는 못 함). 시뮬 감시용"""
+    return abs(v) < 0.01 and abs(w) > 0.05
+
+
 def yaw_from_quat(q):
     return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
 

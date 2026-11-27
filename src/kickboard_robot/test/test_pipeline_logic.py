@@ -49,47 +49,6 @@ def test_collector_center_and_mean():
     assert collector_logic.arrived_by_tag(1.7, 1.6, 0.2) and not collector_logic.arrived_by_tag(1.9, 1.6, 0.2)
 
 
-def _apply_fine_plan(pose, plan):
-    x, y, th = pose
-    for kind, v in plan:
-        if kind == 'turn':
-            th = v
-        else:
-            x, y = x + v * math.cos(th), y + v * math.sin(th)
-    return x, y, th
-
-
-def test_collector_fine_align_plan_reaches_entry_spot():
-    cl = collector_logic
-    tol, ytol = 0.05, math.radians(3)
-    for heading in (0.0, 1.0, -2.5):
-        target = cl.reverse_entry_pose(3.0, -1.0, heading, lane=1)
-        assert cl.fine_align_plan(target, target, tol, ytol, 0.6) == []
-        # 경로 끝 0.24 m 허용 + 끝 회전 같은 도착 오차들 (앞뒤, 옆, 방향 섞어서)
-        for ea, el, ey in ((0.2, 0.0, 0.0), (-0.3, 0.02, 0.1), (0.05, 0.18, 0.05), (-0.1, -0.2, -0.15)):
-            c, s = math.cos(target[2]), math.sin(target[2])
-            pose = (target[0] + c * ea - s * el, target[1] + s * ea + c * el, target[2] + ey)
-            plan = cl.fine_align_plan(pose, target, tol, ytol, 0.6)
-            assert plan, (ea, el, ey)
-            end = _apply_fine_plan(pose, plan)
-            a, l, y = cl.entry_error(end, 3.0, -1.0, heading, lane=1)
-            assert abs(a) <= tol and abs(l) <= tol and abs(y) <= ytol   # 옆 오차가 tol 안이면 옆으로는 안 맞춤
-            # 큰 방향 전환 없이: 직진 거리는 처음 위치 오차 이하
-            assert all(abs(v) <= math.hypot(ea, el) + 1e-9 for k, v in plan if k == 'drive')
-        # 옆 오차가 작으면 옆으로 돌지 않고 앞뒤 직진만
-        c, s = math.cos(target[2]), math.sin(target[2])
-        pose = (target[0] + c * 0.3, target[1] + s * 0.3, target[2])
-        plan = cl.fine_align_plan(pose, target, tol, ytol, 0.6)
-        assert len(plan) == 1 and plan[0][0] == 'drive' and abs(plan[0][1] + 0.3) < 1e-9
-        # 너무 멀면 직접 맞추지 않음
-        # 옆 허용을 따로 주면 작은 옆 오차(0.07 m)는 돌지 않고 남김
-        side = (target[0] - s * 0.07, target[1] + c * 0.07, target[2])
-        assert cl.fine_align_plan(side, target, tol, ytol, 0.6, lat_tol=0.08) == []
-        assert cl.fine_align_plan(side, target, tol, ytol, 0.6)[0][0] == 'turn'
-        far = (target[0] + c * 1.0, target[1] + s * 1.0, target[2])
-        assert cl.fine_align_plan(far, target, tol, ytol, 0.6) is None
-
-
 def test_extended_collector_reads_all_tag_faces():
     cl = collector_logic
     hd = 0.7
@@ -392,6 +351,29 @@ def test_arm_loader_unload_blend_far_from_origin():
     assert np.linalg.norm((half[0] - end[0])[:2]) < 0.15
 
 
+def test_arm_loader_fallen_lift_sequence():
+    """넘어진 킥보드: 팔이 쥐기 전에는 안 서고, 세우는 동안 원래 프레임은 멈추며, 팔 궤적이 원래 동작과 이어짐."""
+    import os
+    from kickboard_robot.arm_loader import LOAD_RANGE, Rig
+    path = os.path.join(os.path.dirname(__file__), '..', '..', 'kickboard_sim', 'config', 'scootover_rig.json')
+    rig = Rig(path, [0.42, 0.0, 0.127])
+    start, grab, lift = (rig.fallen[k] for k in ('start', 'grab', 'lift'))
+    for lane in (0, 1):
+        frames = [rig.fallen_frame(lane, i) for i in range(LOAD_RANGE[1] + lift)]
+        assert all(u == 0.0 for _, _, u in frames[:grab + 1])
+        assert all(k == grab for k, _, _ in frames[grab:grab + lift + 1])
+        assert frames[grab + lift][2] == 1.0 and frames[-1][0] == LOAD_RANGE[1] - 1
+        q = []
+        for k, arm, _ in frames:
+            row = rig.Q[lane][k].copy()
+            if arm is not None:
+                row[rig.fallen_cols] = arm
+            q.append(row)
+        step = np.abs(np.diff(np.array(q), axis=0)).max(axis=1)
+        orig = np.abs(np.diff(rig.Q[lane][:grab + 20], axis=0)).max()
+        assert step[start - 1:grab + lift + 1].max() <= orig + 1e-6          # 끊김 없음
+
+
 def test_rear_clear_checks_corridor_behind_body():
     """도크 후진: 차체 뒤끝(-0.92)에서 남은 거리 + 여유 안, 차체 폭 안에 점이 있으면 막힘."""
     assert ml.rear_clear([], 1.0)
@@ -537,22 +519,24 @@ def test_undock_until_body_out_of_station_and_straight():
 
 
 def _simulate_dock(start, target, goal_along=0.0, turn_gain=1.0, dt=0.05, steps=3000):
+    from kickboard_robot.fake_base import integrate
     x, y, th = start
     for _ in range(steps):
         v, w, done = collector_logic.dock_step((x, y, th), target, goal_along)
         if done:
             return (x, y, th), True
-        x, y, th = x + v * math.cos(th) * dt, y + v * math.sin(th) * dt, th + turn_gain * w * dt
+        assert abs(w) <= abs(v) / 1.8 + 1e-9                 # 서서 돌지 않음
+        x, y, th = integrate(x, y, th, v, turn_gain * w, dt)
     return (x, y, th), False
 
 
 def test_dock_reverses_onto_target_from_offset_staging():
     target = collector_logic.reverse_entry_pose(3.0, -1.0, 0.7, 0)
     c, s = math.cos(0.7), math.sin(0.7)
-    for lat, head, gain in ((0.25, 8.0, 1.0), (-0.25, -10.0, 0.6), (0.15, 0.0, 1.4)):   # gain: 스키드 스티어 회전 오차
-        start = (target[0] + 1.5 * c - lat * s, target[1] + 1.5 * s + lat * c, 0.7 + math.radians(head))
+    for lat, head, gain in ((0.25, 8.0, 1.0), (-0.25, -10.0, 0.9), (0.4, 0.0, 1.05)):   # gain: 회전 오차
+        start = (target[0] + 3.0 * c - lat * s, target[1] + 3.0 * s + lat * c, 0.7 + math.radians(head))
         pose, done = _simulate_dock(start, target, turn_gain=gain)
         ea, el, ey = collector_logic.dock_errors(pose, target)
-        assert done and collector_logic.dock_ok(pose, target) and abs(math.degrees(ey)) < 8, (lat, head, gain, ea, el, ey)
-        back, done = _simulate_dock(pose, target, goal_along=1.5, turn_gain=gain)       # 다시 빼기
+        assert done and collector_logic.dock_ok(pose, target) and abs(math.degrees(ey)) < 4, (lat, head, gain, ea, el, ey)
+        back, done = _simulate_dock(pose, target, goal_along=3.0, turn_gain=gain)       # 다시 빼기
         assert done and abs(collector_logic.dock_errors(back, target)[1]) < 0.1

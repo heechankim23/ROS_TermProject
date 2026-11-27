@@ -10,7 +10,7 @@
   - 칸 배정은 하역하러 갈 때 한다: 거치대 센서(/zone_occupancy)로 빈 칸을 보고, 로봇에서 가까운 구역부터.
         충전 칸이 하나도 없으면 일반 슬롯에 세우고 '충전 대기'로 관리자 알림.
         충전 스탠드 수는 시나리오 overrides.charging_capacity 로 줄일 수 있다 (앞 번호 칸부터 사용).
-  - SCOOTOVER v19 는 앞 램프로 한 대씩 밀어 내린다 (arm_loader 하차 애니메이션) -> 칸마다 거치대를 마주 보고
+  - SCOOTOVER v19 하차: 주차구역은 뒤 램프, 충전 거치대는 앞 램프. 한 대씩 내린다 (arm_loader 하차 애니메이션) -> 칸마다 거치대를 마주 보고
     슬롯 중심에서 STOP_DIST(1.6 m) 앞, 그 킥보드가 실린 레인(왼 y +0.27 / 오른 y -0.27)이 슬롯 줄에 오도록 옆으로 비켜 선다.
     레인은 arm_loader 와 같은 규칙(실을 때 빈 레인 중 왼쪽부터)으로 따라간다 (self.lanes).
   - 하역하러 가는 때: 적재함이 찼을 때, 대기열이 비었을 때. 로봇 배터리가 부족하면 실은 채 도크에서 충전부터 한다.
@@ -32,14 +32,26 @@ from kickboard_interfaces.msg import ScooterState
 from kickboard_interfaces.srv import SelectNextTarget
 
 from .common import now_sec, spin_single
+from .collector_logic import reverse_entry_pose
 from .mission_logic import CHARGING, DROPPING, IDLE, SELECTING   # 상태 이름은 D 의 mission_logic 에 있음
 from .mission_manager import MissionManager
 from .motion import quat_from_yaw
 
-STOP_DIST = 1.6          # 슬롯 중심 -> 로봇 중심 (거치대를 마주 봄). v19 하차 애니메이션 끝 킥보드 위치와 같음
+STAND_STOP_DIST = 1.6    # 충전 칸 중심 -> 로봇 중심 (앞으로 내림, 거치대를 마주 봄). v19 하차 애니메이션 끝 킥보드 위치와 같음
 LANE_Y = (0.27, -0.27)   # 적재 레인 (로봇 기준 y). arm_loader 레인 0, 1
 KIND_ROLE = {'normal': 'normal', 'broken': 'broken', 'charge': 'charge', 'charge_wait': 'normal'}
 KIND_NAME = {'normal': '일반 슬롯', 'broken': '고장 분류 칸', 'charge': '충전 스탠드', 'charge_wait': '일반 슬롯(충전 대기)'}
+
+
+def unload_stop_pose(slot, on_stand, lane):
+    """칸(중심 x, y, yaw) -> 하역할 때 로봇이 설 자리 (x, y, yaw).
+    on_stand(충전 거치대): 거치대를 마주 보고 STAND_STOP_DIST 앞 -> 앞 램프로 밀어 꽂는다.
+    그 외(주차구역): 킥보드와 같은 방향으로 칸 앞 2.07 m -> 뒤 램프로 내린다 (후진 적재 자리와 같음)."""
+    if not on_stand:
+        return reverse_entry_pose(slot['x'], slot['y'], slot['yaw'], lane)
+    c, s = math.cos(slot['yaw']), math.sin(slot['yaw'])
+    ly = LANE_Y[lane]
+    return slot['x'] - c * STAND_STOP_DIST + s * ly, slot['y'] - s * STAND_STOP_DIST - c * ly, slot['yaw']
 
 
 class CampusMissionManager(MissionManager):
@@ -279,16 +291,11 @@ class CampusMissionManager(MissionManager):
         self.stops = []
         for zid in order:
             z = self.zones[zid]
-            ox, oy = z['out']
             ax, ay = z['axis']
             jobs = sorted(plan[zid], key=lambda js: js[1]['x'] * ax + js[1]['y'] * ay)
             for sid, slot in jobs:                          # 한 칸씩: 그 킥보드의 레인을 슬롯 줄에 맞춤
-                ly = LANE_Y[self.lanes.get(sid, 0)]
-                yaw = math.atan2(oy, ox)
-                c, s_ = math.cos(yaw), math.sin(yaw)
-                sx = slot['x'] - c * STOP_DIST + s_ * ly
-                sy = slot['y'] - s_ * STOP_DIST - c * ly
-                self.stops.append((zid, (sx, sy, yaw), [(sid, slot)]))
+                pose = unload_stop_pose(slot, z['type'] == 'charging', self.lanes.get(sid, 0))
+                self.stops.append((zid, pose, [(sid, slot)]))
         desc = ', '.join(f'{zid}({len(plan[zid])})' for zid in order)
         self.ev.emit('drop_plan', zones=order, assignments={sid: (slot['id'], self.kind.get(sid))
                                                              for zid in order for sid, slot in plan[zid]})
@@ -338,7 +345,8 @@ class CampusMissionManager(MissionManager):
             self.on_stop_failed(r.result.message if r is not None else 'no result')
             return
         zid, _, grp = self.stops.pop(0)
-        jobs = [(sid, (s['x'], s['y'], s['yaw']), 'park') for sid, s in grp]
+        kind = 'stand' if self.zones[zid]['type'] == 'charging' else 'park'
+        jobs = [(sid, (s['x'], s['y'], s['yaw']), kind) for sid, s in grp]
         for sid, s in grp:
             self.ev.emit('slot_assigned', id=sid, zone=zid, slot=s['id'], role=s['role'], kind=self.kind.get(sid))
 

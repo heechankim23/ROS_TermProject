@@ -24,16 +24,16 @@ parking_zones:
   rack: {x: 246.46, y: 312.66, yaw_deg: -85.3, length: 7.0, road: service}
   robot_access: {x: 244.72, y: 312.52, yaw_deg: -85.3}
   slots:
-  - {id: P01-01, x: 246.2, y: 315.8, z: -11.9, yaw_deg: 4.7, role: normal}
-  - {id: P01-02, x: 246.26, y: 315.1, z: -11.86, yaw_deg: 4.7, role: normal}
-  - {id: P01-03, x: 246.32, y: 314.41, z: -11.82, yaw_deg: 4.7, role: normal}
-  - {id: P01-04, x: 246.38, y: 313.71, z: -11.78, yaw_deg: 4.7, role: normal}
-  - {id: P01-05, x: 246.43, y: 313.01, z: -11.74, yaw_deg: 4.7, role: normal}
-  - {id: P01-06, x: 246.49, y: 312.31, z: -11.69, yaw_deg: 4.7, role: normal}
-  - {id: P01-07, x: 246.55, y: 311.62, z: -11.66, yaw_deg: 4.7, role: normal}
-  - {id: P01-08, x: 246.61, y: 310.92, z: -11.62, yaw_deg: 4.7, role: normal}
-  - {id: P01-09, x: 246.66, y: 310.22, z: -11.59, yaw_deg: -175.3, role: broken}
-  - {id: P01-10, x: 246.72, y: 309.52, z: -11.55, yaw_deg: -175.3, role: broken}
+  - {id: P01-01, x: 246.2, y: 315.8, z: -11.9, yaw_deg: -175.3, role: normal}
+  - {id: P01-02, x: 246.26, y: 315.1, z: -11.86, yaw_deg: -175.3, role: normal}
+  - {id: P01-03, x: 246.32, y: 314.41, z: -11.82, yaw_deg: -175.3, role: normal}
+  - {id: P01-04, x: 246.38, y: 313.71, z: -11.78, yaw_deg: -175.3, role: normal}
+  - {id: P01-05, x: 246.43, y: 313.01, z: -11.74, yaw_deg: -175.3, role: normal}
+  - {id: P01-06, x: 246.49, y: 312.31, z: -11.69, yaw_deg: -175.3, role: normal}
+  - {id: P01-07, x: 246.55, y: 311.62, z: -11.66, yaw_deg: -175.3, role: normal}
+  - {id: P01-08, x: 246.61, y: 310.92, z: -11.62, yaw_deg: -175.3, role: normal}
+  - {id: P01-09, x: 246.66, y: 310.22, z: -11.59, yaw_deg: 4.7, role: broken}
+  - {id: P01-10, x: 246.72, y: 309.52, z: -11.55, yaw_deg: 4.7, role: broken}
 - name: P04
   site: 117 첨단기술융합대학 인근
   origin: image
@@ -46,16 +46,16 @@ parking_zones:
   rack: {x: 248.91, y: 273.19, yaw_deg: -90.9, length: 7.0, road: service}
   robot_access: {x: 247.16, y: 273.22, yaw_deg: -90.9}
   slots:
-  - {id: P04-01, x: 248.96, y: 276.34, z: -10.19, yaw_deg: -0.9, role: normal}
-  - {id: P04-02, x: 248.95, y: 275.64, z: -10.15, yaw_deg: -0.9, role: normal}
-  - {id: P04-03, x: 248.94, y: 274.94, z: -10.12, yaw_deg: -0.9, role: normal}
-  - {id: P04-04, x: 248.93, y: 274.24, z: -10.09, yaw_deg: -0.9, role: normal}
-  - {id: P04-05, x: 248.92, y: 273.54, z: -10.06, yaw_deg: -0.9, role: normal}
-  - {id: P04-06, x: 248.91, y: 272.84, z: -10.02, yaw_deg: -0.9, role: normal}
-  - {id: P04-07, x: 248.9, y: 272.14, z: -9.99, yaw_deg: -0.9, role: normal}
-  - {id: P04-08, x: 248.89, y: 271.44, z: -9.96, yaw_deg: -0.9, role: normal}
-  - {id: P04-09, x: 248.88, y: 270.74, z: -9.94, yaw_deg: 179.1, role: broken}
-  - {id: P04-10, x: 248.87, y: 270.04, z: -9.91, yaw_deg: 179.1, role: broken}
+  - {id: P04-01, x: 248.96, y: 276.34, z: -10.19, yaw_deg: 179.1, role: normal}
+  - {id: P04-02, x: 248.95, y: 275.64, z: -10.15, yaw_deg: 179.1, role: normal}
+  - {id: P04-03, x: 248.94, y: 274.94, z: -10.12, yaw_deg: 179.1, role: normal}
+  - {id: P04-04, x: 248.93, y: 274.24, z: -10.09, yaw_deg: 179.1, role: normal}
+  - {id: P04-05, x: 248.92, y: 273.54, z: -10.06, yaw_deg: 179.1, role: normal}
+  - {id: P04-06, x: 248.91, y: 272.84, z: -10.02, yaw_deg: 179.1, role: normal}
+  - {id: P04-07, x: 248.9, y: 272.14, z: -9.99, yaw_deg: 179.1, role: normal}
+  - {id: P04-08, x: 248.89, y: 271.44, z: -9.96, yaw_deg: 179.1, role: normal}
+  - {id: P04-09, x: 248.88, y: 270.74, z: -9.94, yaw_deg: -0.9, role: broken}
+  - {id: P04-10, x: 248.87, y: 270.04, z: -9.91, yaw_deg: -0.9, role: broken}
 - name: P29
   site: 419 공대8호관 인근
   origin: image
@@ -70,16 +70,16 @@ parking_zones:
   rack: {x: 135.09, y: -380.74, yaw_deg: 165.4, length: 7.0, road: service}
   robot_access: {x: 135.53, y: -379.05, yaw_deg: 165.4}
   slots:
-  - {id: P29-01, x: 138.14, y: -381.54, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-02, x: 137.46, y: -381.36, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-03, x: 136.78, y: -381.18, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-04, x: 136.1, y: -381.01, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-05, x: 135.43, y: -380.83, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-06, x: 134.75, y: -380.65, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-07, x: 134.07, y: -380.47, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-08, x: 133.4, y: -380.3, z: -3.49, yaw_deg: -104.6, role: normal}
-  - {id: P29-09, x: 132.72, y: -380.12, z: -3.49, yaw_deg: 75.4, role: broken}
-  - {id: P29-10, x: 132.04, y: -379.94, z: -3.49, yaw_deg: 75.4, role: broken}
+  - {id: P29-01, x: 138.14, y: -381.54, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-02, x: 137.46, y: -381.36, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-03, x: 136.78, y: -381.18, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-04, x: 136.1, y: -381.01, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-05, x: 135.43, y: -380.83, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-06, x: 134.75, y: -380.65, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-07, x: 134.07, y: -380.47, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-08, x: 133.4, y: -380.3, z: -3.49, yaw_deg: 75.4, role: normal}
+  - {id: P29-09, x: 132.72, y: -380.12, z: -3.49, yaw_deg: -104.6, role: broken}
+  - {id: P29-10, x: 132.04, y: -379.94, z: -3.49, yaw_deg: -104.6, role: broken}
 - name: P30
   site: 503 화목관 인근
   origin: image
@@ -91,16 +91,16 @@ parking_zones:
   rack: {x: 57.38, y: -418.49, yaw_deg: 177.9, length: 7.0, road: service}
   robot_access: {x: 57.31, y: -420.24, yaw_deg: 177.9}
   slots:
-  - {id: P30-01, x: 60.53, y: -418.6, z: -5.34, yaw_deg: 87.9, role: normal}
-  - {id: P30-02, x: 59.83, y: -418.58, z: -5.34, yaw_deg: 87.9, role: normal}
-  - {id: P30-03, x: 59.13, y: -418.55, z: -5.34, yaw_deg: 87.9, role: normal}
-  - {id: P30-04, x: 58.43, y: -418.53, z: -5.33, yaw_deg: 87.9, role: normal}
-  - {id: P30-05, x: 57.73, y: -418.5, z: -5.33, yaw_deg: 87.9, role: normal}
-  - {id: P30-06, x: 57.03, y: -418.47, z: -5.33, yaw_deg: 87.9, role: normal}
-  - {id: P30-07, x: 56.33, y: -418.45, z: -5.33, yaw_deg: 87.9, role: normal}
-  - {id: P30-08, x: 55.63, y: -418.42, z: -5.32, yaw_deg: 87.9, role: normal}
-  - {id: P30-09, x: 54.93, y: -418.4, z: -5.32, yaw_deg: -92.1, role: broken}
-  - {id: P30-10, x: 54.23, y: -418.37, z: -5.32, yaw_deg: -92.1, role: broken}
+  - {id: P30-01, x: 60.53, y: -418.6, z: -5.34, yaw_deg: -92.1, role: normal}
+  - {id: P30-02, x: 59.83, y: -418.58, z: -5.34, yaw_deg: -92.1, role: normal}
+  - {id: P30-03, x: 59.13, y: -418.55, z: -5.34, yaw_deg: -92.1, role: normal}
+  - {id: P30-04, x: 58.43, y: -418.53, z: -5.33, yaw_deg: -92.1, role: normal}
+  - {id: P30-05, x: 57.73, y: -418.5, z: -5.33, yaw_deg: -92.1, role: normal}
+  - {id: P30-06, x: 57.03, y: -418.47, z: -5.33, yaw_deg: -92.1, role: normal}
+  - {id: P30-07, x: 56.33, y: -418.45, z: -5.33, yaw_deg: -92.1, role: normal}
+  - {id: P30-08, x: 55.63, y: -418.42, z: -5.32, yaw_deg: -92.1, role: normal}
+  - {id: P30-09, x: 54.93, y: -418.4, z: -5.32, yaw_deg: 87.9, role: broken}
+  - {id: P30-10, x: 54.23, y: -418.37, z: -5.32, yaw_deg: 87.9, role: broken}
 - name: P31
   site: 407 화학관 인근
   origin: image
@@ -112,16 +112,16 @@ parking_zones:
   rack: {x: -131.09, y: -457.96, yaw_deg: -1.3, length: 7.0, road: service}
   robot_access: {x: -131.05, y: -456.21, yaw_deg: -1.3}
   slots:
-  - {id: P31-01, x: -134.24, y: -457.89, z: -10.11, yaw_deg: -91.3, role: normal}
-  - {id: P31-02, x: -133.54, y: -457.91, z: -10.1, yaw_deg: -91.3, role: normal}
-  - {id: P31-03, x: -132.84, y: -457.92, z: -10.09, yaw_deg: -91.3, role: normal}
-  - {id: P31-04, x: -132.14, y: -457.94, z: -10.08, yaw_deg: -91.3, role: normal}
-  - {id: P31-05, x: -131.44, y: -457.95, z: -10.06, yaw_deg: -91.3, role: normal}
-  - {id: P31-06, x: -130.74, y: -457.97, z: -10.05, yaw_deg: -91.3, role: normal}
-  - {id: P31-07, x: -130.04, y: -457.99, z: -10.04, yaw_deg: -91.3, role: normal}
-  - {id: P31-08, x: -129.34, y: -458.0, z: -10.03, yaw_deg: -91.3, role: normal}
-  - {id: P31-09, x: -128.64, y: -458.02, z: -10.01, yaw_deg: 88.7, role: broken}
-  - {id: P31-10, x: -127.94, y: -458.03, z: -10.0, yaw_deg: 88.7, role: broken}
+  - {id: P31-01, x: -134.24, y: -457.89, z: -10.11, yaw_deg: 88.7, role: normal}
+  - {id: P31-02, x: -133.54, y: -457.91, z: -10.1, yaw_deg: 88.7, role: normal}
+  - {id: P31-03, x: -132.84, y: -457.92, z: -10.09, yaw_deg: 88.7, role: normal}
+  - {id: P31-04, x: -132.14, y: -457.94, z: -10.08, yaw_deg: 88.7, role: normal}
+  - {id: P31-05, x: -131.44, y: -457.95, z: -10.06, yaw_deg: 88.7, role: normal}
+  - {id: P31-06, x: -130.74, y: -457.97, z: -10.05, yaw_deg: 88.7, role: normal}
+  - {id: P31-07, x: -130.04, y: -457.99, z: -10.04, yaw_deg: 88.7, role: normal}
+  - {id: P31-08, x: -129.34, y: -458.0, z: -10.03, yaw_deg: 88.7, role: normal}
+  - {id: P31-09, x: -128.64, y: -458.02, z: -10.01, yaw_deg: -91.3, role: broken}
+  - {id: P31-10, x: -127.94, y: -458.03, z: -10.0, yaw_deg: -91.3, role: broken}
 - name: P33
   site: 공대9호관
   origin: image
@@ -133,16 +133,16 @@ parking_zones:
   rack: {x: -163.88, y: -400.46, yaw_deg: 178.7, length: 7.0, road: service}
   robot_access: {x: -163.92, y: -402.21, yaw_deg: 178.7}
   slots:
-  - {id: P33-01, x: -160.74, y: -400.54, z: -11.99, yaw_deg: 88.7, role: normal}
-  - {id: P33-02, x: -161.44, y: -400.52, z: -12.02, yaw_deg: 88.7, role: normal}
-  - {id: P33-03, x: -162.13, y: -400.5, z: -12.04, yaw_deg: 88.7, role: normal}
-  - {id: P33-04, x: -162.83, y: -400.49, z: -12.07, yaw_deg: 88.7, role: normal}
-  - {id: P33-05, x: -163.53, y: -400.47, z: -12.09, yaw_deg: 88.7, role: normal}
-  - {id: P33-06, x: -164.23, y: -400.46, z: -12.11, yaw_deg: 88.7, role: normal}
-  - {id: P33-07, x: -164.93, y: -400.44, z: -12.13, yaw_deg: 88.7, role: normal}
-  - {id: P33-08, x: -165.63, y: -400.42, z: -12.15, yaw_deg: 88.7, role: normal}
-  - {id: P33-09, x: -166.33, y: -400.41, z: -12.17, yaw_deg: -91.3, role: broken}
-  - {id: P33-10, x: -167.03, y: -400.39, z: -12.19, yaw_deg: -91.3, role: broken}
+  - {id: P33-01, x: -160.74, y: -400.54, z: -11.99, yaw_deg: -91.3, role: normal}
+  - {id: P33-02, x: -161.44, y: -400.52, z: -12.02, yaw_deg: -91.3, role: normal}
+  - {id: P33-03, x: -162.13, y: -400.5, z: -12.04, yaw_deg: -91.3, role: normal}
+  - {id: P33-04, x: -162.83, y: -400.49, z: -12.07, yaw_deg: -91.3, role: normal}
+  - {id: P33-05, x: -163.53, y: -400.47, z: -12.09, yaw_deg: -91.3, role: normal}
+  - {id: P33-06, x: -164.23, y: -400.46, z: -12.11, yaw_deg: -91.3, role: normal}
+  - {id: P33-07, x: -164.93, y: -400.44, z: -12.13, yaw_deg: -91.3, role: normal}
+  - {id: P33-08, x: -165.63, y: -400.42, z: -12.15, yaw_deg: -91.3, role: normal}
+  - {id: P33-09, x: -166.33, y: -400.41, z: -12.17, yaw_deg: 88.7, role: broken}
+  - {id: P33-10, x: -167.03, y: -400.39, z: -12.19, yaw_deg: 88.7, role: broken}
 charging_zones: []
 params:
   nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}

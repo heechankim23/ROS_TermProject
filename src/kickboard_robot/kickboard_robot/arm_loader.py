@@ -4,13 +4,17 @@ Blender 애니메이션(config/scootover_rig.json, build_blender_models.py 가 �
   적재 (LoadScooter, /arm_loader/load)  애니메이션 프레임 1~729: 로봇이 뒤를 킥보드에 대고 선 상태에서
       지지대·뒤 램프 -> 셔틀 마중 -> 팔이 스템을 잡음 -> 램프 타고 셔틀로 -> 셔틀이 거치 위치(x 0.65)까지 -> 옆 집게 닫힘 -> 접음
       collector 가 로봇을 '킥보드 앞바퀴 축이 로봇 기준 (-1.65, 레인 y)' 인 자리에 세운다 (collector_logic.reverse_entry_pose).
-  하차 (UnloadScooter, /arm_loader/unload)  프레임 730~1690: 앞 램프 -> 팔이 스템을 밀어 Kickspot 거치대까지 -> 걸쇠 -> 0.65 m 후진
-      remove_only  충전소 하역(예전 방식) — 적재함에서 바로 지움
-      keep_as_cargo  Kickspot 충전 자리: 복사본을 거치 자세(앞바퀴 축 높이·기울기 = blender_assets.json kickspot_4)로 둔다
-      그 외        주차구역: 같은 동작으로 바닥(target)에 세우고 원래 킥보드 모델(충돌체 있음)을 되살린다
+  하차 (UnloadScooter, /arm_loader/unload)  두 가지
+      뒤 하차 (기본, 주차구역)  적재 동작을 거꾸로 (프레임 729~1): 셔틀 -> 팔이 잡고 뒤 램프로 내려 로봇 뒤에 세움.
+                              로봇은 target 앞 2.07 m 에 target 과 같은 방향 (collector_logic.reverse_entry_pose). 로봇은 안 움직임
+      앞 하차 (onto_stand · keep_as_cargo, Kickspot 충전 거치대)  프레임 730~1690: 앞 램프 -> 팔이 스템을 밀어 거치대까지
+                              -> 걸쇠 -> 0.65 m 후진. 킥보드는 거치 자세(앞바퀴 축 높이·기울기 = blender_assets.json kickspot_4)
+      keep_as_cargo  충전하러 맡김: 복사본을 거치 자세로 둔다. 그 외는 원래 킥보드 모델(충돌체 있음)을 되살린다
+      remove_only    애니메이션 없이 지움
 레인 2개 (적재 2대): 0 = 왼쪽(y +0.27), 1 = 오른쪽(y -0.27). 애니메이션은 왼쪽 레인만 있어서 오른쪽은
   옆 부품 = 거울 짝 관절에 왼쪽 트랙, 팔 = '<관절>@r' 트랙(빌드 때 손목 거울상으로 푼 IK), 킥보드 = y 거울.
-킥보드 실제 pose 와 애니메이션 pose 의 차이(정렬 오차·넘어짐)는 팔이 잡는 동안 섞어서 없앤다.
+킥보드 실제 pose 와 애니메이션 pose 의 차이(정렬 오차)는 팔이 잡는 동안 섞어서 없앤다.
+넘어진 킥보드는 따로 만든 팔 궤적(rig['fallen'])으로 누운 스템을 먼저 잡고, 쥔 채 세운 뒤 원래 동작을 이어 간다.
 하차 목표와 애니메이션 끝 pose 의 차이도 팔이 미는 동안 섞어서 목표에 정확히 놓는다.
 
 Gazebo 와의 통신
@@ -180,6 +184,15 @@ class Rig:
                 out.append((p - rm @ off, rm))
             self.scooter.append(out)
         self.root = [(np.array(v[:3]), quat_to_mat(v[3:])) for v in tr['robot_root@start']]
+        self.fallen = d['fallen']                # 넘어진 킥보드 세우기 (팔 관절만)
+        self.fallen_cols = [self.names.index(n) for n in self.fallen['joints']]
+
+    def fallen_frame(self, lane, i):
+        """세우기가 들어간 적재 동작의 i 번째 프레임 -> (원래 트랙 번호, 팔 관절값 또는 None, 세운 정도 0~1)"""
+        start, grab, lift = (self.fallen[key] for key in ('start', 'grab', 'lift'))
+        k = i if i <= grab else max(grab, i - lift)
+        arm = self.fallen['lanes'][lane][i - start] if start <= i <= grab + lift else None
+        return k, arm, ease((i - grab) / lift)
 
     def phase(self, k):
         name = self.markers[0][1]
@@ -353,7 +366,7 @@ class ArmLoader(Node):
             (gh.succeed if ok else gh.abort)()
             return res
         err, anim = (self.plan_load(sid) if mode == 'load'
-                     else self.plan_unload(sid, gh.request.target, gh.request.keep_as_cargo))
+                     else self.plan_unload(sid, gh.request.target, gh.request.keep_as_cargo, gh.request.onto_stand))
         if err:
             self.get_logger().warn(f'킥보드 {sid} {"적재" if mode == "load" else "하차"} 불가: {err}')
             res.success, res.message = False, err
@@ -361,6 +374,8 @@ class ArmLoader(Node):
             return res
         ts = self.get_parameter('time_scale').value
         k0, k1 = anim['range']
+        k1 += anim.get('extra', 0)               # 넘어진 킥보드: 세우는 프레임만큼 길어짐
+        anim['range'] = (k0, k1)
         anim.update(gh=gh, mode=mode, done=threading.Event(), t0=self.now(), ts=ts, phase=None,
                     total=PREP_SEC * ts + (k1 - k0) / self.rig.fps * ts, q_start=self.q_sent.copy(),
                     fb=LoadScooter.Feedback if mode == 'load' else UnloadScooter.Feedback, reversing=False)
@@ -376,8 +391,9 @@ class ArmLoader(Node):
         else:
             self.slots[anim['lane']] = None
             self.cargo_rel.pop(anim['cargo'], None)
-            where = 'Kickspot 충전 자리' if anim['keep'] else '주차구역'
-            self.get_logger().info(f'하차 시작: {"왼" if anim["lane"] == 0 else "오른"}쪽 레인 킥보드 {sid} -> {where}')
+            how = '앞' if anim['front'] else '뒤'
+            self.get_logger().info(f'{how} 하차 시작: {"왼" if anim["lane"] == 0 else "오른"}쪽 레인 킥보드 {sid} '
+                                   f'-> {self.where_of(anim)}')
         self.anim = anim
         anim['done'].wait()
         res.success = True
@@ -430,22 +446,25 @@ class ArmLoader(Node):
         if err[0] > MAX_START_ERR[0] or err[1] > MAX_START_ERR[1]:
             return (f'킥보드가 뒤 램프 자리에 없음 (로봇 기준 ({rel[0][0]:.2f}, {rel[0][1]:.2f}), 기대 '
                     f'({exp[0][0]:.2f}, {exp[0][1]:.2f}), 방향 차 {math.degrees(err[1]):.0f}°)'), None
+        fallen = abs(rel[1][2, 2]) < 0.7
+        lift = fallen and rel[1][2, 1] > 0.8     # 세우기 궤적은 시뮬의 넘어진 방향(roll +90°)에만 맞음
         return None, {'sid': sid, 'src': src, 'src_pose': sp, 'cargo': f'cargo_{sid}', 'lane': lane,
-                      'range': LOAD_RANGE, 'rel0': rel, 'start_err': err, 'fallen': abs(rel[1][2, 2]) < 0.7}
+                      'range': LOAD_RANGE, 'rel0': rel, 'start_err': err, 'fallen': fallen, 'lift': lift,
+                      'extra': self.rig.fallen['lift'] if lift else 0}
 
-    def target_pose(self, target, keep):
+    def target_pose(self, target, on_stand):
         """하차 목표(world, 킥보드 중심 바닥 + yaw) -> 킥보드 모델 pose. Kickspot 이면 거치 자세(앞바퀴 축 높이·기울기)"""
         o = target.orientation
         yaw = math.atan2(2 * (o.w * o.z + o.x * o.y), 1 - 2 * (o.y * o.y + o.z * o.z))
         p = np.array([target.position.x, target.position.y, 0.0])
-        if not keep:
+        if not on_stand:
             return p, rz(yaw)
         rm = rz(yaw) @ ry(self.kickspot['pitch'])
         ax = p + rz(yaw) @ np.array([self.axle[0], 0.0, 0.0])
         ax[2] = self.kickspot['front_axle_z']
         return ax - rm @ np.array(self.axle), rm
 
-    def plan_unload(self, sid, target, keep=False):
+    def plan_unload(self, sid, target, keep=False, onto_stand=False):
         name = f'cargo_{sid}'
         if name not in self.slots or name not in self.cargo_rel:
             return f'적재함에 {name} 없음', None
@@ -453,10 +472,20 @@ class ArmLoader(Node):
         if rp is None:
             return 'robot pose 없음', None
         lane = self.slots.index(name)
-        k0, k1 = UNLOAD_RANGE
-        base = compose(rp, inverse(self.rig.root[k0]))           # 애니메이션 기준 world (하차 시작 = 지금 로봇)
-        end = compose(compose(base, self.rig.root[k1 - 1]), self.rig.scooter[lane][k1 - 1])
-        goal = self.target_pose(target, keep)
+        front = keep or onto_stand
+        if front:                                    # 앞 하차 (거치대): 하차 애니메이션, 끝 = 마지막 프레임
+            k0, k1 = UNLOAD_RANGE
+            last = k1 - 1
+            base = compose(rp, inverse(self.rig.root[k0]))       # 애니메이션 기준 world (하차 시작 = 지금 로봇)
+            stand_at = '로봇 앞이 목표 앞 1.12 m 에'
+        else:                                        # 뒤 하차: 적재 애니메이션을 거꾸로, 끝 = 첫 프레임
+            k0, k1 = LOAD_RANGE
+            last = k0
+            base = rp                                            # 적재 동작 중에는 로봇이 안 움직임
+            stand_at = '로봇 중심이 목표 앞 2.07 m 에 같은 방향으로'
+        end = compose(compose(base, self.rig.root[last] if front else (np.zeros(3), np.eye(3))),
+                      self.rig.scooter[lane][last])
+        goal = self.target_pose(target, front)
         corr = compose(goal, inverse(end))                        # world 에서 왼쪽에 곱하는 보정
         # 거리·방향 차이는 끝 자리와 목표를 직접 비교한다. corr 의 평행이동 성분은 world 원점 둘레 회전이 섞여
         # 원점에서 먼 곳(캠퍼스 280 m)에서는 방향이 8° 만 달라도 37 m 로 나와 멀쩡한 하차를 거절했다 (k04 P24)
@@ -464,9 +493,15 @@ class ArmLoader(Node):
         dyaw = abs(wrap(heading(goal[1]) - heading(end[1])))
         if dist > 1.5 or dyaw > MAX_START_ERR[1]:
             return (f'하차 목표가 너무 멂 (애니메이션 끝 자리에서 {dist:.2f} m, 방향 차 {math.degrees(dyaw):.0f}°. '
-                    f'로봇 앞이 목표 앞 1.12 m 에 서야 함)'), None
-        return None, {'sid': sid, 'cargo': name, 'lane': lane, 'range': UNLOAD_RANGE, 'keep': keep,
-                      'base': base, 'corr': corr, 'pivot': end[0], 'goal': goal}
+                    f'{stand_at} 서야 함)'), None
+        return None, {'sid': sid, 'cargo': name, 'lane': lane, 'range': (k0, k1), 'keep': keep, 'front': front,
+                      'reverse': not front, 'base': base, 'corr': corr, 'pivot': end[0], 'goal': goal}
+
+    @staticmethod
+    def where_of(a):
+        if a['keep']:
+            return 'Kickspot 충전 자리'
+        return '충전구역 거치대' if a['front'] else '주차구역'
 
     # ---------------- 주기 처리 ----------------
     def tick(self):
@@ -486,41 +521,58 @@ class ArmLoader(Node):
             self.send_poses(updates, force=a is not None)
 
     def frame_of(self, a):
-        """-> (트랙 번호, 준비 단계 진행률 0~1 또는 None, 끝났나)"""
+        """-> (트랙 번호, 준비 단계 진행률 0~1 또는 None, 끝났나). 뒤 하차(reverse)는 끝 프레임부터 거꾸로"""
+        k0, k1 = a['range']
+        back = a.get('reverse', False)
         t = (self.now() - a['t0']) / a['ts']
         if t < PREP_SEC:
-            return a['range'][0], t / PREP_SEC, False
-        k = a['range'][0] + int((t - PREP_SEC) * self.rig.fps)
-        return min(k, a['range'][1] - 1), None, k >= a['range'][1]
+            return (k1 - 1 if back else k0), t / PREP_SEC, False
+        n = int((t - PREP_SEC) * self.rig.fps)
+        i = min(n, k1 - k0 - 1)
+        return (k1 - 1 - i if back else k0 + i), None, n >= k1 - k0
 
     def step_anim(self, a, rp, updates):
         k, prep, finished = self.frame_of(a)
         lane = a['lane']
         if finished:
             return self.finish_anim(a, rp)
+        arm, lifted = None, 0.0
+        if a.get('lift'):
+            k, arm, lifted = self.rig.fallen_frame(lane, k)
         q = self.rig.Q[lane][k]
+        if arm is not None:
+            q = q.copy()
+            q[self.rig.fallen_cols] = arm
         if prep is not None:
             q = a['q_start'] + ease(prep) * (q - a['q_start'])
         self.send_joints(q)
-        name = 'PREP' if prep is not None else self.rig.phase(k)
+        name = 'PREP' if prep is not None else ('[뒤 하차] ' if a.get('reverse') else '') + self.rig.phase(k)
+        if 0.0 < lifted < 1.0:
+            name = '  넘어진 킥보드 세움'
         if a['phase'] != name:
             a['phase'] = name
             el = (self.now() - a['t0']) / a['ts']
             a['gh'].publish_feedback(a['fb'](phase=name, progress=float(min(1.0, el * a['ts'] / a['total']))))
         anim_rel = self.rig.scooter[lane][k]
         if a['mode'] == 'load':
-            if k < GRIP_K:
+            if a['lift']:                        # 팔이 쥐고 돌리는 만큼만 선다 (잡기 전에는 누운 그대로)
+                rel = blend(a['rel0'], anim_rel, lifted) if lifted < 1.0 else anim_rel
+            elif k < GRIP_K:
                 rel = a['rel0']
             else:
                 rel = blend(a['rel0'], anim_rel, ease((k - GRIP_K) / (UPRIGHT_K - GRIP_K)))
             updates[a['cargo']] = compose(rp, rel)
             return
-        # 하차: world = 시작 로봇 · 로봇 이동(애니메이션) · 킥보드(로봇 기준), 목표 쪽 보정을 미는 동안 섞음
-        w = compose(compose(a['base'], self.rig.root[k]), anim_rel)
-        u = ease((k - PUSH_K) / (LATCH_K - PUSH_K))
-        corr = blend_about(a['corr'], a['pivot'], u)
-        updates[a['cargo']] = compose(corr, w)
-        self.drive_reverse(a, k)
+        # 하차: world = 시작 로봇 · 로봇 이동(앞 하차 애니메이션) · 킥보드(로봇 기준), 목표 쪽 보정을 팔이 옮기는 동안 섞음
+        if a['reverse']:
+            w = compose(a['base'], anim_rel)
+            u = ease((UPRIGHT_K - k) / (UPRIGHT_K - GRIP_K))     # 거꾸로: 눕히기 시작(255) ~ 팔이 놓는 곳(125)
+        else:
+            w = compose(compose(a['base'], self.rig.root[k]), anim_rel)
+            u = ease((k - PUSH_K) / (LATCH_K - PUSH_K))
+        updates[a['cargo']] = compose(blend_about(a['corr'], a['pivot'], u), w)
+        if not a['reverse']:
+            self.drive_reverse(a, k)
 
     def drive_reverse(self, a, k):
         """하차 끝 후진: 애니메이션의 로봇 이동(robot_root)을 /cmd_vel 로"""
@@ -552,11 +604,10 @@ class ArmLoader(Node):
             if a['keep']:
                 self.station_cargo.add(a['cargo'])
                 self.send_poses({a['cargo']: (pw, rw)}, force=True)
-                where = 'Kickspot 충전 자리'
             else:
                 self.create_visual_copy(f'scooter_{a["sid"]}', pw, rw, collide=True)
                 self.remove(a['cargo'])
-                where = '주차구역'
+            where = self.where_of(a)
             p_floor = pw.copy()
             p_floor[2] = 0.0
             a['placed'] = (p_floor, rz(heading(rw)))

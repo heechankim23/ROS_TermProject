@@ -52,7 +52,7 @@ from .mission_logic import (CHARGER, CHARGING, COLLECT_PHASE_TO_STATE, DOCKING, 
                             collect_cost, decide_queue_empty, decide_select, decide_tick, dock_should_stop,
                             drop_cost, drop_destination, drop_next_points, drop_station_walls, must_head_home, parking_jobs,
                             rear_clear, scan_to_body_points)
-from .motion import quat_from_yaw
+from .motion import car_limit, quat_from_yaw
 from .occupancy import OccupancyMap
 from .profiling import Profiler
 
@@ -611,7 +611,7 @@ class MissionManager(Node):
         cmd = Twist()
         if clear:
             if st is not None:
-                cmd.linear.x, cmd.angular.z = undock_twist(pose, st, self.p('undock_speed'))
+                cmd.linear.x, cmd.angular.z = car_limit(*undock_twist(pose, st, self.p('undock_speed')))
             else:
                 cmd.linear.x = -abs(self.p('undock_speed'))
             if u['blocked'] is not None:
@@ -896,7 +896,8 @@ class MissionManager(Node):
 
     def run_unloads(self, jobs, then):
         """jobs = [(id, (x, y, yaw) 또는 None, 종류)] 를 하나씩. 끝나면 then(적재함에서 내린 수)
-          'park'    주차구역에 세움 -> 다시 정상 킥보드 (/scooter_dropped)
+          'park'    주차구역에 세움 (뒤로 내림) -> 다시 정상 킥보드 (/scooter_dropped)
+          'stand'   충전구역 Kickspot 에 꽂음 (앞으로 내림) -> 다시 정상 킥보드 (충전구역도 주차구역)
           'charger' 충전소 충전 자리에 세움 (충전하러 맡김)
           'charged' 충전 자리의 오래된 킥보드를 치움 (충전 끝) — 적재 수와 무관
           'remove'  적재함에서 바로 지움 (충전 자리 정보가 없을 때)"""
@@ -923,7 +924,8 @@ class MissionManager(Node):
                 tm.append(self.create_timer(self.p('unload_sim_sec') if spot else 0.1, fire,
                                             callback_group=self.cb))
                 return
-            goal = UnloadScooter.Goal(scooter_id=sid, remove_only=spot is None, keep_as_cargo=kind == 'charger')
+            goal = UnloadScooter.Goal(scooter_id=sid, remove_only=spot is None, keep_as_cargo=kind == 'charger',
+                                      onto_stand=kind in ('charger', 'stand'))
             if spot is not None:
                 goal.target.position.x, goal.target.position.y = spot[0], spot[1]
                 q = quat_from_yaw(spot[2])
@@ -964,7 +966,7 @@ class MissionManager(Node):
                 return
             self.cargo.remove(sid)
             done[0] += 1
-            if kind == 'park':
+            if kind in ('park', 'stand'):
                 self.used_spots.append((spot[0], spot[1]))
                 m = ScooterTruthArray()
                 m.header.frame_id = 'map'
@@ -987,7 +989,7 @@ class MissionManager(Node):
 
         def job_failed(sid, spot, kind, why):
             self.get_logger().warn(f'킥보드 {sid} 하역 실패 ({kind}): {why}')
-            if kind == 'park':                   # 주차구역에 못 내리면 충전소에서 내림
+            if kind in ('park', 'stand'):        # 주차구역에 못 내리면 충전소에서 내림
                 self.cargo.redirect_to_charger(sid)
                 self.used_spots.append((spot[0], spot[1]))     # 그 자리는 다시 쓰지 않음
             elif kind == 'charger':              # 충전 자리에 못 세우면 적재함에서 바로 지움

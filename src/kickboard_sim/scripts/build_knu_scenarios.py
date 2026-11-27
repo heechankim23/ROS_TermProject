@@ -25,6 +25,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
                                 'kickboard_robot'))
 from kickboard_robot.collector_logic import (ENTRY_DIST, SpotGrid, fill_static, plan_align_spots,  # noqa: E402
                                              reverse_entry_pose)
+from kickboard_robot.kinematic_planner import KinematicParams, plan_path  # noqa: E402
+from kickboard_robot.motion import to_rear  # noqa: E402
+from kickboard_robot.occupancy import OccupancyMap  # noqa: E402
+from kickboard_robot.planner import Costmap  # noqa: E402
 
 PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(PKG, 'config', 'scenarios_knu')
@@ -37,6 +41,7 @@ LOW_BATTERY = 20.0          # 킥보드 배터리 부족 기준 (%)
 FALL_TILT = 45.0            # 넘어짐 기준 (기울기, 도)
 ROBOT_CAPACITY = 2          # 적재함 칸 수 (SCOOTOVER v19 적재 레인 2개)
 ROBOT_RETURN = 20.0         # 로봇 복귀 배터리 (%)
+DOCK_STAGING = (3.5, 3.0, 2.5, 2.0)   # collector dock_staging 와 같게
 DEFAULT_CHARGE_CAP = 8      # 충전 주차구역 스탠드 수 (맵 기본값, 시나리오에서 덮어쓸 수 있음)
 REASONS = {                 # 요청 사유 -> (코드, 표시 이름, 우선순위 가중치)
     'obstruction': (5, '통행 방해 신고', 4.0),     # 출입구·점자블록·통로를 막았다는 사용자 신고
@@ -134,6 +139,7 @@ class NavGrid:
         drive = ((self.road >= 0.6) & (self.clear >= 0.6)).astype(np.uint8)
         _, self.lab = cv2.connectedComponents(drive, connectivity=8)
         self.dock_lab = self.lab[self.rc(*DOCK)]
+        self.drive_map = None
 
     def rc(self, x, y):
         r = int((self.oy + self.h * self.res - y) / self.res)
@@ -155,8 +161,9 @@ class NavGrid:
         return None
 
     def loadable(self, x, y, yaw):
-        """로봇의 후진 적재 자리(collector 와 같은 검사)가 양쪽 레인 모두 길 위에 나오는가"""
-        grid = SpotGrid(x, y, half=6.0, res=0.1)
+        """양쪽 레인 모두: 후진 적재 자리가 길 위에 있고, 대기점에서 그 자리까지 직선 후진 띠가 비어 있고,
+        근처에서 대기점까지 자동차식(Reeds-Shepp, 최소 회전 반경) 경로가 있는가"""
+        grid = SpotGrid(x, y, half=7.0, res=0.1)
         fill_static(grid, *self.maps)
         for lane in (0, 1):
             px, py, _ = reverse_entry_pose(x, y, yaw, lane)
@@ -165,7 +172,35 @@ class NavGrid:
             if not plan_align_spots(grid, x, y, (px, py), ENTRY_DIST, [0.0, 0.15, 0.30], inscribed=0.8,
                                     keep_clear=0.5, entry=(yaw, lane))[0]:
                 return False
+            if not any(self.staging_ok(grid, x, y, yaw, lane, e) for e in DOCK_STAGING):
+                return False
         return True
+
+    def staging_ok(self, grid, x, y, yaw, lane, extra):
+        sx, sy, _ = reverse_entry_pose(x, y, yaw, lane, extra)
+        line = [float(v) for v in np.arange(0.0, extra + 1e-6, 0.25)]
+        found = plan_align_spots(grid, x, y, (sx, sy), ENTRY_DIST, line, inscribed=0.55, keep_clear=0.3,
+                                 entry=(yaw, lane))[0]
+        if len(found) != len(line):
+            return False
+        access = self.reachable_access(x, y)
+        if access is None:
+            return False
+        if self.drive_map is None:
+            self.drive_map = OccupancyMap(os.path.join(PKG, 'maps', 'knu_campus.yaml'))
+            occ = np.frombuffer(bytes(self.drive_map.occ), dtype=np.uint8).reshape(self.drive_map.h, self.drive_map.w)
+            self.drive_occ = occ[::-1] > 0
+        m = self.drive_map
+        cm = Costmap(x - 12.0, y - 12.0, 24.0, 24.0, res=m.res, inscribed=0.55, inflate=1.2)
+        i0, j0 = int(round((cm.x0 - m.ox) / m.res)), int(round((cm.y0 - m.oy) / m.res))
+        part = self.drive_occ[max(0, j0):j0 + cm.h, max(0, i0):i0 + cm.w]
+        cm.static[:part.shape[0], :part.shape[1]] = part
+        goal = to_rear((sx, sy, yaw))
+        for heading in (math.atan2(sy - access[1], sx - access[0]), yaw, yaw + math.pi):
+            start = to_rear((access[0], access[1], heading))
+            if plan_path(cm, start, goal, 0.0, KinematicParams(time_budget_sec=1.0, refine_expansions=0)) is not None:
+                return True
+        return False
 
     def fit_yaw(self, x, y, yaw):
         """원하는 방향에 가장 가까운, 실을 수 있는 방향. 없으면 None"""

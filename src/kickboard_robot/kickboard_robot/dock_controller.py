@@ -26,7 +26,8 @@ from kickboard_interfaces.msg import TagDetectionArray
 
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
 from .gz_utils import GzWorld
-from .motion import GoToController, quat_from_yaw, wrap, yaw_from_quat
+from .collector_logic import dock_errors, dock_step
+from .motion import car_limit, quat_from_yaw, wrap, yaw_from_quat
 
 
 def charger_poses(c):
@@ -78,6 +79,7 @@ class DockController(Node):
         return self.det[1] if self.det and now_sec(self) - self.det[0] < 0.6 else None
 
     def twist(self, v=0.0, w=0.0):
+        v, w = car_limit(v, w)
         t = Twist()
         t.linear.x, t.angular.z = v, w
         self.cmd_pub.publish(t)
@@ -140,8 +142,6 @@ class DockController(Node):
             sleep_sim(self, 0.05)
         if self.fresh() is None:
             self.get_logger().warn('충전소 태그 미검출 -> 설정 pose 로 진입')
-        ctrl = GoToController(v_max=0.08, w_max=0.6, k_lin=0.6, pos_tol=0.02,
-                              yaw_tol=math.radians(2.0), allow_reverse=True)
         dist = self.charger['dock_distance']
         goal = self.dock
         smooth = None              # 검출 노이즈(σ 2 cm) 저역 통과 -> 목표가 흔들리지 않게
@@ -186,7 +186,17 @@ class DockController(Node):
             _, lat, ye = self.errors(pose)
             fb.lateral_error, fb.yaw_error = float(lat), float(math.degrees(ye))
             gh.publish_feedback(fb)
-            v, w, ok = ctrl.step(pose, goal)
+            v, w, ok = dock_step(pose, goal, v_max=0.08)     # 도킹 직선을 따라 (제자리 회전 없음)
+            if ok and (abs(dock_errors(pose, goal)[1]) > 0.05 or abs(dock_errors(pose, goal)[2]) > math.radians(5.0)):
+                back = now_sec(self)                         # 끝까지 왔는데 어긋남 -> 뒤로 뺐다가 다시
+                while now_sec(self) - back < 20.0:
+                    pose = self.pose.get()
+                    v, w, out = dock_step(pose, goal, -1.5, v_max=0.15) if pose else (0.0, 0.0, True)
+                    if out or gh.is_cancel_requested:
+                        break
+                    self.twist(v, w)
+                    sleep_sim(self, 0.05)
+                continue
             if ok:
                 break
             self.twist(v, w)
@@ -206,15 +216,13 @@ class DockController(Node):
         fb.phase = 'ALIGN'
         gh.publish_feedback(fb)
         if drive:
-            ctrl = GoToController(v_max=0.15, w_max=0.8, k_lin=0.8, pos_tol=0.03,
-                                  yaw_tol=math.radians(3.0), allow_reverse=True)
             t0 = now_sec(self)
             while now_sec(self) - t0 < self.get_parameter('snap_drive_sec').value:
                 if gh.is_cancel_requested:
                     return self.done(gh, False)
                 pose = self.pose.get()
                 if pose is not None:
-                    v, w, ok = ctrl.step(pose, self.dock)
+                    v, w, ok = dock_step(pose, self.dock, v_max=0.15)
                     if ok:
                         break
                     self.twist(v, w)

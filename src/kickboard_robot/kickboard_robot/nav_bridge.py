@@ -26,12 +26,24 @@ from sensor_msgs.msg import LaserScan
 from rclpy.time import Time
 
 from kickboard_interfaces.action import GoToPose
+from kickboard_interfaces.msg import ScooterTruthArray
 
 from .common import PoseTracker, future_wait, now_sec, run_blocking, spin_single
-from .motion import GoToController, quat_from_yaw, yaw_from_quat
+from .motion import BASE_BODY_X, MIN_TURN_RADIUS, GoToController, car_limit, quat_from_yaw, to_rear, yaw_from_quat
 from .occupancy import OccupancyMap, free_standoff
 from .planner import Costmap, free_spot, nearest_free
 from .kinematic_planner import KinematicParams, PathTracker, path_collides, plan_path
+
+
+STUCK_SEC, STUCK_MOVE = 8.0, 0.08      # 이 시간 동안 가라고 했는데 이만큼도 못 갔으면 걸린 것
+REAR_STOP_DIST = 0.25                  # 후진 중 차체 뒤끝에서 이 안에 라이다 점이 있으면 정지
+FORWARD_FIRST_M = 1.5                  # 뒤에 킥보드를 내린 자리에서는 이만큼 전진으로 시작하는 경로만 후보로
+
+
+def rear_gap(px, py, rear_x, half_width):
+    """차체 좌표 라이다 점들 -> 차체 뒤끝(rear_x) 바로 뒤 통로에서 가장 가까운 점까지 거리 (없으면 inf)"""
+    behind = np.isfinite(px) & np.isfinite(py) & (px <= rear_x) & (np.abs(py) < half_width)
+    return float(rear_x - px[behind].max()) if behind.any() else float('inf')
 
 
 class NavBridge(Node):
@@ -63,13 +75,12 @@ class NavBridge(Node):
         self.declare_parameter('route_map_json', '')
         self.declare_parameter('window_m', 70.0)
 
-        # 운동학 제약 경로 (kinematic_planner.py): 최소 회전 반경 곡선 + 차체 충돌 검사 + 곡률 제한 추종.
-        # 계획이 안 되면 이번 목표는 예전 방식(격자 A* + 제자리 회전 후 직진)으로 간다
+        # 자동차식 주행 (kinematic_planner.py): 뒤축 기준, 최소 회전 반경 곡선(Reeds-Shepp) + 차체 충돌 검사 + 곡률 제한 추종.
+        # 제자리 회전은 하지 않는다. 지도가 없을 때만 예전 방식(GoToController)
         self.declare_parameter('kinematic_planning', True)
-        self.declare_parameter('min_turn_radius', 0.8)        # 로봇 최소 회전 반경 (m). 추종 곡률 한계, 계획은 1.25배
+        self.declare_parameter('min_turn_radius', MIN_TURN_RADIUS)   # 최소 회전 반경 (m). 추종 곡률 한계, 계획은 1.1배
         self.declare_parameter('k_rate_max', 2.5)             # 조향 속도 한계: 명령 곡률 변화 1/(m·s). 경로 곡률도 연속(완화 곡선)
-        self.declare_parameter('allow_reverse', True)         # 좁은 곳에서 후진 허용 (비용 2.5배, 전·후진 전환 벌점)
-        self.declare_parameter('pivot_at_ends', True)         # 출발·도착점에서만 제자리 회전 (회전할 공간이 있을 때)
+        self.declare_parameter('allow_reverse', True)         # 후진 허용 (비용 1.8배, 전·후진 전환 벌점)
         self.declare_parameter('plan_time_budget_sec', 2.5)
         self.declare_parameter('kin_replan_dev_m', 0.6)       # 경로에서 이만큼 벗어나면 다시 계획
 
@@ -108,7 +119,10 @@ class NavBridge(Node):
         self.cb = ReentrantCallbackGroup()
         self.pose = PoseTracker(self)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.rear_drop = None      # 뒤에 킥보드를 내린 자리 (x, y). 거기서 벗어날 때까지 전진으로 시작하는 경로만
+        self.create_subscription(ScooterTruthArray, '/scooter_dropped', self.on_dropped, 10, callback_group=self.cb)
         self.front_min = float('inf')
+        self.rear_min = float('inf')
         self.scan_wait = []        # 찍힌 시각의 TF 를 기다리는 스캔 (최대 3개)
         self.create_subscription(LaserScan, '/scan', self.on_scan, qos_profile_sensor_data,
                                  callback_group=self.cb)
@@ -134,6 +148,27 @@ class NavBridge(Node):
                 or not all(math.isfinite(v) for v in values) or request.standoff < 0):
             return GoalResponse.REJECT
         return GoalResponse.ACCEPT if self.goal_lock.acquire(blocking=False) else GoalResponse.REJECT
+
+    def on_dropped(self, msg):
+        """방금 내려놓은 킥보드가 로봇 뒤에 있으면 표시해 둔다 (라이다가 반영하기 전에 계획해도 뒤로 가지 않게)"""
+        pose = self.current_pose()
+        if pose is None:
+            return
+        c, s = math.cos(pose[2]), math.sin(pose[2])
+        for p in msg.poses:
+            dx, dy = p.position.x - pose[0], p.position.y - pose[1]
+            if dx * c + dy * s < BASE_BODY_X[0] and math.hypot(dx, dy) < 4.0:
+                self.rear_drop = pose[:2]
+
+    def forward_first(self, pose):
+        """이 자리에서 계획할 때 전진으로만 가야 하는 남은 거리 (m)"""
+        if self.rear_drop is None:
+            return 0.0
+        left = FORWARD_FIRST_M - math.dist(pose[:2], self.rear_drop)
+        if left <= 0.0:
+            self.rear_drop = None
+            return 0.0
+        return left
 
     def current_pose(self):
         # Check TF age here without changing the shared PoseTracker.
@@ -178,6 +213,8 @@ class NavBridge(Node):
             self.last_scan_at = None
             return
         self.front_min = float(r[front].min()) if front.any() else float('inf')
+        seen = np.isfinite(r) & (r >= msg.range_min + 1e-3)
+        self.rear_min = rear_gap(px[seen & ~own], py[seen & ~own], fx0, fy)
         pose = self.current_pose()
         if pose is None:
             self.last_scan_at = None
@@ -357,16 +394,16 @@ class NavBridge(Node):
         """greedy: 첫 계획이 시간 안에 안 끝났을 때 — 휴리스틱을 더 믿어 빨리 찾음 (조금 덜 짧은 경로)"""
         gp = self.get_parameter
         return KinematicParams(min_turn_radius=gp('min_turn_radius').value, allow_reverse=gp('allow_reverse').value,
-                               pivot_at_ends=gp('pivot_at_ends').value,
                                time_budget_sec=gp('plan_time_budget_sec').value,
                                heuristic_weight=3.0 if greedy else 1.4)
 
-    def kin_plan(self, pose, goal, now, greedy=False):
-        """-> (촘촘한 경로, 최종 목표인가). 큰 지도(RollingCostmap)에서 목표가 창 밖이면 큰 경로의 중간 목표까지.
+    def kin_plan(self, pose, goal, now, greedy=False, yaw_free=False):
+        """pose, goal = base_footprint 자세. -> (뒤축 기준 촘촘한 경로, 최종 목표인가).
+        큰 지도(RollingCostmap)에서 목표가 창 밖이면 큰 경로의 중간 목표까지. yaw_free: 도착 방향을 따지지 않음.
         계획은 수 초 걸릴 수 있어 지도 복사본으로 잠금 밖에서 한다 (잠금을 쥐면 on_scan 이 막혀 단일 executor 의
         TF·스캔 수신까지 멈춤)"""
         cm, snap = self.plan_snapshot(pose)
-        target, final = tuple(goal), True
+        start, target, final = to_rear(pose), to_rear(goal), True
         if hasattr(snap, 'win'):
             if not snap.in_window(goal, 2.0):
                 found = snap.plan(pose[:2], goal[:2], now) is not None and snap.sub is not None
@@ -374,13 +411,21 @@ class NavBridge(Node):
                 if not found:
                     return None, True
                 sx, sy = snap.sub
-                target, final = (sx, sy, math.atan2(sy - pose[1], sx - pose[0])), False
+                target, final = (sx, sy, math.atan2(sy - start[1], sx - start[0])), False
             else:
                 snap.sub = None
                 self.keep_route(cm, snap)
             snap = snap.win
-        path = plan_path(snap, tuple(pose), target, now, self.kin_params(greedy), goal_yaw_free=not final,
-                         log=self.get_logger().info)
+        free = not final or yaw_free
+        if final and yaw_free:
+            target = (goal[0], goal[1], goal[2])        # 방향 자유: 로봇 중심 자리에 뒤축이 서도 됨
+        ahead = self.forward_first(pose)
+        path = plan_path(snap, start, target, now, self.kin_params(greedy), goal_yaw_free=free,
+                         log=self.get_logger().info, forward_first=ahead)
+        if path is None and ahead > 0.0 and greedy:     # 앞이 막혀 전진 시작이 안 되면 제한 없이 (후진 안전 정지는 남음)
+            self.get_logger().warn('전진으로 시작하는 경로가 없음 -> 후진도 후보에 넣음')
+            path = plan_path(snap, start, target, now, self.kin_params(greedy), goal_yaw_free=free,
+                             log=self.get_logger().info)
         return path, final
 
     def plan_snapshot(self, pose):
@@ -397,6 +442,17 @@ class NavBridge(Node):
             if snap.sub is not None:
                 cm.sub_t = snap.sub_t
 
+    def straight_clear(self, pose, v, now):
+        """v 방향으로 0.9 m 직진할 때 차체 앞(뒤)끝이 장애물에 안 닿는가"""
+        end = BASE_BODY_X[1] if v > 0 else BASE_BODY_X[0]
+        radius = self.get_parameter('inscribed_radius').value
+        with self.cm_lock:
+            for extra in (0.1, 0.5, 0.9):
+                x = end + math.copysign(extra, v)
+                if self.cm.dist_at(pose[0] + x * math.cos(pose[2]), pose[1] + x * math.sin(pose[2]), now) <= radius:
+                    return False
+        return True
+
     # ---------------- simple backend ----------------
     def run_simple(self, gh, goal, attempt):
         gp = self.get_parameter
@@ -409,7 +465,8 @@ class NavBridge(Node):
         stop_d = gp('obstacle_stop_dist').value
         path, planned_at = None, -1e9
         backed = 0.0
-        kin = {'tracker': None, 'checked_at': -1e9, 'fails': 0, 'failed': False, 'final': True}
+        kin = {'tracker': None, 'checked_at': -1e9, 'fails': 0, 'final': True, 'unstick': None, 'unstuck': 0}
+        moved_from, rear_blocked = None, None         # (자리, 시각) 걸림 감시, 후진이 막힌 시각
         while rclpy.ok():
             if gh.is_cancel_requested:
                 self.stop()
@@ -449,9 +506,22 @@ class NavBridge(Node):
                         goal, path = new, None
                         kin['tracker'] = None
                         dist = math.hypot(goal[0] - pose[0], goal[1] - pose[1])
-            use_kin = self.cm is not None and gp('kinematic_planning').value and not kin['failed']
-            if use_kin:
-                # ---- 운동학 제약 경로 (최소 회전 반경 곡선 + 차체 충돌 검사) ----
+            use_kin = self.cm is not None and gp('kinematic_planning').value
+            if use_kin and kin['unstick'] is not None:
+                # 계획이 안 될 때: 짧게 직진·후진해 자리를 바꾸고 다시 계획
+                v, w = kin['unstick'][1], 0.0
+                kin.setdefault('unstick_t', now)
+                if (math.dist(pose[:2], kin['unstick'][0]) >= 0.8 or now - kin['unstick_t'] > 12.0
+                        or not self.straight_clear(pose, v, now)):
+                    kin['unstick'] = None
+                    kin.pop('unstick_t', None)
+                    kin['fails'] = 0
+                    self.stop()
+                    continue
+                wp = goal
+            elif use_kin:
+                # ---- 자동차식 경로 (최소 회전 반경 곡선 + 차체 충돌 검사), 뒤축 기준 ----
+                rear = to_rear(pose)
                 tr = kin['tracker']
                 need = tr is None
                 if not need and now - kin['checked_at'] > gp('replan_sec').value:
@@ -459,20 +529,29 @@ class NavBridge(Node):
                     with self.cm_lock:
                         grid = self.cm.win if hasattr(self.cm, 'win') else self.cm
                         blocked = path_collides(grid, tr.path, now, self.kin_params(), from_index=tr.i,
-                                                start=pose[:2])
-                        need = (blocked or tr.cross_track(pose) > gp('kin_replan_dev_m').value
+                                                start=rear[:2])
+                        need = (blocked or tr.cross_track(rear) > gp('kin_replan_dev_m').value
                                 or (hasattr(self.cm, 'needs_replan') and self.cm.needs_replan(pose, now)))
                     if need:
                         self.get_logger().info('경로 다시 계획 (' + ('새 장애물' if blocked else '경로 이탈/구간 끝') + ')')
                 if need:
                     self.stop()                  # 계획하는 동안 직전 속도 명령으로 계속 가지 않게
-                    kpath, final = self.kin_plan(pose, goal, now, greedy=kin['fails'] > 0)
+                    # 두 번 못 찾으면, standoff 목표(바라보는 방향이 꼭 필요하지 않음)는 도착 방향을 풀어 준다
+                    yaw_free = kin['fails'] >= 2 and gh.request.standoff > 0.0
+                    kpath, final = self.kin_plan(pose, goal, now, greedy=kin['fails'] > 0, yaw_free=yaw_free)
                     if kpath is None:
                         self.stop()
                         kin['fails'] += 1
-                        if kin['fails'] >= 2:
-                            kin['failed'] = True
-                            self.get_logger().warn('운동학 경로를 못 찾음 -> 이번 목표는 격자 A* 경로(예전 방식)로')
+                        blocked_since = now if blocked_since is None else blocked_since
+                        if kin['fails'] >= 3:
+                            direction = next((d for d in (-1, 1) if self.straight_clear(pose, d * 0.15, now)), None)
+                            if direction is None or kin['unstuck'] >= 3:
+                                self.get_logger().warn(f'경로 없음: 로봇 ({pose[0]:.1f}, {pose[1]:.1f}) -> '
+                                                       f'목표 ({goal[0]:.1f}, {goal[1]:.1f}, {math.degrees(goal[2]):.0f}°)')
+                                return False, 'no path'
+                            kin['unstuck'] += 1
+                            kin['unstick'] = (pose[:2], 0.15 * direction)
+                            self.get_logger().warn(f'경로를 못 찾음 -> 0.8 m {"후진" if direction < 0 else "전진"}한 뒤 다시 계획')
                         time.sleep(0.05)
                         continue
                     kin['fails'] = 0
@@ -481,10 +560,13 @@ class NavBridge(Node):
                     tr = kin['tracker'] = PathTracker(
                         kpath, v_max=gp('v_max').value, w_max=gp('w_max').value,
                         min_turn_radius=gp('min_turn_radius').value, pos_tol=gp('pos_tol').value,
-                        yaw_tol=math.radians(gp('yaw_tol_deg').value), final_yaw=final,
                         k_rate_max=gp('k_rate_max').value)
                     blocked_since = None
-                v, w, done = tr.step(pose)
+                v, w, done = tr.step(rear)
+                if tr.lost:
+                    self.get_logger().info('경로를 크게 벗어남 -> 다시 계획')
+                    kin['tracker'] = None
+                    continue
                 if done:
                     if kin['final']:
                         self.stop()
@@ -565,6 +647,25 @@ class NavBridge(Node):
                     return False, 'blocked'
             else:
                 blocked_since = None
+            if use_kin:
+                v, w = car_limit(v, w, gp('min_turn_radius').value)
+                # 후진 안전장치: 뒤에 가까운 것이 있으면 멈추고, 잠깐 기다려도 있으면 앞으로 빠져 다시 계획
+                if v < 0 and self.rear_min < REAR_STOP_DIST:
+                    rear_blocked = now if rear_blocked is None else rear_blocked
+                    if now - rear_blocked > 1.0 and self.straight_clear(pose, 0.15, now):
+                        self.get_logger().warn(f'후진 중 뒤 {self.rear_min:.2f} m 에 장애물 -> 앞으로 빠진 뒤 다시 계획')
+                        kin['unstick'], kin['tracker'], rear_blocked = (pose[:2], 0.15), None, None
+                    v, w = 0.0, 0.0
+                elif v < 0:
+                    rear_blocked = None
+                # 걸림 감시: 가라고 했는데 자리가 안 바뀜 (라이다가 못 본 것을 밀고 있음) -> 반대쪽으로 빠져나옴
+                if abs(v) < 0.03 or moved_from is None or math.dist(pose[:2], moved_from[0]) > STUCK_MOVE:
+                    moved_from = (pose[:2], now)
+                elif now - moved_from[1] > STUCK_SEC:
+                    back = -0.15 if v > 0 else 0.15
+                    self.get_logger().warn(f'{STUCK_SEC:.0f}초 동안 못 움직임 -> {"후진" if back < 0 else "전진"}해 빠져나온 뒤 다시 계획')
+                    kin['unstick'], kin['tracker'], moved_from = (pose[:2], back), None, None
+                    v, w = 0.0, 0.0
             tw = Twist()
             tw.linear.x, tw.angular.z = v, w
             self.cmd_pub.publish(tw)

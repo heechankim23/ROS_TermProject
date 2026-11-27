@@ -22,10 +22,10 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 309.497, y: -137.968, yaw_deg: 62.8, battery_pct: 64, slot: P18-01, place: slot, where: "P18 305 복지관 인근 01번 칸"}
-  - {id: 2, x: 310.12, y: -138.288, yaw_deg: 62.8, battery_pct: 68, slot: P18-02, place: slot, where: "P18 305 복지관 인근 02번 칸"}
-  - {id: 3, x: 310.743, y: -138.608, yaw_deg: 62.8, battery_pct: 72, slot: P18-03, place: slot, where: "P18 305 복지관 인근 03번 칸"}
-  - {id: 4, x: 311.365, y: -138.928, yaw_deg: 62.8, battery_pct: 76, slot: P18-04, place: slot, where: "P18 305 복지관 인근 04번 칸"}
-  - {id: 5, x: 311.988, y: -139.248, yaw_deg: 62.8, battery_pct: 80, slot: P18-05, place: slot, where: "P18 305 복지관 인근 05번 칸"}
-  - {id: 6, x: 312.611, y: -139.567, yaw_deg: 62.8, battery_pct: 84, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
+  - {id: 1, x: 309.497, y: -137.968, yaw_deg: -117.2, battery_pct: 64, slot: P18-01, place: slot, where: "P18 305 복지관 인근 01번 칸"}
+  - {id: 2, x: 310.12, y: -138.288, yaw_deg: -117.2, battery_pct: 68, slot: P18-02, place: slot, where: "P18 305 복지관 인근 02번 칸"}
+  - {id: 3, x: 310.743, y: -138.608, yaw_deg: -117.2, battery_pct: 72, slot: P18-03, place: slot, where: "P18 305 복지관 인근 03번 칸"}
+  - {id: 4, x: 311.365, y: -138.928, yaw_deg: -117.2, battery_pct: 76, slot: P18-04, place: slot, where: "P18 305 복지관 인근 04번 칸"}
+  - {id: 5, x: 311.988, y: -139.248, yaw_deg: -117.2, battery_pct: 80, slot: P18-05, place: slot, where: "P18 305 복지관 인근 05번 칸"}
+  - {id: 6, x: 312.611, y: -139.567, yaw_deg: -117.2, battery_pct: 84, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
   - {id: 7, x: 314.37, y: -144.7, yaw_deg: 145.6, battery_pct: 69, place: zone_loose, where: "P18 305 복지관 인근 구역 안, 슬롯 밖"}

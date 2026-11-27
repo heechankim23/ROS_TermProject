@@ -24,16 +24,16 @@ parking_zones:
   rack: {x: -392.0, y: -354.25, yaw_deg: -7.7, length: 7.0, road: service}
   robot_access: {x: -391.77, y: -352.52, yaw_deg: -7.7}
   slots:
-  - {id: P28-01, x: -395.12, y: -353.83, z: -9.89, yaw_deg: -97.7, role: normal}
-  - {id: P28-02, x: -394.43, y: -353.93, z: -9.87, yaw_deg: -97.7, role: normal}
-  - {id: P28-03, x: -393.74, y: -354.02, z: -9.85, yaw_deg: -97.7, role: normal}
-  - {id: P28-04, x: -393.04, y: -354.11, z: -9.83, yaw_deg: -97.7, role: normal}
-  - {id: P28-05, x: -392.35, y: -354.21, z: -9.8, yaw_deg: -97.7, role: normal}
-  - {id: P28-06, x: -391.65, y: -354.3, z: -9.78, yaw_deg: -97.7, role: normal}
-  - {id: P28-07, x: -390.96, y: -354.39, z: -9.76, yaw_deg: -97.7, role: normal}
-  - {id: P28-08, x: -390.27, y: -354.49, z: -9.74, yaw_deg: -97.7, role: normal}
-  - {id: P28-09, x: -389.57, y: -354.58, z: -9.72, yaw_deg: 82.3, role: broken}
-  - {id: P28-10, x: -388.88, y: -354.67, z: -9.7, yaw_deg: 82.3, role: broken}
+  - {id: P28-01, x: -395.12, y: -353.83, z: -9.89, yaw_deg: 82.3, role: normal}
+  - {id: P28-02, x: -394.43, y: -353.93, z: -9.87, yaw_deg: 82.3, role: normal}
+  - {id: P28-03, x: -393.74, y: -354.02, z: -9.85, yaw_deg: 82.3, role: normal}
+  - {id: P28-04, x: -393.04, y: -354.11, z: -9.83, yaw_deg: 82.3, role: normal}
+  - {id: P28-05, x: -392.35, y: -354.21, z: -9.8, yaw_deg: 82.3, role: normal}
+  - {id: P28-06, x: -391.65, y: -354.3, z: -9.78, yaw_deg: 82.3, role: normal}
+  - {id: P28-07, x: -390.96, y: -354.39, z: -9.76, yaw_deg: 82.3, role: normal}
+  - {id: P28-08, x: -390.27, y: -354.49, z: -9.74, yaw_deg: 82.3, role: normal}
+  - {id: P28-09, x: -389.57, y: -354.58, z: -9.72, yaw_deg: -97.7, role: broken}
+  - {id: P28-10, x: -388.88, y: -354.67, z: -9.7, yaw_deg: -97.7, role: broken}
 - name: P33
   site: 공대9호관
   origin: image
@@ -45,16 +45,16 @@ parking_zones:
   rack: {x: -163.88, y: -400.46, yaw_deg: 178.7, length: 7.0, road: service}
   robot_access: {x: -163.92, y: -402.21, yaw_deg: 178.7}
   slots:
-  - {id: P33-01, x: -160.74, y: -400.54, z: -11.99, yaw_deg: 88.7, role: normal}
-  - {id: P33-02, x: -161.44, y: -400.52, z: -12.02, yaw_deg: 88.7, role: normal}
-  - {id: P33-03, x: -162.13, y: -400.5, z: -12.04, yaw_deg: 88.7, role: normal}
-  - {id: P33-04, x: -162.83, y: -400.49, z: -12.07, yaw_deg: 88.7, role: normal}
-  - {id: P33-05, x: -163.53, y: -400.47, z: -12.09, yaw_deg: 88.7, role: normal}
-  - {id: P33-06, x: -164.23, y: -400.46, z: -12.11, yaw_deg: 88.7, role: normal}
-  - {id: P33-07, x: -164.93, y: -400.44, z: -12.13, yaw_deg: 88.7, role: normal}
-  - {id: P33-08, x: -165.63, y: -400.42, z: -12.15, yaw_deg: 88.7, role: normal}
-  - {id: P33-09, x: -166.33, y: -400.41, z: -12.17, yaw_deg: -91.3, role: broken}
-  - {id: P33-10, x: -167.03, y: -400.39, z: -12.19, yaw_deg: -91.3, role: broken}
+  - {id: P33-01, x: -160.74, y: -400.54, z: -11.99, yaw_deg: -91.3, role: normal}
+  - {id: P33-02, x: -161.44, y: -400.52, z: -12.02, yaw_deg: -91.3, role: normal}
+  - {id: P33-03, x: -162.13, y: -400.5, z: -12.04, yaw_deg: -91.3, role: normal}
+  - {id: P33-04, x: -162.83, y: -400.49, z: -12.07, yaw_deg: -91.3, role: normal}
+  - {id: P33-05, x: -163.53, y: -400.47, z: -12.09, yaw_deg: -91.3, role: normal}
+  - {id: P33-06, x: -164.23, y: -400.46, z: -12.11, yaw_deg: -91.3, role: normal}
+  - {id: P33-07, x: -164.93, y: -400.44, z: -12.13, yaw_deg: -91.3, role: normal}
+  - {id: P33-08, x: -165.63, y: -400.42, z: -12.15, yaw_deg: -91.3, role: normal}
+  - {id: P33-09, x: -166.33, y: -400.41, z: -12.17, yaw_deg: 88.7, role: broken}
+  - {id: P33-10, x: -167.03, y: -400.39, z: -12.19, yaw_deg: 88.7, role: broken}
 charging_zones: []
 params:
   nav_bridge: {v_max: 1.2, w_max: 1.0, lookahead: 1.2, goal_timeout_sec: 1200.0, replan_sec: 3.0, costmap_res: 0.25, goal_clearance: 1.2, inflation_radius: 1.2, window_m: 70.0, max_retries: 2}

@@ -24,8 +24,8 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 100, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: 309.497, y: -137.968, yaw_deg: 62.8, battery_pct: 80, slot: P18-01, place: slot, where: "P18 305 복지관 인근 01번 칸"}
-  - {id: 2, x: 310.12, y: -138.288, yaw_deg: 62.8, battery_pct: 74, slot: P18-02, place: slot, where: "P18 305 복지관 인근 02번 칸"}
+  - {id: 1, x: 309.497, y: -137.968, yaw_deg: -117.2, battery_pct: 80, slot: P18-01, place: slot, where: "P18 305 복지관 인근 01번 칸"}
+  - {id: 2, x: 310.12, y: -138.288, yaw_deg: -117.2, battery_pct: 74, slot: P18-02, place: slot, where: "P18 305 복지관 인근 02번 칸"}
   - {id: 3, x: 378.28, y: -122.47, yaw_deg: 147.4, tilt_deg: 90, battery_pct: 62, place: walkway, where: "복지관 앞 보행로"}
   - {id: 4, x: 383.89, y: -124.59, yaw_deg: 125.1, battery_pct: 7, place: walkway, where: "복지관 옆 보행로"}
   - {id: 5, x: 360.04, y: -164.74, yaw_deg: -72.6, battery_pct: 58, fault: motor, place: lawn, where: "복지관 옆 잔디"}

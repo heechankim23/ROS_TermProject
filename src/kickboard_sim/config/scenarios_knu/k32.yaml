@@ -30,8 +30,8 @@ robot: {initial_battery_pct: 100, capacity: 2}
 overrides: {charging_capacity: 5}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
   - {id: 1, x: 93.028, y: 218.34, yaw_deg: -91.1, battery_pct: 35, slot: C4-01, charging: true, place: slot, where: "C4 글로벌플라자 광장 01번 칸"}
-  - {id: 2, x: 204.85, y: 212.816, yaw_deg: -93.1, battery_pct: 70, slot: P06-02, place: slot, where: "P06 111 중앙도서관 인근 02번 칸"}
-  - {id: 3, x: 203.34, y: 138.63, yaw_deg: 170.6, tilt_deg: 90, battery_pct: 66, place: walkway, where: "도서관 앞 보행로"}
+  - {id: 2, x: 204.85, y: 212.816, yaw_deg: 86.9, battery_pct: 70, slot: P06-02, place: slot, where: "P06 111 중앙도서관 인근 02번 칸"}
+  - {id: 3, x: 203.34, y: 138.63, yaw_deg: -69.4, tilt_deg: 90, battery_pct: 66, place: walkway, where: "도서관 앞 보행로"}
   - {id: 4, x: 62.71, y: 151.75, yaw_deg: -89.0, battery_pct: 74, place: entrance, where: "103 글로벌플라자 출입구 앞"}
   - {id: 5, x: 41.02, y: 54.19, yaw_deg: -169.1, battery_pct: 9, place: lawn, where: "인문대 앞 잔디"}
   - {id: 6, x: 382.02, y: -123.89, yaw_deg: 146.2, battery_pct: 48, fault: brake, place: walkway, where: "복지관 앞 보행로"}

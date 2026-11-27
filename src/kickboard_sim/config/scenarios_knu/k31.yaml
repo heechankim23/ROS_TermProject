@@ -25,13 +25,13 @@ pass_criteria:
   - "모든 요청이 완료·취소·실패 중 하나로 닫힘"
 robot: {initial_battery_pct: 95, capacity: 2}
 scooters:          # id = AprilTag id. place: entrance|walkway|lawn|roadside|stairs|slot|zone_loose
-  - {id: 1, x: -79.091, y: 192.754, yaw_deg: 105.6, battery_pct: 6, slot: P05-02, place: slot, where: "P05 108 첨성인미래관 인근 02번 칸"}
-  - {id: 2, x: -135.706, y: 97.292, yaw_deg: -104.1, battery_pct: 9, slot: P09-04, place: slot, where: "P09 202 농대3호관 인근 04번 칸"}
-  - {id: 3, x: -71.142, y: -9.752, yaw_deg: 75.4, battery_pct: 4, slot: P13-01, place: slot, where: "P13 201 농대1호관 인근 01번 칸"}
-  - {id: 4, x: 312.611, y: -139.567, yaw_deg: 62.8, battery_pct: 12, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
-  - {id: 5, x: -142.496, y: -240.77, yaw_deg: 88.7, battery_pct: 7, slot: P24-03, place: slot, where: "P24 401 공대2호관 인근 03번 칸"}
-  - {id: 6, x: -455.7, y: -349.477, yaw_deg: -91.2, battery_pct: 10, slot: P27-02, place: slot, where: "P27 216 학군단 인근 02번 칸"}
-  - {id: 7, x: 57.728, y: -418.5, yaw_deg: 87.9, battery_pct: 8, slot: P30-05, place: slot, where: "P30 503 화목관 인근 05번 칸"}
-  - {id: 8, x: -134.242, y: -457.892, yaw_deg: -91.3, battery_pct: 13, slot: P31-01, place: slot, where: "P31 407 화학관 인근 01번 칸"}
-  - {id: 9, x: 328.252, y: 56.586, yaw_deg: -115.8, battery_pct: 40, fault: brake, slot: P11-03, place: slot, where: "P11 110 정보화본부 인근 03번 칸"}
-  - {id: 10, x: 134.073, y: -380.474, yaw_deg: -104.7, battery_pct: 9, fault: display, slot: P29-07, place: slot, where: "P29 419 공대8호관 인근 07번 칸"}
+  - {id: 1, x: -79.091, y: 192.754, yaw_deg: -74.4, battery_pct: 6, slot: P05-02, place: slot, where: "P05 108 첨성인미래관 인근 02번 칸"}
+  - {id: 2, x: -135.706, y: 97.292, yaw_deg: 75.9, battery_pct: 9, slot: P09-04, place: slot, where: "P09 202 농대3호관 인근 04번 칸"}
+  - {id: 3, x: -71.142, y: -9.752, yaw_deg: -104.6, battery_pct: 4, slot: P13-01, place: slot, where: "P13 201 농대1호관 인근 01번 칸"}
+  - {id: 4, x: 312.611, y: -139.567, yaw_deg: -117.2, battery_pct: 12, slot: P18-06, place: slot, where: "P18 305 복지관 인근 06번 칸"}
+  - {id: 5, x: -142.496, y: -240.77, yaw_deg: -91.3, battery_pct: 7, slot: P24-03, place: slot, where: "P24 401 공대2호관 인근 03번 칸"}
+  - {id: 6, x: -455.7, y: -349.477, yaw_deg: 88.8, battery_pct: 10, slot: P27-02, place: slot, where: "P27 216 학군단 인근 02번 칸"}
+  - {id: 7, x: 57.728, y: -418.5, yaw_deg: -92.1, battery_pct: 8, slot: P30-05, place: slot, where: "P30 503 화목관 인근 05번 칸"}
+  - {id: 8, x: -134.242, y: -457.892, yaw_deg: 88.7, battery_pct: 13, slot: P31-01, place: slot, where: "P31 407 화학관 인근 01번 칸"}
+  - {id: 9, x: 328.252, y: 56.586, yaw_deg: 64.2, battery_pct: 40, fault: brake, slot: P11-03, place: slot, where: "P11 110 정보화본부 인근 03번 칸"}
+  - {id: 10, x: 134.073, y: -380.474, yaw_deg: 75.3, battery_pct: 9, fault: display, slot: P29-07, place: slot, where: "P29 419 공대8호관 인근 07번 칸"}

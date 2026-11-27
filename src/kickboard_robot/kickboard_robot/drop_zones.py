@@ -1,13 +1,15 @@
 """주차구역 하역 자리 계산 (ROS 무관 — 단위 테스트 가능).
 
-주차구역(볼록 다각형)의 각 변 바깥에 로봇이 서서 구역 쪽을 바라보고, 로봇팔이 변 안쪽 INSET 위치에
-킥보드를 SPACING 간격으로 나란히 세운다 (킥보드 앞이 구역 안쪽을 향함).
+주차구역(볼록 다각형)의 각 변 바깥에 로봇이 구역을 등지고 서서, 뒤 램프로 변 안쪽 INSET 위치에
+킥보드를 SPACING 간격으로 나란히 내린다 (킥보드 앞이 구역 바깥 = 로봇 쪽을 향함).
 로봇이 설 자리는 지도에서 벽·고정 장애물과 clearance 이상 떨어져야 한다.
 """
 import math
 
-ROBOT_STANDOFF = 0.95   # 구역 변 -> 로봇 중심 (앞 범퍼 0.75 -> 변 밖 0.2 m)
+from .collector_logic import ENTRY_DIST
+
 INSET = 0.45            # 구역 변 -> 킥보드 중심 (구역 안쪽)
+ROBOT_STANDOFF = ENTRY_DIST - INSET   # 구역 변 -> 로봇 중심 (킥보드 중심이 로봇 뒤 2.07 m)
 SPACING = 0.45          # 나란히 세운 킥보드 간격 (핸들 폭 0.42)
 EDGE_MARGIN = 0.3       # 변 양 끝 여유
 MIN_GAP = 0.40          # 이미 세운 킥보드와 이보다 가까운 자리는 쓰지 않음
@@ -34,12 +36,12 @@ def edge_plans(name, poly, omap=None, clearance=0.95, max_spots=4):
         k = min(max_spots, int((length - 2 * EDGE_MARGIN) / SPACING) + 1)
         if k <= 0:
             continue
-        yaw_in = math.atan2(-ny, -nx)
+        yaw_out = math.atan2(ny, nx)
         spots = []
         for j in range(k):
             off = (j - (k - 1) / 2) * SPACING
-            spots.append((mx - nx * INSET + tx * off, my - ny * INSET + ty * off, yaw_in))
-        out.append({'zone': name, 'robot': (rx, ry, yaw_in), 'spots': spots})
+            spots.append((mx - nx * INSET + tx * off, my - ny * INSET + ty * off, yaw_out))
+        out.append({'zone': name, 'robot': (rx, ry, yaw_out), 'spots': spots})
     return out
 
 

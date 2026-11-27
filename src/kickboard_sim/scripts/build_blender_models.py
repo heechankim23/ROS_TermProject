@@ -20,6 +20,7 @@
 import json
 import math
 import os
+import re
 import shutil
 import sys
 
@@ -259,7 +260,11 @@ def chain_fk(chain, vals):
     return T
 
 
+# 바퀴 옆마찰: 뒤는 크게, 앞은 작게 -> 앞바퀴 조향차처럼 뒤축(x -0.62)을 중심으로 돈다 (빈 Gazebo 측정 2026-11-27:
+# 회전 중심 -0.62 m, 회전 99~101 %, 옆경사 10 % 에서도 같음). 앞뒤가 같으면 전진 때 앞축, 후진 때 뒤축으로 돌았다
+FRONT_SIDE_MU, REAR_SIDE_MU = 0.1, 1.0
 ARM_LINKS = ('arm_base', 'upper_arm', 'forearm', 'wrist')
+ARM_BLEND_REACH = (0.18, 0.55)   # 손목이 베이스 회전축에서 수평으로 이만큼 떨어지는 동안 오른쪽 팔의 IK 보정을 서서히 켬 (m)
 
 
 def arm_right_lane(chains, Mrel, parent, rig, F):
@@ -286,12 +291,7 @@ def arm_right_lane(chains, Mrel, parent, rig, F):
         e[3:] = 0.3 * 0.5 * np.array([Rd[2, 1] - Rd[1, 2], Rd[0, 2] - Rd[2, 0], Rd[1, 0] - Rd[0, 1]])
         return e
 
-    def slerp_R(R0, R1, u):
-        ax, a = axis_angle(R0.T @ R1)
-        return R0 @ rot(ax, a * u) if a > 1e-9 else R0
-
-    W0 = wrist(np.zeros(len(names)))
-    # 거울 짝 자세 (여유 자유도 기준): 축이 xz 평면(거울면과 나란)이면 각도 부호 반대, y 축이면 그대로
+    # 거울 짝 자세: 축이 xz 평면(거울면과 나란)이면 각도 부호 반대, y 축이면 그대로
     sign = []
     for n, k, _ in names:
         T = np.eye(4)
@@ -301,36 +301,156 @@ def arm_right_lane(chains, Mrel, parent, rig, F):
         w = T[:3, :3] @ j['axis']
         sign.append(1.0 if j['type'] == 'prismatic' or abs(w[1]) > 0.5 else -1.0)
     sign = np.array(sign)
-    qr = np.zeros(len(names))
+    # 레일(직선 관절)은 왼쪽 값을 그대로 쓴다: 거울상은 y 만 뒤집으므로 x 이동은 같다. 남는 6 관절 = 손목 목표 6 자유도.
+    rail = np.array([chains[n][0][k]['type'] == 'prismatic' for n, k, _ in names])
+    free = np.flatnonzero(~rail)
     out = {jn: [] for _, _, jn in names}
     worst = 0.0
     for k in range(F):
         ql = np.array([rig['tracks'][jn][k] for _, _, jn in names])
-        Wm = Mm @ wrist(ql) @ Mm
-        s = float(np.clip(np.abs(ql).max() / 0.3, 0.0, 1.0))
-        Tt = np.eye(4)
-        Tt[:3, 3] = (1 - s) * W0[:3, 3] + s * Wm[:3, 3]
-        Tt[:3, :3] = slerp_R(W0[:3, :3], Wm[:3, :3], s)
-        qref = sign * ql
-        if s == 0.0:
-            qr = np.zeros(len(names))
-        for it in range(80):
-            e = err(wrist(qr), Tt)
-            if np.linalg.norm(e) < 2e-4 and (it > 0 or s == 0.0):
-                break
-            J = np.zeros((6, len(names)))
-            for i in range(len(names)):
-                dq = qr.copy()
-                dq[i] += 1e-5
-                J[:, i] = (err(wrist(qr), Tt) - err(wrist(dq), Tt)) / 1e-5
-            Jp = J.T @ np.linalg.inv(J @ J.T + 1e-4 * np.eye(6))
-            # 손목 목표는 그대로, 남는 자유도로 거울 짝 자세에 가깝게 (안 그러면 2π 돌거나 팔꿈치가 뒤집힌 해로 흘러감)
-            qr = qr + Jp @ e + 0.3 * (np.eye(len(names)) - Jp @ J) @ (qref - qr)
-        worst = max(worst, float(np.linalg.norm(err(wrist(qr), Tt)[:3])))
+        qm = sign * ql                                 # 관절값만 뒤집은 자세: 접힌 자세에서는 수송 자세(0)와 같다
+        # 손목이 베이스 회전축 가까이 있으면 거울상 IK 가 불안정하다 (팔꿈치 옆 비킴 0.11 m 때문에 베이스·손목이 크게 돈다)
+        # -> 가까울 때는 qm 그대로, 멀어지면 IK 보정. 관절 공간에서 섞어 끊김이 없다
+        base_xy = (Mrel[ARM_LINKS[0]] @ chain_fk(chains[ARM_LINKS[0]][0], [q for q, r in zip(ql, rail) if r] + [0.0]))[:2, 3]
+        reach = float(np.linalg.norm(wrist(ql)[:2, 3] - base_xy))
+        s = float(np.clip((reach - ARM_BLEND_REACH[0]) / (ARM_BLEND_REACH[1] - ARM_BLEND_REACH[0]), 0.0, 1.0))
+        s = s * s * (3 - 2 * s)
+        qr = qm.copy()
+        if s > 0.0:
+            Tt = Mm @ wrist(ql) @ Mm
+            for _ in range(60):                        # 매번 거울 자세에서 시작: 같은 팔 자세 가지의 해가 나온다
+                e = err(wrist(qr), Tt)
+                if np.linalg.norm(e) < 2e-4:
+                    break
+                J = np.zeros((6, len(free)))
+                for c, i in enumerate(free):
+                    dq = qr.copy()
+                    dq[i] += 1e-5
+                    J[:, c] = (e - err(wrist(dq), Tt)) / 1e-5
+                step = J.T @ np.linalg.solve(J @ J.T + 1e-4 * np.eye(6), e)
+                qr[free] += step * min(1.0, 0.1 / max(float(np.abs(step).max()), 1e-9))
+            if s == 1.0:
+                worst = max(worst, float(np.linalg.norm(err(wrist(qr), Tt)[:3])))
+            qr = qm + s * (qr - qm)
         for i, (_, _, jn) in enumerate(names):
             out[jn].append(round(float(qr[i]), 5))
     print(f'오른쪽 레인 팔 IK: 손목 위치 최대 오차 {worst * 1000:.1f} mm')
     return {f'{jn}@r': v for jn, v in out.items()}
+
+
+# 넘어진 킥보드 세우기 (적재 동작의 변형, 프레임 = rig 트랙 번호). 팔만 새로 풀고 나머지 관절은 원래 트랙을 쓴다
+FALLEN_START, FALLEN_GRAB, FALLEN_LIFT = 178, 254, 72     # 넘어진 스템 쪽으로 틀기 시작 / 집게를 닫은 뒤 / 세우는 시간 (24 fps)
+FALLEN_REACHED = 232                                      # 원래 동작에서 손목이 스템 앞에 다 온 프레임
+FALLEN_ROLL, FALLEN_Z = math.pi / 2, 0.236                # 시뮬의 넘어진 자세 (gz_utils: roll +90°, 원점 높이)
+G30_FRONT_AXLE = np.array([0.42, 0.0, 0.127])             # build_g30 의 front_axle 과 같음
+
+
+def smooth(u):
+    u = min(max(u, 0.0), 1.0)
+    return u * u * (3 - 2 * u)
+
+
+def arm_fallen(chains, Mrel, rig):
+    """넘어진(roll +90°) 킥보드를 팔이 잡아 세우는 팔 궤적 (레인별). 원래 적재 동작과 같은 모양으로 스템을 쥔 채
+    (손목-킥보드 상대 자세 = 원래 잡은 순간) 킥보드와 함께 돌아 선 자세가 되고, 거기서 원래 동작으로 이어진다.
+      FALLEN_START ~ FALLEN_GRAB  원래 접근 경로를 서서히 옮겨 누운 스템에 가서 쥠
+      이어서 FALLEN_LIFT 프레임    세움 (arm_loader 는 같은 smooth 곡선으로 킥보드를 돌린다)
+    -> rig['fallen'] = {start, grab, lift, joints, lanes[레인][프레임][관절]}"""
+    names = []
+    for n in ARM_LINKS:
+        jn = [j['name'] for j in rig['joints'] if j['link'] == n]
+        names += [(n, jn[k]) for k in range(len(chains[n][0]))]
+    free = [i for i, (_, jn) in enumerate(names) if jn != 'j_arm_base_t']      # 레일은 원래 값 그대로
+
+    def wrist(q):
+        T = np.eye(4)
+        for n in ARM_LINKS:
+            T = T @ Mrel[n] @ chain_fk(chains[n][0], [q[i] for i, (ln, _) in enumerate(names) if ln == n])
+        return T
+
+    def err(T, Tt):
+        e = np.zeros(6)
+        e[:3] = Tt[:3, 3] - T[:3, 3]
+        ax, a = axis_angle(Tt[:3, :3] @ T[:3, :3].T)
+        e[3:] = 0.3 * a * ax
+        return e
+
+    def solve(Tt, seed):
+        q = seed.copy()
+        for _ in range(150):
+            e = err(wrist(q), Tt)
+            if np.linalg.norm(e) < 1e-4:
+                break
+            J = np.zeros((6, len(free)))
+            for c, i in enumerate(free):
+                dq = q.copy()
+                dq[i] += 1e-5
+                J[:, c] = (e - err(wrist(dq), Tt)) / 1e-5
+            step = J.T @ np.linalg.solve(J @ J.T + 1e-4 * np.eye(6), e)
+            q[free] += step * min(1.0, 0.1 / max(float(np.abs(step).max()), 1e-9))
+        return q, float(np.linalg.norm(err(wrist(q), Tt)[:3]))
+
+    def between(a, b, u):
+        """pose a -> b (위치는 직선, 방향은 한 축 회전)"""
+        ax, ang = axis_angle(b[:3, :3] @ a[:3, :3].T)
+        T = np.eye(4)
+        T[:3, :3] = rot(ax, u * ang) @ a[:3, :3]
+        T[:3, 3] = a[:3, 3] + u * (b[:3, 3] - a[:3, 3])
+        return T
+
+    lanes, worst = [], []
+    for lane in range(2):
+        def orig(k):
+            return np.array([rig['tracks'].get(f'{jn}@r' if lane else jn, rig['tracks'][jn])[k] for _, jn in names])
+        v = rig['tracks']['ref_scooter_l@robot'][FALLEN_GRAB]
+        p, q = np.array(v[:3]), v[3:]
+        if lane:                                       # y 거울 (arm_loader.Rig 와 같음)
+            p, q = p * [1, -1, 1], (q[0], -q[1], q[2], -q[3])
+        up = np.eye(4)
+        up[:3, :3] = quat_to_mat(q)
+        up[:3, 3] = p - up[:3, :3] @ G30_FRONT_AXLE
+        down = np.eye(4)
+        down[:3, :3] = rot([1, 0, 0], FALLEN_ROLL)
+        down[:3, 3] = [up[0, 3], up[1, 3], FALLEN_Z]
+        grip = np.linalg.inv(up) @ wrist(orig(FALLEN_GRAB))          # 킥보드 기준 손목 (쥔 상태)
+        # 세우기: 선 자세에서 눕히는 쪽으로 이어 풀면 끝(= 선 자세)이 원래 동작의 관절값과 정확히 맞는다
+        qs, down_err, seed = [], 0.0, orig(FALLEN_GRAB)
+        for n in range(FALLEN_LIFT + 1):               # n/LIFT = 눕힌 정도 (균등) -> 아래에서 시간 곡선으로 뽑음
+            seed, e = solve(between(up, down, n / FALLEN_LIFT) @ grip, seed)
+            qs.append(seed)
+            down_err = max(down_err, e)
+        qs = np.array(qs)
+        lift = [np.array([np.interp((1 - smooth(j / FALLEN_LIFT)) * FALLEN_LIFT, range(len(qs)), qs[:, i])
+                          for i in range(len(names))]) for j in range(1, FALLEN_LIFT + 1)]
+        # 접근: 원래 손목 경로에 (선 자세 -> 누운 자세) 손목 이동을 서서히 더함
+        wg, wf = wrist(orig(FALLEN_GRAB)), down @ grip
+        ax, ang = axis_angle(wf[:3, :3] @ wg[:3, :3].T)
+        approach, seed = [], orig(FALLEN_START)
+        for k in range(FALLEN_START, FALLEN_GRAB + 1):
+            s = smooth((k - FALLEN_START) / (FALLEN_REACHED - FALLEN_START))
+            Tt = wrist(orig(k))
+            Tt[:3, :3] = rot(ax, s * ang) @ Tt[:3, :3]
+            Tt[:3, 3] += s * (wf[:3, 3] - wg[:3, 3])
+            seed, _ = solve(Tt, orig(k) if s == 0.0 else seed)
+            approach.append(seed if k < FALLEN_GRAB else qs[-1])
+        lanes.append([[round(float(x), 5) for x in qq] for qq in approach + lift])
+        worst.append(down_err)
+    print('넘어진 킥보드 세우기 팔 IK: 손목 위치 최대 오차 ' +
+          ', '.join(f'{"왼" if i == 0 else "오른"}쪽 {e * 1000:.1f} mm' for i, e in enumerate(worst)))
+    return {'start': FALLEN_START, 'grab': FALLEN_GRAB, 'lift': FALLEN_LIFT,
+            'joints': [jn for _, jn in names], 'lanes': lanes}
+
+
+def widen_limits(sdf, tracks):
+    """'<관절>@...' 트랙이 왼쪽에서 정한 관절 범위를 벗어나면 범위를 넓힌다.
+    안 넓히면 Gazebo 가 명령을 범위 끝에서 잘라 오른쪽 레인 팔이 돌다 만다 (베이스 회전 -2.8 rad 인데 하한 -0.1)."""
+    for key, vals in tracks.items():
+        if '@r' not in key and '@fallen' not in key:
+            continue
+        pat = re.compile(rf'(<joint name="{re.escape(key.split("@")[0])}"[^\n]*?<lower>)([-\d.]+)(</lower><upper>)([-\d.]+)(</upper>)')
+        sdf = pat.sub(lambda m: f'{m[1]}{min(float(m[2]), min(vals) - 0.02):.4f}{m[3]}'
+                                f'{max(float(m[4]), max(vals) + 0.02):.4f}{m[5]}', sdf)
+    return sdf
 
 
 def build_robot():
@@ -463,7 +583,8 @@ def build_robot():
         extra = ''
         if n.startswith('wheel_') and n in wheels:
             extra = ('<collision name="tire"><pose>0 0 0 1.5708 0 0</pose><geometry><cylinder><radius>0.125</radius>'
-                     '<length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu><mu2>0.6</mu2>'
+                     '<length>0.086</length></cylinder></geometry><surface><friction><ode><mu>1.0</mu>'
+                     f'<mu2>{REAR_SIDE_MU if n in ("wheel_rl", "wheel_rr") else FRONT_SIDE_MU}</mu2>'
                      # 마찰 방향 지정: mu = 굴러가는 쪽, mu2 = 옆. 없으면 4륜 스키드 스티어가 달리면서 돌지 못함
                      '<fdir1 gz:expressed_in="base_link">1 0 0</fdir1>'
                      '</ode></friction></surface></collision>')
@@ -545,7 +666,6 @@ def build_robot():
         '      <update_frequency>30</update_frequency></plugin>',
         '    <!-- 기구 관절: 속도 명령 위치 제어. 명령 토픽 /kickboard_robot/joint/<관절> (gz.msgs.Double), 0 = 수송 자세 -->',
     ] + joint_plugins + ['  </model>', '</sdf>', '']
-    write(os.path.join(mdir, 'model.sdf'), '\n'.join(L))
     write(os.path.join(mdir, 'model.config'),
           model_config(ROBOT, 'SCOOTOVER v19 킥보드 수거 로봇 (Blender 외형, 자동 생성 build_blender_models.py)'))
     # 킥보드 pose (로봇 기준) 트랙: 적재·하차 때 실린 킥보드를 옮기는 데 씀
@@ -571,6 +691,10 @@ def build_robot():
             rig['tracks'][f'{n}@world'] = ws
     rig['transport_scooter_axle'] = {'l': [0.65, 0.27, 0.277], 'r': [0.65, -0.27, 0.277]}
     rig['tracks'].update(arm_right_lane(chains, Mrel, parent, rig, F))
+    rig['fallen'] = arm_fallen(chains, Mrel, rig)
+    fallen = {f'{jn}@fallen{lane}': [q[i] for q in qs] for lane, qs in enumerate(rig['fallen']['lanes'])
+              for i, jn in enumerate(rig['fallen']['joints'])}
+    write(os.path.join(mdir, 'model.sdf'), widen_limits('\n'.join(L), {**rig['tracks'], **fallen}))
     write(os.path.join(PKG, 'config', 'scootover_rig.json'), json.dumps(rig, ensure_ascii=False))
     print('로봇:', len(links), '움직이는 링크,', len(rig['joints']), '관절')
     for ln in report:

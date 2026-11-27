@@ -10,13 +10,13 @@ Gazebo 의 로봇 world pose(/sim/robot_pose, PosePublisher)와 /odom 으로
 import math
 
 import rclpy
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 
 from .common import spin_single
-from .motion import quat_from_yaw, yaw_from_quat
+from .motion import quat_from_yaw, spinning, yaw_from_quat
 
 
 def compose_map_odom(truth, odom):
@@ -32,13 +32,20 @@ class SimLocalizer(Node):
     def __init__(self):
         super().__init__('sim_localizer')
         # map->odom 은 미끄러질 때만 천천히 변한다. 정답·odom 메시지 시각 차이로 생기는 떨림은 저역 통과로 없앰
-        self.declare_parameter('smoothing', 0.1)
+        # DiffDrive 오도메트리는 차체 가운데 회전을 가정하지만 실제(모델)는 뒤축 회전이라, 도는 동안 옆으로 어긋난다
+        # -> 보정을 빠르게 따라간다 (0.1 이면 선회 중 TF 가 0.1 m 넘게 늦음)
+        self.declare_parameter('smoothing', 0.6)
         self.truth = None
         self.est = None
         self.br = TransformBroadcaster(self)
         self.create_subscription(PoseStamped, '/sim/robot_pose', self.on_truth, 10)
         self.create_subscription(Odometry, '/odom', self.on_odom, 10)
+        self.create_subscription(Twist, '/cmd_vel', self.on_cmd, 10)
         self.get_logger().info('정답 위치로 map->odom 보정 (simple 모드 위치 추정)')
+
+    def on_cmd(self, m):
+        if spinning(m.linear.x, m.angular.z):
+            self.get_logger().warn(f'서서 도는 명령: v={m.linear.x:.3f}, w={m.angular.z:.3f}', throttle_duration_sec=2.0)
 
     def on_truth(self, m):
         p = m.pose

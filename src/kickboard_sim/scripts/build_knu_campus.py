@@ -72,6 +72,8 @@ ZONES = {1: ('본부·인문·도서관', '#cb679e', '#b85a85'), 2: ('농생대�
 
 ROAD_W = {'service': 6.0, 'residential': 6.0, 'pedestrian': 4.0, 'footway': 2.5, 'steps': 2.5}   # 거치대 자리 계산
 PATH_W = dict(ROAD_W, footway=3.0)     # 바닥 그림의 길 폭. 보행로는 눈에 띄게 3 m
+CROSS_LEN, CROSS_WIDTH = 7.0, 3.0      # 횡단보도: 건너는 길이 (차도 6 m + 양옆 0.5), 폭
+CROSS_SPACING, CROSS_MIN_GAP = 40.0, 12.0   # 보행로가 안 닿는 차도에 놓는 간격, 횡단보도끼리 최소 거리
 
 # ---------------------------------------------------------------------------------------------
 # 충전 주차구역 후보 (처음 8곳. 아래 DELETED_ZONES·GENERAL_FROM_CHARGING 을 뺀 5곳이 남는다). anchor 근처(45 m 안)의 기존 주차 가능 구역을 충전구역으로 바꾸고,
@@ -268,7 +270,69 @@ def load_layers():
                   for w in extra['pitch']]
     L['car_parking'] = [{'poly': poly_m(w['coords'])} for w in extra['car_parking']]
     L['image_zones'] = [{'color': z['image_color'], 'poly': poly_m(z['lonlat'])} for z in pz['zones']]
+    L['crosswalks'] = place_crosswalks(L)
     return L
+
+
+def place_crosswalks(L):
+    """횡단보도 (OSM 에 없어 임의로 놓는다): ① 보행로가 차도와 만나거나 가로지르는 곳 ② 남은 차도에는 CROSS_SPACING 마다.
+    -> [{x, y, yaw_deg(건너는 방향 = 차도에 수직), length(건너는 길이), width}]"""
+    drive = [(r['pts'][i], r['pts'][i + 1]) for r in L['roads'] if r['kind'] in ('service', 'residential')
+             for i in range(len(r['pts']) - 1)]
+    walk = [r['pts'] for r in L['roads'] if r['kind'] in ('footway', 'pedestrian')]
+    A = np.array([a for a, _ in drive])
+    D = np.array([b - a for a, b in drive])
+    L2 = np.maximum((D * D).sum(1), 1e-9)
+
+    def nearest(p):
+        """p 에서 가장 가까운 차도 (거리, 번호, 수선의 발)"""
+        t = np.clip(((p - A) * D).sum(1) / L2, 0, 1)
+        q = A + D * t[:, None]
+        d = np.hypot(*(q - p).T)
+        k = int(np.argmin(d))
+        return float(d[k]), k, q[k]
+
+    out = []
+
+    def add(q, k, gap):
+        if any(math.hypot(c['x'] - q[0], c['y'] - q[1]) < gap for c in out):
+            return
+        t = D[k] / math.sqrt(L2[k])
+        n = np.array([-t[1], t[0]])
+        ends = [q + n * s_ * (CROSS_LEN / 2 + 0.5) for s_ in (1, -1)]
+        if any(not point_in_poly(e[0], e[1], L['boundary']) or any(point_in_poly(e[0], e[1], w['poly']) for w in L.get('water', []))
+               for e in ends):
+            return
+        out.append({'x': round(float(q[0]), 2), 'y': round(float(q[1]), 2),
+                    'yaw_deg': round(math.degrees(math.atan2(n[1], n[0])), 1), 'length': CROSS_LEN, 'width': CROSS_WIDTH})
+
+    for pts in walk:                                   # 보행로가 차도를 가로지름
+        for a, b in zip(pts[:-1], pts[1:]):
+            r = b - a
+            den = r[0] * D[:, 1] - r[1] * D[:, 0]
+            ok = np.abs(den) > 1e-9
+            w = A - a
+            u = np.where(ok, (w[:, 0] * D[:, 1] - w[:, 1] * D[:, 0]) / np.where(ok, den, 1), -1)
+            v = np.where(ok, (w[:, 0] * r[1] - w[:, 1] * r[0]) / np.where(ok, den, 1), -1)
+            for k in np.nonzero((u >= 0) & (u <= 1) & (v >= 0) & (v <= 1))[0]:
+                add(a + r * u[k], int(k), CROSS_MIN_GAP)
+    for pts in walk:                                   # 보행로 끝이 차도에 닿음
+        for p in (pts[0], pts[-1]):
+            d, k, q = nearest(p)
+            if d < 5.0:
+                add(q, k, CROSS_MIN_GAP)
+    for r in L['roads']:                               # 남은 차도: 일정 간격
+        if r['kind'] not in ('service', 'residential'):
+            continue
+        done = CROSS_SPACING / 2
+        for a, b in zip(r['pts'][:-1], r['pts'][1:]):
+            ln = float(np.hypot(*(b - a)))
+            while done < ln:
+                q = a + (b - a) * (done / ln)
+                add(q, nearest(q)[1], CROSS_SPACING * 0.7)
+                done += CROSS_SPACING
+            done -= ln
+    return out
 
 
 # =============================================================================================
@@ -483,7 +547,7 @@ def place_rack(L, g, M, clear, target, length, depth=RACK_DEPTH, zone_poly=None,
 def make_slots(rack, kind):
     c, t, out = rack['center'], rack['axis'], rack['out']
     slots = []
-    head = math.atan2(out[1], out[0])                   # 킥보드 앞(+x)이 거치대 안쪽(도로 반대)을 향한다
+    head = math.atan2(out[1], out[0])                   # 충전: 킥보드 앞(+x)이 거치대 안쪽(도로 반대)을 향한다
     if kind == 'charging':                              # Kickspot 2대: 칸 = 슬롯 줄 (킥보드 중심 = 앞바퀴 축 - 0.42)
         return [{'xy': c + t * (u0 + sy), 'yaw': head, 'role': 'charge'}
                 for u0 in KS_UNITS for sy in KS['slots_y']]
@@ -492,7 +556,8 @@ def make_slots(rack, kind):
     for i in range(n):
         u = (i - (n - 1) / 2) * pitch
         p = c + t * u
-        yaw = head + (math.pi if roles[i] == 'broken' else 0.0)   # 고장 칸: 반대 방향
+        # 일반 칸: 정상은 앞이 길 쪽 (로봇이 길 쪽에서 뒤 램프로 내림), 고장 칸은 반대 방향
+        yaw = head + (0.0 if roles[i] == 'broken' else math.pi)
         slots.append({'xy': p, 'yaw': math.atan2(math.sin(yaw), math.cos(yaw)), 'role': roles[i]})
     return slots
 
@@ -625,7 +690,7 @@ def rack_apron(center, out, depth, road_kind, length, reach):
 
 
 def zone_apron(z):
-    """일반 구역: 슬롯 뒤(길 반대쪽)에도 로봇이 서야 한다 (후진 적재 자리 = 슬롯 중심 앞 2.07 m) -> 3 m 뒤까지, 양끝 3.5 m 돌아갈 폭.
+    """일반 구역: 슬롯 뒤(길 반대쪽)에도 로봇이 서야 한다 (고장 칸의 하역·적재 자리 = 슬롯 중심에서 2.07 m) -> 3 m 뒤까지, 양끝 3.5 m 돌아갈 폭.
     충전 구역: 기둥 앞까지만"""
     r = z['rack']
     if z['type'] == 'general':
@@ -755,7 +820,7 @@ TEX_COL = {
     'outside': (205, 207, 203), 'campus': (214, 210, 196), 'green': (188, 212, 156), 'water': (110, 165, 215),
     'pitch': (120, 175, 105), 'track': (196, 112, 92), 'cars': (112, 114, 120), 'service': (78, 80, 88),
     'pedestrian': (226, 190, 150), 'footway': (236, 208, 164), 'steps': (150, 128, 100),
-    'curb': (150, 112, 80), 'road_edge': (235, 235, 235), 'center_line': (245, 196, 40),
+    'curb': (150, 112, 80), 'road_edge': (235, 235, 235), 'center_line': (245, 196, 40), 'crosswalk': (250, 250, 250),
     'zone_general': (30, 105, 255), 'zone_charge': (0, 205, 160), 'contour': (150, 120, 90),
     'bld_floor': (120, 120, 125), 'boundary': (180, 60, 60),
 }
@@ -829,6 +894,15 @@ def draw_roads(d, L, g):
                            fill=TEX_COL['center_line'], width=px_w(0.16))
                 u += step
             done += ln
+    for c in L.get('crosswalks', []):                # 횡단보도: 차도 방향 흰 줄무늬
+        th = math.radians(c['yaw_deg'])
+        n = np.array([math.cos(th), math.sin(th)])   # 건너는 방향
+        t = np.array([-n[1], n[0]])
+        o = np.array([c['x'], c['y']])
+        for u in np.arange(-ROAD_W['service'] / 2 + 0.5, ROAD_W['service'] / 2 - 0.2, 1.0):
+            p = o + n * u
+            d.line([tuple(v) for v in g.px(np.array([p - t * c['width'] / 2, p + t * c['width'] / 2]))],
+                   fill=TEX_COL['crosswalk'], width=px_w(0.5))
 
 
 def zone_shapes(z):
@@ -1226,6 +1300,7 @@ def write_json(L, T, zones, dock, bounds):
                        'base_z': round(float(T.z(b['poly'][:, 0], b['poly'][:, 1]).min()), 2)} for b in L['buildings']],
         'roads': [{'kind': r['kind'], 'pts': P2(simplify(r['pts'], 0.5)), 'grade_pct': road_grade(T, r['pts'])}
                   for r in L['roads']],
+        'crosswalks': L['crosswalks'],
         'gates': [{'name': g['name'], 'named': g['named'], 'xy': r3(g['xy'])} for g in L['gates']],
         'water': [{'name': w['name'], 'poly': P2(w['poly'])} for w in L['water']],
         'green': [{'name': w['name'], 'poly': P2(w['poly'])} for w in L['green']],
@@ -1384,13 +1459,13 @@ def write_2d_map(L, T, zones, dock, bounds):
     d.text((q[0], q[1] + 26), '로봇 도크', font=f_m, fill=(30, 60, 170, 255), anchor='mm', stroke_width=3,
            stroke_fill=(255, 255, 255, 240))
     # 제목·범례·축척·방위
-    d.rectangle([30, 30, 1010, 365], fill=(255, 255, 255, 235), outline=(60, 60, 60, 255), width=2)
+    d.rectangle([30, 30, 1010, 398], fill=(255, 255, 255, 235), outline=(60, 60, 60, 255), width=2)
     d.text((55, 50), '경북대학교 대구캠퍼스 — 킥보드 주차·충전 구역', font=f_t, fill=(30, 30, 40, 255))
     yy = 120
     items = [((70, 120, 220), f'일반 주차구역 {sum(z["type"] == "general" for z in zones)}곳 (앱 주차 가능 구역, 정상 {PARK_SLOTS}칸 + 고장 {BROKEN_SLOTS}칸)'),
              ((20, 165, 145), f'충전 주차구역 {sum(z["type"] == "charging" for z in zones)}곳 (충전 스탠드 {CHARGE_SLOTS}칸)'),
              (TEX_COL['contour'], f'등고선 2 m 간격 (굵은 선 10 m), 표고 {T.Z.min():.0f}~{T.Z.max():.0f} m'),
-             (TEX_COL['service'], '차량 도로 (6 m)'), (TEX_COL['footway'], '보행로 (3 m)'), (TEX_COL['steps'], '계단 (진입 금지)'),
+             (TEX_COL['service'], '차량 도로 (6 m)'), (TEX_COL['footway'], '보행로 (3 m)'), (TEX_COL['crosswalk'], f'횡단보도 {len(L["crosswalks"])}곳 (임의 배치)'), (TEX_COL['steps'], '계단 (진입 금지)'),
              ((235, 120, 20), '경사 5 % 이상인 길 (언덕·경사로)')]
     for col, txt in items:
         d.rectangle([60, yy, 100, yy + 24], fill=tuple(col) + (255,), outline=(60, 60, 60, 255))

@@ -294,3 +294,63 @@ def test_planning_does_not_hold_costmap_lock(bridge, monkeypatch):
     monkeypatch.setattr(nav, 'plan_path', lambda cm, *a, **k: held.append((node.cm_lock.locked(), cm is node.cm)))
     node.kin_plan((2.0, 2.0, 0.0), (5.0, 5.0, 0.0), 0.0)
     assert held == [(False, False)]
+
+
+# ---------------- 인도 우선 · 횡단보도 · 하차 방향 ----------------
+def _crossing_world():
+    """세로 차도(x = 0)와 그 양옆 보행로. 횡단보도는 y = 10 한 곳"""
+    return {'roads': [{'kind': 'service', 'pts': [[0.0, -20.0], [0.0, 20.0]]},
+                      {'kind': 'footway', 'pts': [[-5.0, -20.0], [-5.0, 20.0]]},
+                      {'kind': 'footway', 'pts': [[5.0, -20.0], [5.0, 20.0]]}],
+            'crosswalks': [{'x': 0.0, 'y': 10.0, 'yaw_deg': 0.0, 'length': 7.0, 'width': 3.0}]}
+
+
+def _route_points(router, start, goal):
+    pts, prev = [], start
+    for q in router.route(start, goal):
+        n = max(1, int(math.dist(prev, q) * 4))
+        pts += [(prev[0] + (q[0] - prev[0]) * k / n, prev[1] + (q[1] - prev[1]) * k / n) for k in range(1, n + 1)]
+        prev = q
+    return pts
+
+
+def test_router_uses_sidewalk_and_crosswalk():
+    from kickboard_robot.campus_nav import GridRouter
+    from kickboard_robot.surface import ROAD, WALK, build_surface
+    res, ox, oy = 0.25, -12.0, -22.0
+    surface = build_surface(_crossing_world(), ox, oy, res, (176, 96))
+    assert surface[int((0 - oy) / res), int((0 - ox) / res)] == ROAD
+    assert surface[int((10 - oy) / res), int((0 - ox) / res)] == WALK
+    router = GridRouter(np.full(surface.shape, 5.0), ox, oy, res, surface=surface)
+    # 길 건너: 가로질러 가지 않고 횡단보도(y = 10)로
+    crossing = [p for p in _route_points(router, (-5.0, 0.0), (5.0, 0.0)) if abs(p[0]) < 2.0]
+    assert crossing and all(8.0 < p[1] < 12.0 for p in crossing)
+    # 목표가 차도 위: 인도로 가까이 간 다음에만 차도로 나간다
+    on_road = [p for p in _route_points(router, (-5.0, -15.0), (0.0, -2.0)) if abs(p[0]) < 3.0]
+    assert on_road and all(math.dist(p, (0.0, -2.0)) < 6.0 for p in on_road)
+
+
+def test_approach_spot_stays_off_road_for_scooter_on_sidewalk():
+    from kickboard_robot.planner import Costmap, free_spot
+    from kickboard_robot.surface import FACTOR, ROAD, WALK
+    cm = Costmap(-5.0, -5.0, 10.0, 10.0, res=0.25)
+    cm.surface = np.full((cm.h, cm.w), FACTOR[WALK])
+    cm.surface[:, cm.cell(0.5, 0.0)[1]:] = FACTOR[ROAD]          # x >= 0.5 는 차도
+    spot = free_spot(cm, (0.0, 0.0), (4.0, 0.0), 1.6, 0.5, 0.0)  # 로봇은 차도 쪽에 있음
+    assert spot is not None and spot[0] < 0.5
+
+
+def test_unload_stop_pose_front_on_charger_rear_elsewhere():
+    from kickboard_robot.mission_manager_campus import unload_stop_pose
+    slot = {'x': 10.0, 'y': 0.0, 'yaw': 0.0}
+    # 충전 거치대: 마주 보고 1.6 m 앞 (앞으로 내림)
+    assert np.allclose(unload_stop_pose(slot, True, 0), (8.4, -0.27, 0.0))
+    # 주차구역: 같은 방향으로 칸 앞 2.07 m -> 킥보드가 로봇 뒤에 놓임
+    assert np.allclose(unload_stop_pose(slot, False, 0), (12.07, -0.27, 0.0), atol=1e-3)
+
+
+def test_rear_gap_sees_only_the_corridor_behind():
+    px = np.array([-1.5, -1.2, -1.1, 2.0, float('inf')])
+    py = np.array([0.2, 0.9, 0.0, 0.0, 0.0])
+    assert math.isclose(nav.rear_gap(px, py, -0.98, 0.58), 0.12)        # 옆(py 0.9)과 앞의 점은 제외
+    assert nav.rear_gap(px[3:], py[3:], -0.98, 0.58) == float('inf')

@@ -1,7 +1,7 @@
 """F7 / F8: CollectScooter Action 서버.
 
 NAVIGATING : nav_bridge 로 킥보드에서 approach_standoff(1.6 m) 떨어진 곳까지 이동
-VERIFYING  : 태그(ID = 킥보드 ID) 검출 대기, 없으면 제자리 회전. 10초 안에 못 찾으면 실패
+VERIFYING  : 태그(ID = 킥보드 ID) 검출 대기, 없으면 앞뒤 원호(3점 회전)로 좌우를 둘러본다. 다 둘러봐도 없으면 실패
 ALIGNING   : 검출한 태그로 킥보드 중심을 추정하고, nav_bridge(GoToPose, standoff=align_distance 1.3 m)로
              중심 둘레의 '빈 자리'까지 경로 주행해 중심을 바라본다. 자리 선택·경로 모두 코스트맵
              (정적 지도 + 라이다)을 써서 벽·다른 킥보드·이 킥보드의 넘어진 기둥에 부딪히지 않는다.
@@ -11,8 +11,9 @@ ALIGNING   : 검출한 태그로 킥보드 중심을 추정하고, nav_bridge(Go
              고정 장애물(나무·구조물)로 보고 반경(align_distance)은 그대로 두고 각도만 바꾼 자리로 다시 간다 (align_retries 번까지,
              처음 실패한 자리 기준 align_retry_offsets_deg 순서. 0 이면 바로 실패). 실패·시간 초과여도
              팔이 닿는 거리(align_distance + arm_reach_margin 이내)면 그대로 적재한다.
-             align_spot_mode: dock (robot_params.yaml) 이면 적재 자리 앞 대기점까지 간 뒤 직선 후진으로 도킹한다
+             align_spot_mode: dock (robot_params.yaml) 이면 적재 자리 앞 대기점(2~3.5 m)까지 간 뒤 직선 후진으로 도킹한다
              (align_by_dock). 대기점이 없거나 load_mode arm 이면 아래 scan 방식.
+             로봇은 자동차처럼 움직인다(제자리 회전 없음): 어긋나면 앞으로 뺐다가 다시 후진한다 (fine_align).
              align_spot_mode: scan (기본) 이면 자리를 collector 가 직접 고른다 — 정적 지도(nav_bridge 의 map_yaml)
              + 진입 금지 구역 + 최근 라이다 점으로 팔이 닿는 띠(align_spot_radii) 위 후보를 검사(몸체·팔 경로·갈 수 있음)·
              채점해 가장 좋은 자리로 보내고, 실패하면 기다렸다 다시 채점 -> 실패한 자리에서 떨어진 다음 후보. 후보가 없으면
@@ -42,11 +43,11 @@ from kickboard_interfaces.action import CollectScooter, GoToPose, LoadScooter
 from kickboard_interfaces.msg import RobotStatus, TagDetectionArray
 
 from .collector_logic import (ARM_REACH_NEAR, ARM_REACH_SKIP_FAR, BODY_HALF_W, BODY_X, ENTRY_DIST, SpotGrid,
-                              align_next_step, align_pose, dock_errors, dock_ok, dock_step, entry_error, fill_static, fine_align_plan, next_spot,
+                              align_next_step, align_pose, dock_errors, dock_ok, dock_step, entry_error, fill_static, next_spot,
                               plan_align_spots, retry_angles, reverse_entry_pose, scooter_from_face, split_tag_id,
                               within_reach, wrap_angle)
 from .common import PoseTracker, future_wait, now_sec, sleep_sim, run_blocking, spin_single
-from .motion import quat_from_yaw, yaw_from_quat
+from .motion import MIN_TURN_RADIUS, car_limit, quat_from_yaw, yaw_from_quat
 
 
 def tag_id_of(scooter_id):
@@ -61,20 +62,25 @@ class Collector(Node):
         super().__init__('collector')
         self.declare_parameter('approach_standoff', 1.6)     # 로봇 중심 -> 킥보드 (로봇 길이 1.7 m)
         self.declare_parameter('verify_timeout_sec', 10.0)
-        self.declare_parameter('search_angular_speed', 0.65)
+        # 태그를 못 찾으면: 도착 방향 기준 이 각도(도)들을 차례로 향하도록 전·후진 원호(길이 search_leg_m)를 번갈아 간다
+        self.declare_parameter('search_sweep_deg', [40.0, -40.0, 75.0, -75.0])
+        self.declare_parameter('search_speed', 0.35)
+        self.declare_parameter('search_leg_m', 0.6)
+        self.declare_parameter('search_timeout_sec', 60.0)
         self.declare_parameter('align_distance', 1.35)        # 로봇 중심 -> 킥보드 중심 (팔이 발판에 닿는 거리, load_mode arm)
         self.declare_parameter('load_mode', 'reverse')        # reverse = v19 뒤 램프 후진 적재, arm = 예전 로봇팔(어느 방향이든)
         self.declare_parameter('entry_extra', [0.0, 0.15, 0.30])    # reverse: 적재 자리 후보 (진행 방향 추가 거리 m)
         self.declare_parameter('entry_tol', [0.35, 0.15, 10.0])     # reverse: 적재 가능 오차 (앞뒤 m, 옆 m, yaw 도)
         # align_spot_mode dock: 대기점 = 적재 자리에서 진행 방향으로 이만큼 더 앞 (앞의 것부터). 거기서 직선 후진
-        self.declare_parameter('dock_staging', [1.5, 1.0, 2.0])
+        self.declare_parameter('dock_staging', [3.5, 3.0, 2.5, 2.0])
         self.declare_parameter('dock_tries', 3)
-        # reverse: 정렬 이동이 끝난 뒤 적재 자리에 이 오차 안으로 직접 맞춘다 (회전 + 직진, collector_logic.fine_align_plan).
-        # nav_bridge 도착 판정(경로 끝 0.24 m, 끝 회전 뒤 위치 재확인 없음)이 적재 옆 오차(0.15 m)보다 느슨해서 필요
+        # reverse: 정렬 이동이 끝난 뒤 적재 자리에 이 오차 안으로 맞춘다 (앞으로 pull_out_m 뺐다가 직선 후진).
+        # nav_bridge 도착 판정(경로 끝 0.24 m, 방향 10°)이 적재 옆 오차(0.15 m)보다 느슨해서 필요
+        self.declare_parameter('pull_out_m', 3.0)
         self.declare_parameter('align_pos_tol', 0.05)
         self.declare_parameter('align_yaw_tol_deg', 3.0)
-        self.declare_parameter('align_lat_tol', 0.08)         # 옆 오차 허용 (맞추려면 제자리 회전 2번, 적재 한계 0.15 m)
-        self.declare_parameter('fine_align_max_m', 0.6)       # 이보다 멀면 직접 맞추지 않음 (정렬 이동 실패로 처리)
+        self.declare_parameter('align_lat_tol', 0.08)         # 옆 오차 허용 (적재 한계 0.15 m)
+        self.declare_parameter('fine_align_max_m', 1.0)       # 이보다 멀면 직접 맞추지 않음 (정렬 이동 실패로 처리)
         self.declare_parameter('align_timeout_sec', 90.0)     # 정렬 자리까지 경로 주행 포함 (시도 1번당)
         # 정렬 이동 실패 시 1단계: 이만큼(초) 멈춰 기다렸다 같은 자리로 다시 (지나가는 사람·수레). 0 = 바로 2단계
         self.declare_parameter('align_wait_sec', 5.0)
@@ -145,6 +151,7 @@ class Collector(Node):
         return None
 
     def twist(self, v=0.0, w=0.0):
+        v, w = car_limit(v, w)
         t = Twist()
         t.linear.x, t.angular.z = v, w
         self.cmd_pub.publish(t)
@@ -220,12 +227,11 @@ class Collector(Node):
         # 2) VERIFYING — 회전 탐색
         self.fb(gh, 'VERIFYING')
         t0 = now_sec(self)
-        w = self.get_parameter('search_angular_speed').value
-        found = self.spin_search(gh, tag, w)
+        found = self.spin_search(gh, tag)
         if found is None:
             return self.finish(gh, False)
         if not found:
-            found = self.wide_search(gh, tag, w)
+            found = self.wide_search(gh, tag)
             if found is None:
                 return self.finish(gh, False)
             if not found:
@@ -485,8 +491,6 @@ class Collector(Node):
             return 'failed', 'staging pose off line', ''
         tries = int(self.get_parameter('dock_tries').value)
         for k in range(tries):
-            if not self.turn_to(gh, yaw):                   # 대기점에서 방향부터 (후진 전 한 번)
-                return ('canceled', 'canceled', '') if gh.is_cancel_requested else ('failed', 'turn timeout', '')
             r = self.dock_drive(gh, target, 0.0, collect)
             if r is None:
                 return 'canceled', 'canceled', ''
@@ -496,8 +500,7 @@ class Collector(Node):
             ea, el, ey = dock_errors(pose, target)
             self.get_logger().info(f'킥보드 {sid}: 후진 도킹 {k + 1}/{tries} -> 앞뒤 {ea:.2f} m, 옆 {el:.2f} m, '
                                    f'{math.degrees(ey):.0f}°')
-            if r and dock_ok(pose, target):
-                self.turn_to(gh, yaw)
+            if r and dock_ok(pose, target) and abs(ey) <= math.radians(self.get_parameter('align_yaw_tol_deg').value):
                 return 'ok', '', ''
             if k + 1 < tries and not self.dock_drive(gh, target, extra, collect):
                 break
@@ -722,58 +725,45 @@ class Collector(Node):
         self.twist()
 
     def fine_align(self, gh, sid, cx, cy, hd, lane):
-        """reverse: 후진 적재 자리에 align_pos_tol / align_yaw_tol_deg 안으로 직접 선다 (회전 + 짧은 직진).
+        """reverse: 후진 적재 자리에 align_pos_tol / align_lat_tol / align_yaw_tol_deg 안으로 선다.
+        옆·방향이 맞으면 직선으로 거리만, 아니면 앞으로 pull_out_m 뺐다가 직선 후진 (최대 dock_tries 번).
         -> True 맞춤, False 못 맞춤(멀거나 막힘, 지금 자리 그대로), None 취소"""
         target = reverse_entry_pose(cx, cy, hd, lane)
         tol = self.get_parameter('align_pos_tol').value
         ytol = math.radians(self.get_parameter('align_yaw_tol_deg').value)
         max_move = self.get_parameter('fine_align_max_m').value
         lat = self.get_parameter('align_lat_tol').value
-        for _ in range(3):
+
+        def errors():
             pose = self.pose.get()
-            if pose is None:
+            return None if pose is None else dock_errors(pose, target)
+
+        def good(e):
+            return e is not None and abs(e[0]) <= tol and abs(e[1]) <= lat and abs(e[2]) <= ytol
+
+        for k in range(int(self.get_parameter('dock_tries').value) + 1):
+            e = errors()
+            if e is None:
                 return False
-            plan = fine_align_plan(pose, target, tol, ytol, max_move, lat)
-            if plan is None:
-                self.get_logger().warn(f'킥보드 {sid}: 적재 자리에서 {math.hypot(pose[0] - target[0], pose[1] - target[1]):.2f} m '
-                                       f'-> 직접 맞추기엔 멂')
-                return False
-            if not plan:
+            if good(e):
                 return True
-            ea, el, ey = entry_error(pose, cx, cy, hd, lane)
-            self.get_logger().info(f'킥보드 {sid}: 적재 자리 맞춤 (오차 앞뒤 {ea:.2f} m, 옆 {el:.2f} m, '
-                                   f'{math.degrees(ey):.0f}°) -> ' + ', '.join(
-                                       f'회전 {math.degrees(v):.0f}°' if k == 'turn' else f'직진 {v:+.2f} m'
-                                       for k, v in plan))
-            for kind, val in plan:
-                r = self.turn_to(gh, val) if kind == 'turn' else self.drive_straight(gh, val)
+            if math.hypot(e[0], e[1]) > max_move:
+                self.get_logger().warn(f'킥보드 {sid}: 적재 자리에서 {math.hypot(e[0], e[1]):.2f} m -> 직접 맞추기엔 멂')
+                return False
+            self.get_logger().info(f'킥보드 {sid}: 적재 자리 맞춤 {k + 1} (오차 앞뒤 {e[0]:.2f} m, 옆 {e[1]:.2f} m, '
+                                   f'{math.degrees(e[2]):.0f}°)')
+            if k > 0 or abs(e[1]) > lat or abs(e[2]) > ytol:        # 옆·방향이 틀림 -> 앞으로 뺐다가 다시 후진
+                r = self.dock_drive(gh, target, self.get_parameter('pull_out_m').value, lambda: None)
                 if r is None:
                     return None
                 if not r:
                     return False
-        pose = self.pose.get()
-        return pose is not None and fine_align_plan(pose, target, tol, ytol, max_move, lat) == []
-
-    def turn_to(self, gh, yaw, timeout=15.0):
-        """제자리 회전. True 도착, False 시간 초과, None 취소"""
-        t0 = now_sec(self)
-        while rclpy.ok():
-            if gh.is_cancel_requested:
-                self.twist()
+            r = self.dock_drive(gh, target, 0.0, lambda: None)
+            if r is None:
                 return None
-            pose = self.pose.get()
-            if pose is None or now_sec(self) - t0 > timeout:
-                self.twist()
+            if not r:
                 return False
-            err = wrap_angle(yaw - pose[2])
-            if abs(err) <= math.radians(1.0):
-                self.twist()
-                return True
-            w = max(0.12, min(0.5, 1.5 * abs(err)))
-            self.twist(0.0, math.copysign(w, err))
-            sleep_sim(self, 0.05)
-        self.twist()
-        return False
+        return good(errors())
 
     def path_clear(self, dist):
         """직진 dist(m, 음수 = 후진) 동안 차체가 지나갈 띠에 라이다 점이 없는가"""
@@ -792,44 +782,6 @@ class Collector(Node):
             band = (px < BODY_X[0]) & (px > BODY_X[0] + dist - 0.1)
         return not bool((band & (np.abs(py) < BODY_HALF_W)).any())
 
-    def drive_straight(self, gh, dist, timeout=20.0):
-        """지금 방향으로 dist(m, 음수 = 후진) 직진. 차체가 지나갈 띠에 장애물이 보이면 멈춤.
-        True 도착, False 막힘·시간 초과, None 취소"""
-        start = self.pose.get()
-        if start is None:
-            return False
-        if not self.path_clear(dist):
-            self.get_logger().warn(f'적재 자리 맞춤: {"앞" if dist >= 0 else "뒤"}쪽에 장애물 -> 직진 안 함')
-            return False
-        h = start[2]
-        hx, hy = math.cos(h), math.sin(h)
-        t0, checked = now_sec(self), now_sec(self)
-        while rclpy.ok():
-            if gh.is_cancel_requested:
-                self.twist()
-                return None
-            pose = self.pose.get()
-            if pose is None or now_sec(self) - t0 > timeout:
-                self.twist()
-                return False
-            done = (pose[0] - start[0]) * hx + (pose[1] - start[1]) * hy
-            rem = dist - done
-            if abs(rem) <= 0.01:
-                self.twist()
-                return True
-            if now_sec(self) - checked > 0.5:
-                checked = now_sec(self)
-                if not self.path_clear(rem):
-                    self.twist()
-                    self.get_logger().warn('적재 자리 맞춤: 직진 중 장애물 -> 멈춤')
-                    return False
-            v = max(0.04, min(0.12, 0.8 * abs(rem)))
-            w = max(-0.3, min(0.3, 1.5 * wrap_angle(h - pose[2])))
-            self.twist(math.copysign(v, rem), w)
-            sleep_sim(self, 0.05)
-        self.twist()
-        return False
-
     def wait_still(self, gh, tag, sec, collect):
         """멈춰서 sec 초 기다린다. 그동안 태그가 보인 비율(0~1)을 돌려준다 (가림 판단 참고용). 취소되면 None"""
         t0 = now_sec(self)
@@ -844,23 +796,66 @@ class Collector(Node):
             sleep_sim(self, 0.1)
         return seen / n if n else 0.0
 
-    def spin_search(self, gh, tag, w):
-        """제자리 회전 탐색. 찾으면 True, 시간 초과 False, 취소 None"""
+    def spin_search(self, gh, tag):
+        """둘러보기 탐색 (제자리 회전 없음): 0.5 초 정지해 확인한 뒤, 도착 방향 좌우를 3점 회전으로 훑는다.
+        찾으면 True, 못 찾으면 False, 취소 None"""
         t0 = now_sec(self)
-        while self.fresh(tag) is None:
+        while now_sec(self) - t0 < 0.5:
             if gh.is_cancel_requested:
                 return None
-            if now_sec(self) - t0 > self.get_parameter('verify_timeout_sec').value:
+            sleep_sim(self, 0.05)
+        pose = self.pose.get()
+        if self.fresh(tag) is not None:
+            return True
+        if pose is None:
+            return False
+        h0 = pose[2]
+        deadline = now_sec(self) + self.get_parameter('search_timeout_sec').value
+        for off in self.get_parameter('search_sweep_deg').value:
+            r = self.k_turn(gh, wrap_angle(h0 + math.radians(off)), lambda: self.fresh(tag) is not None, deadline)
+            if r is None:
+                return None
+            if self.fresh(tag) is not None:
+                return True
+            if not r:
+                break
+        return False
+
+    def k_turn(self, gh, yaw, found, deadline):
+        """전진 원호와 후진 원호를 번갈아 방향을 yaw 로 돌린다 (자리는 거의 그대로).
+        found() 가 참이면 바로 멈춤. True 도착·발견, False 막힘·시간 초과, None 취소"""
+        speed, leg = self.get_parameter('search_speed').value, self.get_parameter('search_leg_m').value
+        d, start, blocked, checked = 1.0, None, 0, -1e9
+        while rclpy.ok():
+            if gh.is_cancel_requested:
                 self.twist()
-                return False
-            if now_sec(self) - t0 > 0.5:        # 도착 직후 0.5초는 정지 상태에서 확인
-                self.twist(0.0, w)
+                return None
+            pose = self.pose.get()
+            if pose is None or now_sec(self) > deadline:
+                break
+            err = wrap_angle(yaw - pose[2])
+            if found() or abs(err) <= math.radians(4.0):
+                self.twist()
+                return True
+            if start is None or math.dist(pose[:2], start) >= leg:
+                if start is not None:
+                    d = -d
+                start, checked = pose[:2], -1e9
+            if now_sec(self) - checked > 0.3:
+                checked = now_sec(self)
+                if not self.path_clear(d * 0.5):
+                    blocked += 1
+                    if blocked >= 4:                       # 앞뒤 모두 막힘
+                        break
+                    d, start = -d, pose[:2]
+                    continue
+            self.twist(d * speed, math.copysign(speed / MIN_TURN_RADIUS, err))
             sleep_sim(self, 0.05)
         self.twist()
-        return True
+        return False
 
-    def wide_search(self, gh, tag, w):
-        """확장 탐색: 목표(신고 위치) 둘레 3.5 m 간격 원 위의 지점으로 옮겨 가며 회전 탐색. 찾으면 True"""
+    def wide_search(self, gh, tag):
+        """확장 탐색: 목표(신고 위치) 둘레 3.5 m 간격 원 위의 지점으로 옮겨 가며 둘러보기 탐색. 찾으면 True"""
         R = self.get_parameter('search_radius_m').value
         if R <= 0:
             return False
@@ -897,7 +892,7 @@ class Collector(Node):
                 sleep_sim(self, 0.1)
             p = self.pose.get()
             cur = p[:2] if p else nxt
-            ok = self.spin_search(gh, tag, w)
+            ok = self.spin_search(gh, tag)
             if ok is None or ok:
                 if ok:
                     self.get_logger().info(f'확장 탐색으로 태그 {tag} 검출 (신고 위치에서 {math.dist(cur, tp):.1f} m)')

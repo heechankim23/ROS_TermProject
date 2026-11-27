@@ -1,19 +1,17 @@
 """운동학 제약을 지키는 경로 계획·추종 (nav_bridge simple 백엔드, ROS 무관 — 단위 테스트 가능).
 
-로봇: 차동 구동(DiffDrive), 차체 1.6 x 0.74 m (base_footprint = 구동축 중심, +x 앞).
-차동 구동은 제자리 회전이 되지만, 경로 중간에서는 차량처럼 다루어 매끄럽게 달리게 한다.
+로봇은 자동차처럼 움직인다: 제자리에서 못 돌고(|w| <= |v| / R), 회전 중심은 뒷바퀴 축이다.
+**이 모듈의 모든 자세 (x, y, heading) 는 뒤축(rear_axle) 기준**이다. base_footprint 와의 변환은 motion.to_rear / from_rear.
 
-  1. 최소 회전 반경 R_min (최대 곡률 1/R_min): 경로의 모든 원호가 이 곡률 안
-  2. Non-holonomic: 옆으로는 못 간다. 상태는 (x, y, heading), 움직임은 앞/뒤 + 원호뿐
-  3. 연속 곡선: 직선·원호(곡률 0, ±k/2, ±k)를 이어 붙이고, 목표 자세는 Dubins 곡선으로 정확히 맞춘다
-     -> 경로 중간에 꺾임(제자리 회전)이 없다. 후진은 비용을 더 매겨 꼭 필요할 때만, 전·후진 전환도 벌점
-  4. 실제 주행 범위: 차동 구동이 할 수 있는 제자리 회전은 '출발점·도착점'에서만, 그 자리에 회전할
-     공간(장애물과 pivot_clearance 이상)이 있을 때만 쓴다. 추종 속도는 v_max, w_max, 곡률 한계 안
-  5. 충돌: 차체 직사각형을 원 3개로 덮어 경로 위 모든 자세(0.1 m 간격)에서 장애물(정적 지도 + 라이다)과 검사
+  1. 최소 회전 반경 R_min = 1.8 m (최대 곡률 1/R_min): 경로의 모든 원호가 이 곡률 안
+  2. 상태는 (x, y, heading), 움직임은 앞/뒤 + 원호뿐. 방향을 바꿀 때는 전·후진을 섞는다 (3점 회전)
+  3. 직선·원호(곡률 0, ±k/2, ±k)를 이어 붙이고, 목표 자세는 Reeds-Shepp 곡선(reeds_shepp.py)으로 정확히 맞춘다.
+     처음 찾은 경로를 바로 쓰지 않고, 길이·후진·전환 벌점이 가장 낮은 것을 고른다
+  4. 충돌: 차체 직사각형을 원 3개로 덮어 경로 위 모든 자세(0.1 m 간격)에서 장애물(정적 지도 + 라이다)과 검사
 
-방법: Hybrid A* (x, y, heading 격자 위에서 원호 움직임으로 탐색) + 도착 근처에서 Dubins 곡선으로 목표 자세에 바로 연결
+방법: Hybrid A* (x, y, heading 격자 위에서 원호 움직임으로 탐색) + Reeds-Shepp 로 목표 자세에 바로 연결
 (analytic expansion). 휴리스틱 = 장애물을 피한 2D 최단 거리(격자 Dijkstra)와 직선 거리 중 큰 값.
-추종: 곡률을 제한한 Pure Pursuit (PathTracker).
+추종: 곡률을 제한한 Pure Pursuit (PathTracker). 전·후진 전환점에서는 멈췄다 간다.
 """
 import heapq
 import math
@@ -29,6 +27,9 @@ try:
 except ImportError:      # pragma: no cover  (package.xml 에 python3-scipy 있음)
     ndimage = None
 
+from . import reeds_shepp
+from .motion import MIN_TURN_RADIUS, REAR_BODY_X
+
 TWO_PI = 2.0 * math.pi
 
 
@@ -38,31 +39,29 @@ def wrap(a):
 
 @dataclass
 class KinematicParams:
-    min_turn_radius: float = 0.8      # m. 로봇의 최소 회전 반경 (추종 곡률 한계 1/R, 절대 넘지 않음)
-    plan_radius_factor: float = 1.25  # 계획은 R x 이 배수로 -> 추종이 오차를 바로잡을 곡률 여유 (계획 반경 1.0 m)
-    step: float = 0.4                 # m. 탐색 한 걸음(원호 길이)
+    min_turn_radius: float = MIN_TURN_RADIUS  # m. 로봇의 최소 회전 반경 (추종 곡률 한계 1/R, 절대 넘지 않음)
+    plan_radius_factor: float = 1.1   # 계획은 R x 이 배수로 -> 추종이 오차를 바로잡을 곡률 여유 (계획 반경 1.98 m)
+    step: float = 0.5                 # m. 탐색 한 걸음(원호 길이)
     heading_bins: int = 72            # 5° 간격
-    xy_res: float = 0.2               # m. 탐색 상태 격자 (같은 칸·같은 방향이면 같은 상태)
+    xy_res: float = 0.25              # m. 탐색 상태 격자 (같은 칸·같은 방향이면 같은 상태)
     allow_reverse: bool = True
-    reverse_penalty: float = 2.5      # 후진 거리 비용 배수
+    reverse_penalty: float = 1.8      # 후진 거리 비용 배수
     switch_penalty: float = 2.0       # 전·후진 전환 1회 비용 (m 환산)
     steer_penalty: float = 0.15       # 곡선 주행 비용 (곡률 비례) -> 같은 거리면 직선 선호
     steer_change_penalty: float = 0.2  # 곡률이 바뀌는 비용 -> 조향을 자주 바꾸지 않음
     obstacle_weight: float = 0.6      # 장애물 근처 비용 (Costmap 팽창 비용 비례)
-    pivot_at_ends: bool = True        # 출발·도착점 제자리 회전 허용 (차동 구동)
-    pivot_clearance: float = 1.0      # 제자리 회전에 필요한 장애물 거리 (로봇 반 대각선 0.98)
-    pivot_penalty: float = 0.6        # 제자리 회전 1 rad 비용 (m 환산)
     goal_pos_tol: float = 0.15        # 도착 위치 허용
     smooth_margin: float = 0.15       # 다듬기(Dubins 건너뛰기) 때 장애물과 더 두는 여유 (m)
     blend_len: float = 0.8            # m. 곡률 연속화(G2): 곡률이 0 -> k 로 바뀌는 데 쓰는 길이 (완화 곡선)
     blend_max_shift: float = 0.15     # m. 연속화한 경로가 원래 경로에서 이보다 멀어지면 그 구간은 원래 경로 유지
-    goal_yaw_tol_deg: float = 10.0    # 도착 방향 허용 (pivot_at_ends 면 도착 후 회전으로 맞춤)
+    goal_yaw_tol_deg: float = 10.0    # 도착 방향 허용
     max_expansions: int = 30000
     time_budget_sec: float = 2.5      # 실제 시간
+    refine_expansions: int = 150      # 첫 경로를 찾은 뒤 더 싼 경로를 찾아보는 확장 수
     heuristic_weight: float = 1.4     # weighted A* (빠르게, 최적에 가깝게)
-    # 차체 (base_footprint 기준): x 범위와 반폭, 여유
-    body_x_min: float = -0.98
-    body_x_max: float = 0.96
+    # 차체 (뒤축 기준): x 범위와 반폭, 여유
+    body_x_min: float = REAR_BODY_X[0]
+    body_x_max: float = REAR_BODY_X[1]
     body_half_width: float = 0.525
     safety_margin: float = 0.05
     n_circles: int = 3
@@ -88,6 +87,10 @@ class Footprint:
         self.r = math.hypot(seg / 2.0, p.body_half_width) + p.safety_margin
 
 
+SURFACE_CAP = 3.0
+ESCAPE_TIGHT_RADIUS = 2.0     # 출발 자세가 막힌 판정일 때 차체 반폭만 지키며 움직일 수 있는 범위 (m)
+
+
 class CollisionGrid:
     """Costmap 의 거리 격자로 자세(x, y, th) 충돌 검사. 출발점 근처(escape)는 라이다 장애물·진입 금지 구역을 봐준다.
     진입 금지 구역(인도 등, Costmap.set_physical 로 구분된 경우)은 벽이 아니다: 차체 원은 물리 장애물(벽·차·라이다)과만
@@ -103,7 +106,10 @@ class CollisionGrid:
             phys = cm.phys | (cm.seen > t - cm.decay)
             self.dist = ndimage.distance_transform_edt(~phys) * self.res       # 물리 장애물만
             self.dist_keep = cm._dist_keep
-        self.cost = cm.cost_grid(t)
+        self.cost = cm.cost_grid(t, surface=False)      # 장애물 가까움만 (노면은 surface_at)
+        self.surface = getattr(cm, 'surface', None)
+        if self.surface is not None:                    # 곡선 계획은 배수를 낮춰 쓴다: 크면 최소 회전 반경 때문에
+            self.surface = np.minimum(self.surface, SURFACE_CAP)  # 차도 모서리를 스칠 수밖에 없는 곳에서 탐색이 안 끝남
         self.start, self.escape = start, escape
         self.dist_loose = None
         if start is not None and escape > 0.0:
@@ -115,6 +121,7 @@ class CollisionGrid:
             self.dist_loose = ndimage.distance_transform_edt(~base) * self.res
             self.escape = max(escape, 1.5 if off_road else escape)
         self.margin = self.res * 0.5                    # 칸 중심 거리 -> 실제 거리 오차
+        self.tight = fp.r + self.margin                 # 탈출 반경 안에서 원이 장애물과 두어야 하는 거리
 
     def _d(self, x, y, loose):
         i = int(math.floor((x - self.x0) / self.res))
@@ -126,10 +133,11 @@ class CollisionGrid:
 
     def free(self, x, y, th, extra=0.0):
         c, s = math.cos(th), math.sin(th)
+        need = self.fp.r + self.margin + extra
         loose = (self.dist_loose is not None
                  and math.hypot(x - self.start[0], y - self.start[1]) < self.escape)
         for cx in self.fp.cx:
-            if self._d(x + c * cx, y + s * cx, loose) < self.fp.r + self.margin + (0.0 if loose else extra):
+            if self._d(x + c * cx, y + s * cx, loose) < (self.tight if loose else need):
                 return False
         if self.dist_keep is not None and not loose:
             i = int(math.floor((x - self.x0) / self.res))
@@ -138,10 +146,23 @@ class CollisionGrid:
                 return False
         return True
 
-    def clearance(self, x, y):
-        """기준점(구동축 중심)에서 장애물까지 거리 — 제자리 회전 가능 판단"""
-        d = self._d(x, y, False)
-        return d
+    def surface_at(self, x, y):
+        """(x, y) 노면 비용 배수 (1 = 인도)"""
+        if self.surface is None:
+            return 1.0
+        i = int(math.floor((x - self.x0) / self.res))
+        j = int(math.floor((y - self.y0) / self.res))
+        if not (0 <= j < self.h and 0 <= i < self.w):
+            return 1.0
+        return float(self.surface[j, i])
+
+    def surface_length(self, poses, prev):
+        """자세 열을 노면 비용 배수로 잰 길이"""
+        total = 0.0
+        for q in poses:
+            total += math.hypot(q[0] - prev[0], q[1] - prev[1]) * self.surface_at(q[0], q[1])
+            prev = q
+        return total
 
     def penalty(self, x, y):
         i = int(math.floor((x - self.x0) / self.res))
@@ -248,10 +269,11 @@ def dubins_poses(q0, q1, R, ds=0.1):
 
 # ---------------------------------------------------------------- Hybrid A*
 class _Node:
-    __slots__ = ('x', 'y', 'th', 'g', 'parent', 'poses', 'k', 'd')
+    __slots__ = ('x', 'y', 'th', 'g', 'parent', 'poses', 'k', 'd', 's')
 
-    def __init__(self, x, y, th, g, parent, poses, k, d):
+    def __init__(self, x, y, th, g, parent, poses, k, d, s=0.0):
         self.x, self.y, self.th, self.g, self.parent, self.poses, self.k, self.d = x, y, th, g, parent, poses, k, d
+        self.s = s                                      # 출발부터 달린 거리
 
 
 def _grid_distance_to_goal(cm, cg, goal_xy):
@@ -272,7 +294,12 @@ def _grid_distance_to_goal(cm, cg, goal_xy):
         both = a & b
         rows.append(ia[both])
         cols.append(ib[both])
-        vals.append(np.full(int(both.sum()), c * cm.res))
+        if cg.surface is None:
+            vals.append(np.full(int(both.sum()), c * cm.res))
+        else:                                       # 노면 비용: 두 칸 배수의 평균
+            sa = cg.surface[max(0, -dj):h - max(0, dj), max(0, -di):w - max(0, di)]
+            sb = cg.surface[max(0, dj):h - max(0, -dj) if dj < 0 else h, max(0, di):w if di >= 0 else w + di]
+            vals.append(c * cm.res * 0.5 * (sa[both] + sb[both]))
     r = np.concatenate(rows)
     c = np.concatenate(cols)
     v = np.concatenate(vals)
@@ -293,9 +320,32 @@ def _grid_distance_to_goal(cm, cg, goal_xy):
     return d.reshape(h, w)
 
 
-def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False, escape=0.6, log=None):
-    """start=(x, y, th), goal=(x, y, th). -> 촘촘한 경로 [(x, y, th, dir), ...] (시작 제외) 또는 None.
-    dir: +1 전진, -1 후진, 0 제자리 회전(출발·도착점에서만). goal_yaw_free: 도착 방향 상관없음(중간 목표)."""
+def rs_poses(q0, segs, R, ds=0.1):
+    """Reeds-Shepp 구간 목록 -> 촘촘한 자세 [(x, y, th, dir)] (시작 제외)"""
+    x, y, th = q0
+    out = []
+    for steer, length in segs:
+        d = 1 if length > 0 else -1
+        pts = arc(x, y, th, steer / R, abs(length), d, ds)
+        out += [(p[0], p[1], p[2], d) for p in pts]
+        x, y, th = pts[-1]
+    return out
+
+
+def reverses_early(segs, travelled, forward_first):
+    """Reeds-Shepp 구간 목록이 출발부터 forward_first(m)를 다 가기 전에 후진하는가"""
+    for _, length in segs:
+        if length < 0 and travelled < forward_first - 1e-6:
+            return True
+        travelled += abs(length)
+    return False
+
+
+def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False, escape=0.6, log=None,
+              forward_first=0.0):
+    """start=(x, y, th), goal=(x, y, th) (뒤축 기준). -> 촘촘한 경로 [(x, y, th, dir), ...] (시작 제외) 또는 None.
+    dir: +1 전진, -1 후진. goal_yaw_free: 도착 방향 상관없음(중간 목표).
+    forward_first: 처음 이만큼(m)은 전진만 하는 경로 중에서 고른다 (뒤에 방금 내린 킥보드가 있을 때)."""
     p = p or KinematicParams()
     if ndimage is None:
         return None
@@ -306,11 +356,13 @@ def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False
     gj, gi = cm.cell(*goal[:2])
     if not (cm.inside(sj, si) and cm.inside(gj, gi)):
         return None
-    pivot_goal = p.pivot_at_ends and cg.clearance(*goal[:2]) >= p.pivot_clearance
-    goal_th_ok = goal_yaw_free or pivot_goal
-    if not goal_th_ok and not cg.free(*goal):
+    if cg.dist_loose is not None and not cg.free(*start):
+        # 벽·거치대에 바싹 붙어 출발 (제자리에서 못 돌므로 그냥 두면 첫 걸음부터 전부 막힘):
+        # 근처에서는 원 반경 대신 실제 차체 반폭만 지키며 빠져나온다
+        cg.tight, cg.escape = p.body_half_width, max(cg.escape, ESCAPE_TIGHT_RADIUS)
+    if not goal_yaw_free and not cg.free(*goal):
         return None
-    if goal_th_ok and not any(cg.free(goal[0], goal[1], b * TWO_PI / 16) for b in range(16)):
+    if goal_yaw_free and not any(cg.free(goal[0], goal[1], b * TWO_PI / 16) for b in range(16)):
         return None                                   # 목표 위치에 어느 방향으로도 설 수 없음
     hgrid = _grid_distance_to_goal(cm, cg, goal[:2])
     if hgrid is None or not np.isfinite(hgrid[sj, si]):
@@ -335,27 +387,12 @@ def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False
         hd = hgrid[j, i] if (0 <= j < cm.h and 0 <= i < cm.w) else np.inf
         e = math.hypot(goal[0] - x, goal[1] - y)
         h = max(e, float(hd) if np.isfinite(hd) else e * 3.0 + 5.0)
-        if not goal_th_ok:
+        if not goal_yaw_free:
             h += 0.3 * abs(wrap(goal[2] - th)) * R
         return h
 
-    # 출발 상태: 지금 방향. 제자리 회전 공간이 있으면 다른 방향들도 (회전 비용 포함)
-    openq, best_g, counter = [], {}, 0
-    starts = [(start[2], 0.0, [])]
-    if p.pivot_at_ends and cg.clearance(*start[:2]) >= p.pivot_clearance:
-        for b in range(nb):
-            th = wrap(b * TWO_PI / nb)
-            dth = abs(wrap(th - start[2]))
-            if dth < 1e-6:
-                continue
-            starts.append((th, dth * p.pivot_penalty, [(start[0], start[1], th, 0)]))
-    for th, g0, poses in starts:
-        n = _Node(start[0], start[1], th, g0, None, poses, 0.0, 0)
-        k = key(n.x, n.y, n.th)
-        if g0 < best_g.get(k, np.inf):
-            best_g[k] = g0
-            counter += 1
-            heapq.heappush(openq, (g0 + p.heuristic_weight * heur(n.x, n.y, th), counter, n))
+    openq, best_g, counter = [(p.heuristic_weight * heur(*start), 0, _Node(*start, 0.0, None, [], 0.0, 0))], {}, 0
+    best_g[key(*start)] = 0.0
 
     def finish(n, tail):
         out = list(tail)
@@ -366,47 +403,67 @@ def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False
         return curvature_smooth(start, out, cg, kmax, p.blend_len, p.blend_max_shift)
 
     def try_shot(n):
-        """Dubins 로 목표 자세에 바로 연결 (충돌 없으면). 도착 방향이 자유면 도착 방향 몇 개 시도"""
-        cands = [goal[2]]
-        if goal_th_ok:
+        """Reeds-Shepp 로 목표에 바로 연결 -> (이 노드까지 비용 포함 총비용, 자세 목록) 또는 None.
+        후보를 싼 것부터 충돌 검사해 처음 통과한 것."""
+        q0 = (n.x, n.y, n.th)
+        yaws = [goal[2]]
+        if goal_yaw_free:
             approach = math.atan2(goal[1] - n.y, goal[0] - n.x)
-            cands = [goal[2], approach] if not goal_yaw_free else [approach, goal[2]]
-        for gth in cands:
-            poses = dubins_poses((n.x, n.y, n.th), (goal[0], goal[1], gth), R)
-            if poses is None or not all(cg.free(q[0], q[1], q[2]) for q in poses):
+            yaws = [approach, wrap(approach + math.pi), goal[2]]
+        cands = []
+        for gth in yaws:
+            for segs in reeds_shepp.paths(q0, (goal[0], goal[1], gth), R):
+                if not p.allow_reverse and any(length < 0 for _, length in segs):
+                    continue
+                if reverses_early(segs, n.s, forward_first):
+                    continue
+                c = reeds_shepp.cost(segs, p.reverse_penalty, p.switch_penalty)
+                if n.d and segs and (1 if segs[0][1] > 0 else -1) != n.d:
+                    c += p.switch_penalty
+                cands.append((c, segs))
+        cands.sort(key=lambda item: item[0])
+        best = float(hgrid[int((n.y - cm.y0) // cm.res), int((n.x - cm.x0) // cm.res)])
+        for c, segs in cands[:12]:
+            poses = rs_poses(q0, segs, R)
+            if not poses or not all(cg.free(q[0], q[1], q[2]) for q in poses):
                 continue
-            tail = poses
-            if not goal_yaw_free and abs(wrap(goal[2] - gth)) > yaw_tol:
-                tail = tail + [(goal[0], goal[1], goal[2], 0)]       # 도착점 제자리 회전
-            return tail
+            if cg.surface is not None:               # 바로 연결이 차도를 가로질러 가는 지름길이면 쓰지 않음
+                length = cg.surface_length(poses, (n.x, n.y))
+                if length > 1.25 * best + 3.0 + sum(abs(v) for _, v in segs) - math.hypot(goal[0] - n.x, goal[1] - n.y):
+                    continue
+                c += length - sum(abs(v) for _, v in segs)
+            return n.g + c, poses
         return None
 
-    expansions = 0
+    expansions, found, found_at = 0, None, 0
     while openq:
-        _, _, n = heapq.heappop(openq)
+        f, _, n = heapq.heappop(openq)
         if n.g > best_g.get(key(n.x, n.y, n.th), np.inf) + 1e-9:
             continue
         expansions += 1
-        if expansions > p.max_expansions or time.monotonic() - t_start > p.time_budget_sec:
+        over = expansions > p.max_expansions or time.monotonic() - t_start > p.time_budget_sec
+        if found is not None and (over or expansions - found_at > p.refine_expansions or n.g >= found[0]):
+            break
+        if over:
             if log:
                 log(f'운동학 계획: 탐색 한도 ({expansions}회, {time.monotonic() - t_start:.1f} s)')
             return None
         dgoal = math.hypot(goal[0] - n.x, goal[1] - n.y)
         # 도착 판정 (위치 + 방향)
-        if dgoal <= p.goal_pos_tol:
-            dth = abs(wrap(goal[2] - n.th))
-            if goal_yaw_free or dth <= yaw_tol:
-                return finish(n, [])
-            if pivot_goal:
-                return finish(n, [(n.x, n.y, goal[2], 0)])
-        # Dubins 바로 연결: 가까울수록 자주 시도
-        if dgoal < 12.0 * R and (expansions % (1 if dgoal < 4.0 * R else 8) == 0):
-            tail = try_shot(n)
-            if tail is not None:
-                if log:
-                    log(f'운동학 계획: {expansions}회 탐색, {time.monotonic() - t_start:.2f} s')
-                return finish(n, tail)
+        if dgoal <= p.goal_pos_tol and n.parent is not None and (goal_yaw_free or abs(wrap(goal[2] - n.th)) <= yaw_tol):
+            if found is None or n.g < found[0]:
+                found = (n.g, n, [])
+            break
+        # Reeds-Shepp 바로 연결: 가까울수록 자주 시도
+        if dgoal < 8.0 * R and (expansions == 1 or expansions % (2 if dgoal < 3.0 * R else 10) == 0):
+            shot = try_shot(n)
+            if shot is not None and (found is None or shot[0] < found[0]):
+                if found is None:
+                    found_at = expansions
+                found = (shot[0], n, shot[1])
         for d in dirs:
+            if d < 0 and n.s < forward_first - 1e-6:
+                continue
             for k in steers:
                 poses = arc(n.x, n.y, n.th, k, p.step, d)
                 if not all(cg.free(q[0], q[1], q[2]) for q in poses):
@@ -418,14 +475,18 @@ def plan_path(cm, start, goal, t, p: KinematicParams = None, goal_yaw_free=False
                 if n.d and d != n.d:
                     cost += p.switch_penalty
                 cost += p.step * p.obstacle_weight * cg.penalty(x, y) / max(1.0, cm.weight)
-                g = n.g + cost
+                g = n.g + cost * cg.surface_at(x, y)
                 kk = key(x, y, th)
                 if g >= best_g.get(kk, np.inf):
                     continue
                 best_g[kk] = g
-                child = _Node(x, y, th, g, n, [(q[0], q[1], q[2], d) for q in poses], k, d)
+                child = _Node(x, y, th, g, n, [(q[0], q[1], q[2], d) for q in poses], k, d, n.s + p.step)
                 counter += 1
                 heapq.heappush(openq, (g + p.heuristic_weight * heur(x, y, th), counter, child))
+    if found is not None:
+        if log:
+            log(f'운동학 계획: {expansions}회 탐색, {time.monotonic() - t_start:.2f} s')
+        return finish(found[1], found[2])
     if log:
         log(f'운동학 계획: 경로 없음 ({expansions}회 탐색)')
     return None
@@ -441,7 +502,7 @@ def _length(poses, prev):
 
 def smooth_path(start, path, cg, R, deadline=None, margin=0.0):
     """전진 구간을 Dubins 곡선으로 '멀리 건너뛰어' 다듬는다 (격자 탐색의 흔들림 제거).
-    건너뛴 곡선이 충돌 없고 원래보다 길지 않을 때만 바꾼다. 제자리 회전·후진 구간은 그대로."""
+    건너뛴 곡선이 충돌 없고 원래보다 길지 않을 때만 바꾼다. 후진 구간은 그대로."""
     if not path:
         return path
     pts = [(start[0], start[1], start[2], path[0][3])] + list(path)
@@ -464,7 +525,9 @@ def smooth_path(start, path, cg, R, deadline=None, margin=0.0):
                 break
             cand = dubins_poses(pts[i][:3], pts[j][:3], R)
             if cand is not None and _length(cand, pts[i]) <= _length(pts[i + 1:j + 1], pts[i]) * 1.02 + 1e-6 \
-                    and all(cg.free(q[0], q[1], q[2], margin) for q in cand):
+                    and all(cg.free(q[0], q[1], q[2], margin) for q in cand) \
+                    and (cg.surface is None or cg.surface_length(cand, pts[i])
+                         <= cg.surface_length(pts[i + 1:j + 1], pts[i]) * 1.02 + 0.1):
                 best = (j, cand)
                 break
             j -= max(1, (j - i) // 4)
@@ -486,17 +549,13 @@ def curvature_smooth(start, path, cg, kmax, blend=0.8, max_shift=0.15):
       - 구간 끝 방향은 정확히 보존(전체 방향 변화를 맞추는 상수 보정). 완화 곡선마다 경로가 조금씩(~blend²k/24) 안쪽으로
         밀려 끝 위치가 어긋나는데, 이 오차는 구간 길이에 비례해 나눠 없앤다 (방향 어긋남 3% = 1.7° 이하일 때만)
       - 원래 경로에서 max_shift 넘게 벗어나거나, 곡률이 kmax 넘거나, 차체가 장애물과 겹치면 그 구간은 원래 경로 그대로
-    제자리 회전(dir 0)과 전·후진 전환점(정지)은 그대로 둔다 — 멈춘 상태에선 곡률이 끊겨도 된다."""
+    전·후진 전환점(정지)은 그대로 둔다 — 멈춘 상태에선 곡률이 끊겨도 된다."""
     if not path or blend <= 0.0:
         return path
     pts = [(start[0], start[1], start[2], 0)] + list(path)
     out, k, n = [], 1, len(pts)
     while k < n:
         d = pts[k][3]
-        if d == 0:
-            out.append(pts[k])
-            k += 1
-            continue
         e = k
         while e + 1 < n and pts[e + 1][3] == d:
             e += 1
@@ -548,15 +607,13 @@ def path_collides(cm, path, t, p: KinematicParams = None, from_index=0, start=No
     """남은 경로(촘촘한 자세)가 지금 장애물과 부딪히는지"""
     p = p or KinematicParams()
     cg = CollisionGrid(cm, t, Footprint(p), start=start, escape=escape if start else 0.0)
-    return any(not cg.free(q[0], q[1], q[2]) for q in path[from_index:] if q[3] != 0)
+    return any(not cg.free(q[0], q[1], q[2]) for q in path[from_index:])
 
 
 def max_curvature(path):
-    """경로 안 연속 자세 사이의 최대 곡률 (제자리 회전 제외) — 검증용"""
+    """경로 안 연속 자세 사이의 최대 곡률 — 검증용"""
     km = 0.0
     for a, b in zip(path[:-1], path[1:]):
-        if a[3] == 0 or b[3] == 0:
-            continue
         ds = math.hypot(b[0] - a[0], b[1] - a[1])
         if ds > 1e-6:
             km = max(km, abs(wrap(b[2] - a[2])) / ds)
@@ -565,27 +622,25 @@ def max_curvature(path):
 
 # ---------------------------------------------------------------- 추종 (곡률 제한 Pure Pursuit)
 class PathTracker:
-    """촘촘한 경로를 따라간다. step(pose) -> (v, w, done).
-    - 같은 방향(전진/후진) 구간은 Pure Pursuit. 곡률은 track_kmax(계획 한계의 1.2배)로, 회전 속도는 w_max 로 제한하고
-      곡률이 크면 속도를 줄인다 (v = w_max / k). lookahead 는 속도에 비례 (0.35 + 0.6 v, 최대 1.5 m)
+    """촘촘한 경로를 따라간다. step(pose) -> (v, w, done). pose 는 뒤축 기준. 항상 |w| <= |v| / R.
+    - 같은 방향(전진/후진) 구간은 Pure Pursuit. 곡률은 1/R 로 제한하고 곡률이 크면 속도를 줄인다 (v = w_max / k).
+      lookahead 는 속도에 비례 (0.35 + 0.6 v, 최대 1.5 m)
     - 방향이 바뀌는 점(cusp)에서는 멈췄다가 반대로
-    - 제자리 회전 구간(dir 0, 출발·도착점에서만)은 그 방향이 될 때까지 회전만
-    - 끝에 도착하면 마지막 자세 방향으로 맞춘다 (차동 구동, 도착점 회전 공간은 목표 선택이 보장)
-    - 비정상으로 크게 벗어나 목표점이 옆·뒤(60° 이상)에 있으면 회복용으로 제자리에서 돌려 세운다
+    - 제자리 회전은 하지 않는다. 비정상으로 크게 벗어나 목표점이 옆·뒤(75° 이상)에 있으면 lost = True 로 알려
+      호출한 쪽이 다시 계획하게 한다
     - 조향 속도 한계: 달리는 동안 명령 곡률은 초당 k_rate_max 이상 바뀌지 않는다 (조향을 한순간에 꺾지 않음).
-      멈춘 상태(출발·cusp·제자리 회전 뒤)에서는 제한 없이 새로 시작"""
+      멈춘 상태(출발·cusp)에서는 제한 없이 새로 시작"""
 
-    def __init__(self, path, v_max=0.22, w_max=1.0, min_turn_radius=0.8, lookahead=None, pos_tol=0.08,
-                 yaw_tol=math.radians(8.0), final_yaw=True, k_rate_max=2.5):
+    def __init__(self, path, v_max=0.22, w_max=1.0, min_turn_radius=MIN_TURN_RADIUS, lookahead=None, pos_tol=0.08,
+                 k_rate_max=2.5):
         self.path = list(path)
         self.v_max, self.w_max = v_max, w_max
         self.kmax = 1.0 / max(1e-3, min_turn_radius)     # 추종도 최소 회전 반경을 지킨다
         self.look_fixed = lookahead
-        self.pos_tol, self.yaw_tol = pos_tol, yaw_tol
-        self.final_yaw = final_yaw
+        self.pos_tol = pos_tol
         self.i = 0
         self.v_prev = 0.0
-        self.recovering = False
+        self.lost = False                                # 경로를 크게 벗어남 -> 다시 계획해야 함
         self.k_rate_max = k_rate_max                     # 1/(m·s). 명령 곡률 변화율 한계
         self.k_prev = None                               # 직전 명령 곡률 (None = 멈춘 상태)
         self._t_prev = None
@@ -594,7 +649,7 @@ class PathTracker:
         for k in range(1, len(self.path)):
             a, b = self.path[k - 1], self.path[k]
             ds = math.hypot(b[0] - a[0], b[1] - a[1])
-            if ds > 1e-6 and a[3] != 0 and b[3] != 0:
+            if ds > 1e-6:
                 self.curv[k] = wrap(b[2] - a[2]) / ds        # 진행 방향 기준 왼쪽 + (후진도 같은 식)
 
     def _segment_end(self):
@@ -615,12 +670,6 @@ class PathTracker:
         lo, hi = max(0, self.i - 5), min(len(self.path), self.i + 30)
         return min(math.hypot(q[0] - pose[0], q[1] - pose[1]) for q in self.path[lo:hi])
 
-    def _turn_to(self, th, target):
-        err = wrap(target - th)
-        if abs(err) <= self.yaw_tol:
-            return None
-        return 0.0, max(-self.w_max, min(self.w_max, 1.8 * err)), False
-
     def step(self, pose, dt=None):
         """dt: 이전 호출과의 간격(s). None 이면 실제 시간으로 잰다 (곡률 변화율 제한에 씀)"""
         now = time.monotonic()
@@ -630,20 +679,9 @@ class PathTracker:
         x, y, th = pose
         if not self.path:
             return 0.0, 0.0, True
-        if self.i >= len(self.path):                    # 끝: 마지막 방향 맞춤
-            if self.final_yaw:
-                r = self._turn_to(th, self.path[-1][2])
-                if r is not None:
-                    return r
+        if self.i >= len(self.path):
             return 0.0, 0.0, True
         q = self.path[self.i]
-        if q[3] == 0:                                   # 제자리 회전 (출발·도착점)
-            self.k_prev = None
-            r = self._turn_to(th, q[2])
-            if r is not None:
-                return r
-            self.i += 1
-            return 0.0, 0.0, False
         e = self._segment_end()
         d = q[3]
         best, bi = 1e18, self.i
@@ -654,7 +692,9 @@ class PathTracker:
         self.i = bi
         end = self.path[e]
         dist_end = math.hypot(end[0] - x, end[1] - y)
-        if dist_end <= self.pos_tol or (self.i >= e and dist_end <= 3.0 * self.pos_tol):
+        # 구간 끝: 가까워졌거나, 마지막 점까지 왔는데 이미 지나쳤음
+        passed = self.i >= e and ((end[0] - x) * math.cos(end[2]) + (end[1] - y) * math.sin(end[2])) * d <= 0.0
+        if dist_end <= self.pos_tol or (passed and dist_end <= 6.0 * self.pos_tol):
             self.i = e + 1
             self.v_prev = 0.0
             self.k_prev = None
@@ -673,13 +713,11 @@ class PathTracker:
         ly = -dx * hy + dy * hx
         L = math.hypot(dx, dy)
         ang = math.atan2(ly, lx)
-        # 회복: 목표점이 진행 방향에서 60° 넘게 벗어남 (정상 추종에선 생기지 않음)
-        if L > 0.25 and abs(ang) > math.radians(60 if not self.recovering else 15):
-            self.recovering = True
+        if L > 0.4 and abs(ang) > math.radians(75):      # 정상 추종에선 생기지 않음
+            self.lost = True
             self.v_prev = 0.0
             self.k_prev = None
-            return 0.0, max(-self.w_max, min(self.w_max, 1.8 * ang * d)), False
-        self.recovering = False
+            return 0.0, 0.0, False
         # 경로 곡률(피드포워드) + 측면·방향 오차 피드백 (진행 방향 기준). 순수 pure pursuit 은 급한 원호에서 안쪽을 깎는다
         near = self.path[self.i]
         pth = near[2] + (math.pi if d < 0 else 0.0)       # 경로 진행 방향
@@ -714,4 +752,4 @@ class PathTracker:
             v = min(v, max(0.1, self.v_max * 0.5))
         v = min(v, self.v_prev + 0.06 if self.v_prev >= 0 else v)   # 가속 제한 (주기당)
         self.v_prev = v
-        return v * d, v * k * d * d, False
+        return v * d, v * k, False

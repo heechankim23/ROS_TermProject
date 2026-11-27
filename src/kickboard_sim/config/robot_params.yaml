@@ -38,6 +38,7 @@ collector:
     align_retries: 2           # 그래도 실패하면 같은 반경(align_distance), 다른 각도 자리로 다시 시도. 0 = 안 함
     align_retry_offsets_deg: [90.0, -90.0, 180.0]   # 처음 실패한 자리 각도 기준 후보 순서 (nav_bridge 모드)
     align_spot_mode: dock      # dock = 대기점까지 간 뒤 직선 후진 도킹 (reverse 적재). scan = 자리 후보를 채점해 경로 주행. nav_bridge = 예전 방식
+    dock_staging: [3.5, 3.0, 2.5, 2.0]   # 대기점 = 적재 자리에서 진행 방향으로 이만큼 앞 (앞의 것부터)
     align_blocked_wait_sec: 20.0   # scan: 후보가 없을 때 1초마다 다시 채점하며 기다리는 최대 시간 (자리에 선 사람이 비켜나길)
     load_time_sec: 3.0
 
